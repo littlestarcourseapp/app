@@ -184,7 +184,7 @@ function renderHits(id,list){
   el.innerHTML=list.map(s=>`<div class="search-hit" onclick="openReport('${s.id}')">
     <div class="av">${s.nama[0]}</div>
     <div style="flex:1"><b>${s.nama}</b> <span class="badge badge-active">Grade ${s.grade||'-'}</span>
-      <div class="hint text-muted">${s.parent_name||''} · ${tName(s.tutor_id)} · ${s.schedule||''}</div></div>
+      <div class="hint text-muted">${s.parent_name||''} · ${s.schedule||''}</div></div>
     <div class="right-arrow">›</div></div>`).join('')||'<div class="text-muted" style="padding:8px">Tidak ada hasil.</div>';
 }
 function wireTutorSearch(){

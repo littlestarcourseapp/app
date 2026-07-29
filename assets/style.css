@@ -201,6 +201,28 @@ table.tbl .muted{color:var(--muted)}
 .text-green{color:var(--green2)}.text-red{color:var(--red)}.text-blue{color:var(--blue)}.text-muted{color:var(--muted)}
 .mt-16{margin-top:16px}.mt-24{margin-top:24px}.mb-0{margin-bottom:0}
 
+/* ---------- Weekly Calendar ---------- */
+.cal{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+.cal-toolbar{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.cal-title{font-weight:800;color:var(--navy);font-size:15px}
+.cal-nav{display:flex;gap:8px;align-items:center}
+.cal-head{display:grid;grid-template-columns:54px repeat(7,1fr);border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.cal-head .ch{padding:9px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);border-left:1px solid var(--line)}
+.cal-head .ch b{display:block;font-size:17px;color:var(--ink);margin-top:2px}
+.cal-head .ch.today{color:var(--blue)} .cal-head .ch.today b{color:#fff;background:var(--blue);border-radius:8px;width:30px;height:30px;line-height:30px;margin:2px auto 0}
+.cal-scroll{overflow:auto;max-height:660px}
+.cal-body{display:grid;grid-template-columns:54px repeat(7,1fr);position:relative}
+.cal-times .th{height:56px;font-size:10.5px;color:var(--muted);text-align:right;padding-right:6px;position:relative;top:-7px}
+.cal-col{border-left:1px solid var(--line);position:relative}
+.cal-col.today{background:rgba(135,206,235,.07)}
+.cal-col .hourline{height:56px;border-bottom:1px dashed #eef0f6}
+.cal-ev{position:absolute;left:3px;right:3px;border-radius:8px;padding:4px 7px;font-size:10.5px;font-weight:700;color:#fff;overflow:hidden;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.18);line-height:1.25}
+.cal-ev small{display:block;font-weight:500;opacity:.92;font-size:9.5px}
+.cal-ev.onsite{background:linear-gradient(135deg,#2f6bf0,#1d4ed8)}
+.cal-ev.online{background:linear-gradient(135deg,#25ac74,#158a57)}
+.cal-empty{text-align:center;color:var(--muted);padding:26px;font-size:13px}
+@media(max-width:768px){.cal-scroll{overflow-x:auto}.cal-head,.cal-body{min-width:640px}}
+
 /* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:12px 22px;border-radius:12px;font-weight:600;font-size:13px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:200}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}

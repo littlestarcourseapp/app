@@ -163,7 +163,8 @@ async function renderStats(){
   const m=todayStr().slice(0,7);
   const cls=(await API.getClasses({month:m,tutor_id:ME.id}));
   document.getElementById('cMonth').textContent=cls.length;
-  document.getElementById('myStudents').textContent=STUDENTS.filter(s=>s.tutor_id===ME.id).length;
+  const myStu=new Set((await API.getClasses({tutor_id:ME.id})).map(c=>c.student_id));
+  document.getElementById('myStudents').textContent=myStu.size;
   let fee=0;
   cls.forEach(c=>{fee+=(c.type==='online'?Number(ME.fee_online):Number(ME.fee_onsite))||0;});
   document.getElementById('feeMonth').textContent=fmtRp(fee);

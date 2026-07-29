@@ -15,6 +15,7 @@
     <nav class="nav">
       <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
       <a data-view="classes"><span class="ic">📅</span> Classes</a>
+      <a data-view="calendar"><span class="ic">🗓️</span> Weekly Calendar</a>
       <a data-view="attendance"><span class="ic">🕒</span> Attendance</a>
       <a data-view="students"><span class="ic">🧑‍🎓</span> Students</a>
       <a data-view="tutors"><span class="ic">👩‍🏫</span> Tutors</a>
@@ -81,6 +82,25 @@
         </table></div></div>
       </section>
 
+      <!-- ============ WEEKLY CALENDAR ============ -->
+      <section class="view hide" id="view-calendar">
+        <div class="page-head"><div><h1>Weekly Calendar</h1><div class="sub">Jadwal kelas satu minggu — klik kelas untuk edit</div></div>
+          <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button></div>
+        <div class="cal">
+          <div class="cal-toolbar">
+            <div class="cal-title" id="calTitle">—</div>
+            <div class="cal-nav">
+              <button class="btn btn-outline btn-sm" onclick="calMove(-7)">‹ Sebelumnya</button>
+              <button class="btn btn-ghost btn-sm" onclick="calToday()">Minggu Ini</button>
+              <button class="btn btn-outline btn-sm" onclick="calMove(7)">Berikutnya ›</button>
+            </div>
+          </div>
+          <div class="cal-head" id="calHead"></div>
+          <div class="cal-scroll"><div class="cal-body" id="calBody"></div></div>
+        </div>
+        <div class="note-band mt-16">🗓️ Kalender menampilkan kelas yang sudah di-input. <b>Onsite</b> biru, <b>Online</b> hijau. Jam 08.00–21.00.</div>
+      </section>
+
       <!-- ============ ATTENDANCE ============ -->
       <section class="view hide" id="view-attendance">
         <div class="page-head"><div><h1>Attendance</h1><div class="sub">Catat jam datang & pulang — murid dan tentor</div></div>
@@ -97,7 +117,7 @@
         <div class="page-head"><div><h1>Students</h1><div class="sub">Data murid & jadwal tetap</div></div>
           <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
-          <thead><tr><th>Nama</th><th>Grade</th><th>Orang Tua</th><th>WA</th><th>Tentor</th><th>Jadwal</th><th>Fee/Meet</th><th>Deposit</th><th>Action</th></tr></thead>
+          <thead><tr><th>Nama</th><th>Grade</th><th>Orang Tua</th><th>WA</th><th>Jadwal</th><th>Fee/Meet</th><th>Deposit</th><th>Action</th></tr></thead>
           <tbody id="studentBody"></tbody>
         </table></div></div>
       </section>
@@ -179,10 +199,7 @@
         <div class="field"><label>Nama Orang Tua</label><input id="sParent"></div>
         <div class="field"><label>WA Orang Tua</label><input id="sWa" placeholder="08xxxx"></div>
       </div>
-      <div class="field-row">
-        <div class="field"><label>Tentor Tetap</label><select id="sTutor"></select></div>
-        <div class="field"><label>Jadwal Tetap</label><input id="sSchedule" placeholder="Sen & Kam · 19.00"></div>
-      </div>
+      <div class="field"><label>Jadwal Tetap</label><input id="sSchedule" placeholder="Sen & Kam · 19.00"><div class="help">Jam les tetap murid (info). Tentor dipilih per kelas saat Add Class.</div></div>
       <div class="field-row">
         <div class="field"><label>Fee / Meeting</label><input type="number" id="sFee" value="150000"></div>
         <div class="field"><label>Durasi (menit)</label><input type="number" id="sMin" value="90"></div>
@@ -283,10 +300,48 @@ async function renderToday(){
 /* ---- render other views ---- */
 function render(v){
   if(v==='classes') renderAllClasses();
+  if(v==='calendar') renderCalendar();
   if(v==='attendance') renderAttendance();
   if(v==='students') renderStudents();
   if(v==='tutors') renderTutors();
   if(v==='reports') renderReports();
+}
+
+/* ---- WEEKLY CALENDAR ---- */
+const CAL_START=8, CAL_END=21, PXH=56; // 08:00–21:00, 56px/hour
+function mondayOf(d){const x=new Date(d);const wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);x.setHours(0,0,0,0);return x;}
+function isoOf(d){return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
+let calWeek=mondayOf(new Date());
+function calMove(n){calWeek.setDate(calWeek.getDate()+n);renderCalendar();}
+function calToday(){calWeek=mondayOf(new Date());renderCalendar();}
+const DNAME=['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+const MNAME=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+async function renderCalendar(){
+  const days=[...Array(7)].map((_,i)=>{const d=new Date(calWeek);d.setDate(d.getDate()+i);return d;});
+  const isos=days.map(isoOf); const tIso=todayStr();
+  document.getElementById('calTitle').textContent=`${days[0].getDate()} ${MNAME[days[0].getMonth()]} – ${days[6].getDate()} ${MNAME[days[6].getMonth()]} ${days[6].getFullYear()}`;
+  // header
+  document.getElementById('calHead').innerHTML=`<div class="ch"></div>`+days.map((d,i)=>
+    `<div class="ch ${isos[i]===tIso?'today':''}">${DNAME[i]}<b>${d.getDate()}</b></div>`).join('');
+  // body: time gutter + 7 day columns
+  const hours=[]; for(let h=CAL_START;h<CAL_END;h++) hours.push(h);
+  let html=`<div class="cal-times">`+hours.map(h=>`<div class="th">${pad2(h)}:00</div>`).join('')+`</div>`;
+  const all=await API.getClasses({});
+  days.forEach((d,i)=>{
+    const evs=all.filter(c=>c.date===isos[i]&&c.start_time);
+    const lines=hours.map(()=>`<div class="hourline"></div>`).join('');
+    const chips=evs.map(c=>{
+      const [sh,sm]=c.start_time.split(':').map(Number);
+      const top=((sh*60+sm)-CAL_START*60)/60*PXH;
+      const dur=Number(c.duration)|| (c.end_time?durMin(c.start_time,c.end_time):60) ||60;
+      const hgt=Math.max(26,dur/60*PXH-3);
+      if(top<0) return '';
+      return `<div class="cal-ev ${c.type==='online'?'online':'onsite'}" style="top:${top}px;height:${hgt}px" onclick="editClass('${c.id}')">
+        ${sName(c.student_id)}<small>${c.start_time}${c.end_time?'–'+c.end_time:''} · ${tName(c.tutor_id)}</small></div>`;
+    }).join('');
+    html+=`<div class="cal-col ${isos[i]===tIso?'today':''}">${lines}${chips}</div>`;
+  });
+  document.getElementById('calBody').innerHTML=html;
 }
 async function renderAllClasses(){
   const all=await API.getClasses({});
@@ -322,7 +377,7 @@ function renderStudents(){
   const tb=document.getElementById('studentBody');
   tb.innerHTML=STUDENTS.map(s=>`<tr>
     <td><b>${s.nama}</b></td><td>${s.grade||'-'}</td><td>${s.parent_name||'-'}</td><td>${s.wa_ortu||'-'}</td>
-    <td>${tName(s.tutor_id)}</td><td>${s.schedule||'-'}</td><td>${fmtRp(s.fee_per_meeting)}</td>
+    <td>${s.schedule||'-'}</td><td>${fmtRp(s.fee_per_meeting)}</td>
     <td>${s.deposit_meetings||0}×</td>
     <td><button class="btn btn-warn btn-sm" onclick="openStudent('${s.id}')">Edit</button></td></tr>`).join('');
 }
@@ -359,8 +414,6 @@ function openAddClass(){
   fillSelect(document.getElementById('cStudent'),STUDENTS); fillSelect(document.getElementById('cTutor'),TUTORS);
   ['cStart','cEnd','cTopic','cNote','cDocName'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('cDur').value=90; document.querySelector('input[name=cType][value=onsite]').checked=true;
-  // auto-link student->tutor
-  document.getElementById('cStudent').onchange=e=>{const s=STUDENTS.find(x=>x.id===e.target.value);if(s&&s.tutor_id)document.getElementById('cTutor').value=s.tutor_id;};
   openModal('mClass');
 }
 async function editClass(id){
@@ -404,12 +457,11 @@ async function delClass(id){ if(!confirm('Hapus kelas ini?'))return; await API.d
 /* ---- Student modal ---- */
 function openStudent(id){
   document.getElementById('mStudentTitle').textContent=id?'Edit Murid':'Tambah Murid';
-  fillSelect(document.getElementById('sTutor'),TUTORS);
   const s=id?STUDENTS.find(x=>x.id===id):{};
   document.getElementById('sId').value=id||'';
   document.getElementById('sNama').value=s.nama||''; document.getElementById('sGrade').value=s.grade||'';
   document.getElementById('sParent').value=s.parent_name||''; document.getElementById('sWa').value=s.wa_ortu||'';
-  document.getElementById('sTutor').value=s.tutor_id||''; document.getElementById('sSchedule').value=s.schedule||'';
+  document.getElementById('sSchedule').value=s.schedule||'';
   document.getElementById('sFee').value=s.fee_per_meeting||150000; document.getElementById('sMin').value=s.meeting_minutes||90;
   document.getElementById('sDep').value=s.deposit_meetings||8;
   openModal('mStudent');
@@ -417,7 +469,7 @@ function openStudent(id){
 async function saveStudent(){
   const p={id:document.getElementById('sId').value||undefined,nama:document.getElementById('sNama').value,
     grade:document.getElementById('sGrade').value,parent_name:document.getElementById('sParent').value,
-    wa_ortu:document.getElementById('sWa').value,tutor_id:document.getElementById('sTutor').value,
+    wa_ortu:document.getElementById('sWa').value,
     schedule:document.getElementById('sSchedule').value,fee_per_meeting:document.getElementById('sFee').value,
     meeting_minutes:document.getElementById('sMin').value,deposit_meetings:document.getElementById('sDep').value};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
