@@ -1,0 +1,193 @@
+/* ============================================================
+   Little Star Course — Shared front-end helpers
+   ============================================================ */
+
+/* ---- CONFIG ------------------------------------------------
+   After deploying Code.gs as a Web App, paste the /exec URL here.
+   While SCRIPT_URL is empty, the portals run in DEMO MODE using
+   the sample data below so you can preview the design.
+------------------------------------------------------------- */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxuH7x7w8tRuDH_U-tw7X8igt69Cr3BoyZzMiBicsMEv5xW7zQp6GHdM5TbAy3vjGBR/exec'; // Apps Script /exec URL
+const DEMO_MODE   = !SCRIPT_URL;
+
+/* ---- Star logo (inline SVG) -------------------------------- */
+const STAR_SVG = `
+<svg class="ls-star" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M32 4l7.6 15.9L57 22.2 44.5 34.4 47.7 52 32 43.4 16.3 52l3.2-17.6L7 22.2l17.4-2.3z"
+        fill="#FFD700" stroke="#F0A500" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="25" cy="30" r="2.4" fill="#2A2A6A"/>
+  <circle cx="39" cy="30" r="2.4" fill="#2A2A6A"/>
+  <path d="M26 36c2.2 2.4 9.8 2.4 12 0" stroke="#2A2A6A" stroke-width="2.2" stroke-linecap="round"/>
+</svg>`;
+
+function logoBlock(name, sub){
+  return `<div class="ls-logo">${STAR_SVG}<div class="ls-name">${name||'Little Star'}<small>${sub||'Course'}</small></div></div>`;
+}
+
+/* ---- Formatting -------------------------------------------- */
+const fmtRp   = n => 'Rp ' + (Number(n)||0).toLocaleString('id-ID');
+const fmtNum  = n => (Number(n)||0).toLocaleString('id-ID');
+const pad2    = n => String(n).padStart(2,'0');
+function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function prettyDate(iso){
+  if(!iso) return '-';
+  const d=new Date(iso+ (iso.length===10?'T00:00:00':''));
+  if(isNaN(d)) return iso;
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const mon=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  return `${d.getDate()} ${mon[d.getMonth()]} ${d.getFullYear()}`;
+}
+function dayName(iso){
+  const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return '';
+  return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
+}
+function longToday(){
+  const d=new Date();
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const mon=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${mon[d.getMonth()]} ${d.getFullYear()}`;
+}
+function timeRange(s,e){ if(!s) return '-'; return e? `${s} - ${e}` : `${s} - …`; }
+function durMin(s,e){
+  if(!s||!e) return null;
+  const [sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+  return (eh*60+em)-(sh*60+sm);
+}
+
+/* ---- Toast ------------------------------------------------- */
+function toast(msg,type){
+  let t=document.getElementById('__toast');
+  if(!t){t=document.createElement('div');t.id='__toast';t.className='toast';document.body.appendChild(t);}
+  t.className='toast '+(type||'');t.textContent=msg;
+  requestAnimationFrame(()=>t.classList.add('show'));
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ---- Modal helpers ----------------------------------------- */
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+/* ---- Mobile sidebar ---------------------------------------- */
+function toggleSidebar(){
+  document.querySelector('.sidebar')?.classList.toggle('open');
+  document.querySelector('.backdrop')?.classList.toggle('open');
+}
+
+/* ============================================================
+   API — talks to Apps Script; falls back to DEMO data
+   ============================================================ */
+const API = {
+  async _post(payload){
+    if(DEMO_MODE) return DEMO.handle(payload);
+    const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+    const j=await r.json(); if(j.status==='error') throw new Error(j.message); return j.data;
+  },
+  getStudents : (o={}) => API._post({action:'getStudents',...o}),
+  getStudent  : (id)   => API._post({action:'getStudents',id}),
+  addStudent  : (d)    => API._post({action:'addStudent',...d}),
+  updateStudent:(d)    => API._post({action:'updateStudent',...d}),
+  deleteStudent:(id)   => API._post({action:'deleteStudent',id}),
+
+  getTutors   : ()     => API._post({action:'getTutors'}),
+  addTutor    : (d)    => API._post({action:'addTutor',...d}),
+  updateTutor : (d)    => API._post({action:'updateTutor',...d}),
+  deleteTutor : (id)   => API._post({action:'deleteTutor',id}),
+
+  getClasses  : (o={}) => API._post({action:'getClasses',...o}),
+  addClass    : (d)    => API._post({action:'addClass',...d}),
+  updateClass : (d)    => API._post({action:'updateClass',...d}),
+  deleteClass : (id)   => API._post({action:'deleteClass',id}),
+
+  getAttendance : (o={}) => API._post({action:'getAttendance',...o}),
+  saveAttendance: (d)    => API._post({action:'saveAttendance',...d}),
+
+  getDeposit  : (sid)  => API._post({action:'getDeposit',student_id:sid}),
+};
+
+/* ============================================================
+   DEMO DATA  (mirrors the mockups; used until SCRIPT_URL is set)
+   ============================================================ */
+const DEMO = {
+  tutors:[
+    {id:'t1',nama:'Mr. Yesaya',subject:'Math',wa:'081200000001',fee_onsite:150000,fee_online:120000},
+    {id:'t2',nama:'Ms. Dian',  subject:'Science',wa:'081200000002',fee_onsite:150000,fee_online:120000},
+    {id:'t3',nama:'Mr. Kevin', subject:'English',wa:'081200000003',fee_onsite:140000,fee_online:110000},
+  ],
+  students:[
+    {id:'s1',nama:'Anton Wijaya',grade:'7',parent_name:'Ibu Rina Wijaya',wa_ortu:'081234567890',
+     tutor_id:'t1',schedule:'Sen & Kam · 19.00',fee_per_meeting:150000,meeting_minutes:90,
+     deposit_meetings:16,active:'aktif',link_id:'anton-s1'},
+    {id:'s2',nama:'Budi Santoso',grade:'8',parent_name:'Bpk. Hadi',wa_ortu:'081234500011',
+     tutor_id:'t2',schedule:'Sel · 16.00',fee_per_meeting:150000,meeting_minutes:90,
+     deposit_meetings:8,active:'aktif',link_id:'budi-s2'},
+    {id:'s3',nama:'Clara Halim',grade:'6',parent_name:'Ibu Mega',wa_ortu:'081234500022',
+     tutor_id:'t3',schedule:'Rab & Jum · 15.30',fee_per_meeting:140000,meeting_minutes:90,
+     deposit_meetings:12,active:'aktif',link_id:'clara-s3'},
+  ],
+  classes:[
+    {id:'c101',date:todayStr(),student_id:'s1',tutor_id:'t1',start_time:'19:00',end_time:'',duration:90,type:'onsite',topic:'',note:'',material_url:'',doc_url:'',
+     stu_in:'',stu_out:'',tut_in:'',tut_out:''},
+    {id:'c102',date:todayStr(),student_id:'s2',tutor_id:'t2',start_time:'16:00',end_time:'',duration:90,type:'online',topic:'',note:'',material_url:'',doc_url:'',
+     stu_in:'',stu_out:'',tut_in:'',tut_out:''},
+    // history for Anton
+    {id:'c1',date:'2026-07-28',student_id:'s1',tutor_id:'t1',start_time:'19:00',end_time:'20:30',duration:90,type:'onsite',
+     topic:'Linear Equation (Persamaan Linear)',note:'Anton cukup aktif dan memahami materi dengan baik.',material_url:'materi/linear-equation.pdf',doc_url:'doc1'},
+    {id:'c2',date:'2026-07-21',student_id:'s1',tutor_id:'t1',start_time:'19:00',end_time:'20:30',duration:90,type:'onsite',
+     topic:'Algebraic Fractions',note:'Perlu latihan lebih banyak soal cerita.',material_url:'materi/algebraic-fractions.pdf',doc_url:'doc2'},
+    {id:'c3',date:'2026-07-14',student_id:'s1',tutor_id:'t1',start_time:'19:00',end_time:'21:00',duration:120,type:'onsite',
+     topic:'Linear Inequalities',note:'Kelas ditambah 30 menit.',material_url:'materi/inequalities.pdf',doc_url:'doc3'},
+    {id:'c4',date:'2026-07-07',student_id:'s1',tutor_id:'t1',start_time:'19:00',end_time:'20:30',duration:90,type:'onsite',
+     topic:'Integers (Bilangan Bulat)',note:'Anton sudah mulai terbiasa.',material_url:'materi/integers.pdf',doc_url:'doc4'},
+    {id:'c5',date:'2026-06-30',student_id:'s1',tutor_id:'t1',start_time:'19:00',end_time:'20:30',duration:90,type:'onsite',
+     topic:'Introduction to Algebra',note:'Good job!',material_url:'materi/intro-algebra.pdf',doc_url:'doc5'},
+  ],
+  deposits:{
+    s1:{paid_meetings:16,minutes_total:1440,minutes_used:900,fee_per_meeting:150000,last_paid:'2026-07-20'},
+    s2:{paid_meetings:8, minutes_total:720, minutes_used:360,fee_per_meeting:150000,last_paid:'2026-07-05'},
+    s3:{paid_meetings:12,minutes_total:1080,minutes_used:540,fee_per_meeting:140000,last_paid:'2026-07-10'},
+  },
+  handle(p){
+    return new Promise(res=>{
+      setTimeout(()=>res(this._route(p)),120); // tiny delay to feel real
+    });
+  },
+  _route(p){
+    const clone=x=>JSON.parse(JSON.stringify(x));
+    switch(p.action){
+      case 'getTutors': return clone(this.tutors);
+      case 'getStudents':
+        if(p.id) return clone(this.students.find(s=>s.id===p.id)||null);
+        return clone(this.students);
+      case 'getClasses':{
+        let r=clone(this.classes);
+        if(p.date)       r=r.filter(c=>c.date===p.date);
+        if(p.student_id) r=r.filter(c=>c.student_id===p.student_id);
+        if(p.tutor_id)   r=r.filter(c=>c.tutor_id===p.tutor_id);
+        if(p.month)      r=r.filter(c=>c.date.startsWith(p.month));
+        return r.sort((a,b)=>b.date>a.date?1:-1);
+      }
+      case 'addClass':{
+        const id='c'+Date.now();
+        this.classes.push({id,doc_url:'',material_url:'',topic:'',note:'',...p});
+        return {id};
+      }
+      case 'updateClass':{
+        const c=this.classes.find(x=>x.id===p.id); if(c) Object.assign(c,p); return {updated:p.id};
+      }
+      case 'deleteClass':{
+        this.classes=this.classes.filter(x=>x.id!==p.id); return {deleted:p.id};
+      }
+      case 'getDeposit': return clone(this.deposits[p.student_id]||null);
+      case 'addStudent': { const id='s'+Date.now(); this.students.push({id,active:'aktif',...p}); return {id}; }
+      case 'addTutor':   { const id='t'+Date.now(); this.tutors.push({id,...p}); return {id}; }
+      case 'getAttendance': return clone(this.classes.filter(c=>!p.date||c.date===p.date));
+      default: return null;
+    }
+  },
+  tutorName(id){return (this.tutors.find(t=>t.id===id)||{}).nama||'-';},
+  studentName(id){return (this.students.find(s=>s.id===id)||{}).nama||'-';},
+};
+
+/* Convenience lookups that work in demo & live (names embedded server-side in live) */
+async function tutorMap(){const t=await API.getTutors();const m={};t.forEach(x=>m[x.id]=x);return m;}
+async function studentMap(){const s=await API.getStudents();const m={};s.forEach(x=>m[x.id]=x);return m;}

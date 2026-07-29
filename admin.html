@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Little Star Course</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-head" id="logo"></div>
+    <div class="sidebar-role">Menu</div>
+    <nav class="nav">
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
+      <a data-view="classes"><span class="ic">📅</span> Classes</a>
+      <a data-view="attendance"><span class="ic">🕒</span> Attendance</a>
+      <a data-view="students"><span class="ic">🧑‍🎓</span> Students</a>
+      <a data-view="tutors"><span class="ic">👩‍🏫</span> Tutors</a>
+      <a data-view="reports"><span class="ic">📊</span> Reports</a>
+      <div class="divider"></div>
+      <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
+      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="avatar">A</div>
+      <div class="who">Admin<small>Administrator</small></div>
+    </div>
+  </aside>
+  <div class="backdrop" onclick="toggleSidebar()"></div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="spacer"></div>
+      <div class="bell">🔔<span class="dot">2</span></div>
+      <div class="me"><div class="who">Admin<small>Administrator</small></div><div class="avatar">A</div></div>
+    </div>
+
+    <div class="content">
+      <!-- ============ DASHBOARD / TODAY'S CLASS ============ -->
+      <section class="view" id="view-dashboard">
+        <div class="page-head">
+          <div>
+            <h1>Today's Class</h1>
+            <div class="sub" id="todayDate">—</div>
+          </div>
+          <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom:22px">
+          <div class="stat tint-blue"><div class="lbl"><span class="icon">📅</span> Kelas Hari Ini</div><div class="val" id="kToday">0</div></div>
+          <div class="stat tint-green"><div class="lbl"><span class="icon">✅</span> Selesai</div><div class="val" id="kDone">0</div></div>
+          <div class="stat tint-amber"><div class="lbl"><span class="icon">⏳</span> Berlangsung</div><div class="val" id="kOngoing">0</div></div>
+          <div class="stat tint-purple"><div class="lbl"><span class="icon">🧑‍🎓</span> Murid Aktif</div><div class="val" id="kStudents">0</div></div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr>
+                <th>No.</th><th>Student's Name</th><th>Tentor's Name</th><th>Start</th><th>End</th>
+                <th>Duration</th><th>Type</th><th>Topic/Material</th><th>Note</th><th>Doc</th><th>Action</th>
+              </tr></thead>
+              <tbody id="todayBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="note-band mt-16">ℹ️ Admin mengisi <b>waktu mulai/berakhir</b> & <b>dokumentasi foto</b>. Topik, catatan & materi PDF diisi oleh tentor (bisa juga di sini).</div>
+      </section>
+
+      <!-- ============ CLASSES (all) ============ -->
+      <section class="view hide" id="view-classes">
+        <div class="page-head"><div><h1>Semua Kelas</h1><div class="sub">Riwayat seluruh sesi kelas</div></div>
+          <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Tanggal</th><th>Murid</th><th>Tentor</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik</th><th>Action</th></tr></thead>
+          <tbody id="allClassBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- ============ ATTENDANCE ============ -->
+      <section class="view hide" id="view-attendance">
+        <div class="page-head"><div><h1>Attendance</h1><div class="sub">Catat jam datang & pulang — murid dan tentor</div></div>
+          <input type="date" id="attDate" class="btn btn-outline" style="font-weight:600"></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Murid</th><th>Tentor</th><th>Murid Datang</th><th>Murid Pulang</th><th>Tentor Datang</th><th>Tentor Pulang</th><th>Simpan</th></tr></thead>
+          <tbody id="attBody"></tbody>
+        </table></div></div>
+        <div class="note-band mt-16">🕒 Isi jam kehadiran lalu klik <b>Simpan</b> per baris. Rekap akan otomatis muncul di laporan akhir bulan.</div>
+      </section>
+
+      <!-- ============ STUDENTS ============ -->
+      <section class="view hide" id="view-students">
+        <div class="page-head"><div><h1>Students</h1><div class="sub">Data murid & jadwal tetap</div></div>
+          <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Nama</th><th>Grade</th><th>Orang Tua</th><th>WA</th><th>Tentor</th><th>Jadwal</th><th>Fee/Meet</th><th>Deposit</th><th>Action</th></tr></thead>
+          <tbody id="studentBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- ============ TUTORS ============ -->
+      <section class="view hide" id="view-tutors">
+        <div class="page-head"><div><h1>Tutors</h1><div class="sub">Data tentor & honor</div></div>
+          <button class="btn btn-primary" onclick="openTutor()">＋ Tambah Tentor</button></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Nama</th><th>Subject</th><th>WA</th><th>Fee Onsite</th><th>Fee Online</th><th>Action</th></tr></thead>
+          <tbody id="tutorBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- ============ REPORTS ============ -->
+      <section class="view hide" id="view-reports">
+        <div class="page-head"><div><h1>Reports</h1><div class="sub">Rekap kelas per murid untuk laporan bulanan</div></div>
+          <input type="month" id="repMonth" class="btn btn-outline" style="font-weight:600"></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Murid</th><th>Jml Kelas</th><th>Total Menit</th><th>Fee/Meet</th><th>Estimasi</th><th></th></tr></thead>
+          <tbody id="repBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <div class="foot-note">© 2026 Little Star Course. All rights reserved.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: ADD/EDIT CLASS ============ -->
+<div class="modal-overlay" id="mClass">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mClassTitle">Add Class</h3><button class="x" onclick="closeModal('mClass')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="cId"><input type="hidden" id="cDate">
+      <div class="field-row">
+        <div class="field"><label>Student's Name <span class="req">*</span></label>
+          <select id="cStudent"></select></div>
+        <div class="field"><label>Tentor's Name <span class="req">*</span></label>
+          <select id="cTutor"></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Start Time <span class="req">*</span></label><input type="time" id="cStart"></div>
+        <div class="field"><label>End Time <span class="help" style="display:inline">(diisi saat kelas selesai)</span></label><input type="time" id="cEnd"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Duration <span class="req">*</span></label><input type="number" id="cDur" value="90"> <div class="help">menit — otomatis dari start/end bila keduanya diisi</div></div>
+        <div class="field"><label>Type <span class="req">*</span></label>
+          <div class="radio-row">
+            <label><input type="radio" name="cType" value="onsite" checked> Onsite</label>
+            <label><input type="radio" name="cType" value="online"> Online</label>
+          </div></div>
+      </div>
+      <div class="field"><label>Topic / Material <span class="help" style="display:inline">(oleh tentor)</span></label>
+        <input id="cTopic" placeholder="Will be filled after class"></div>
+      <div class="field"><label>Note</label><textarea id="cNote" placeholder="Optional note"></textarea></div>
+      <div class="field"><label>Documentation (Upload Photo)</label>
+        <label class="dropzone" for="cDoc"><span class="zi">🖼️</span><div><b>Choose file</b> atau drag &amp; drop<br><span class="help">JPG, PNG up to 5MB</span></div></label>
+        <input type="file" id="cDoc" accept="image/*" class="hide"><div class="help" id="cDocName"></div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('mClass')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClass()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: STUDENT ============ -->
+<div class="modal-overlay" id="mStudent">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mStudentTitle">Tambah Murid</h3><button class="x" onclick="closeModal('mStudent')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="sId">
+      <div class="field-row">
+        <div class="field"><label>Nama Murid <span class="req">*</span></label><input id="sNama"></div>
+        <div class="field"><label>Grade</label><input id="sGrade" placeholder="7"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Nama Orang Tua</label><input id="sParent"></div>
+        <div class="field"><label>WA Orang Tua</label><input id="sWa" placeholder="08xxxx"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Tentor Tetap</label><select id="sTutor"></select></div>
+        <div class="field"><label>Jadwal Tetap</label><input id="sSchedule" placeholder="Sen & Kam · 19.00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Fee / Meeting</label><input type="number" id="sFee" value="150000"></div>
+        <div class="field"><label>Durasi (menit)</label><input type="number" id="sMin" value="90"></div>
+      </div>
+      <div class="field"><label>Deposit (jumlah meeting dibayar)</label><input type="number" id="sDep" value="8"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('mStudent')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStudent()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: TUTOR ============ -->
+<div class="modal-overlay" id="mTutor">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mTutorTitle">Tambah Tentor</h3><button class="x" onclick="closeModal('mTutor')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="tId">
+      <div class="field-row">
+        <div class="field"><label>Nama <span class="req">*</span></label><input id="tNama"></div>
+        <div class="field"><label>Subject</label><input id="tSubject" placeholder="Math"></div>
+      </div>
+      <div class="field"><label>WhatsApp</label><input id="tWa" placeholder="08xxxx"></div>
+      <div class="field-row">
+        <div class="field"><label>Fee Onsite</label><input type="number" id="tOnsite" value="150000"></div>
+        <div class="field"><label>Fee Online</label><input type="number" id="tOnline" value="120000"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('mTutor')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTutor()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+document.getElementById('logo').innerHTML = logoBlock('Little Star','Admin Portal');
+document.getElementById('todayDate').textContent = '📅 ' + longToday();
+document.getElementById('attDate').value = todayStr();
+document.getElementById('repMonth').value = todayStr().slice(0,7);
+
+let TUTORS=[], STUDENTS=[], CLASSES=[];
+
+/* ---- nav ---- */
+document.querySelectorAll('.nav a[data-view]').forEach(a=>{
+  a.onclick=()=>{
+    document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.add('hide'));
+    document.getElementById('view-'+a.dataset.view).classList.remove('hide');
+    if(window.innerWidth<768) toggleSidebar();
+    render(a.dataset.view);
+  };
+});
+
+/* ---- load ---- */
+async function boot(){
+  TUTORS=await API.getTutors();
+  STUDENTS=await API.getStudents();
+  renderToday();
+}
+function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
+function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
+
+/* ---- TODAY ---- */
+async function renderToday(){
+  CLASSES=await API.getClasses({date:todayStr()});
+  const tb=document.getElementById('todayBody'); tb.innerHTML='';
+  let done=0,ongoing=0;
+  CLASSES.forEach((c,i)=>{
+    if(c.end_time) done++; else ongoing++;
+    const type=c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>';
+    tb.innerHTML+=`<tr>
+      <td>${i+1}</td>
+      <td><b>${sName(c.student_id)}</b></td>
+      <td>${tName(c.tutor_id)}</td>
+      <td>${c.start_time||'-'}</td>
+      <td>${c.end_time||'<span class="muted">-</span>'}</td>
+      <td>${c.duration||'-'} min</td>
+      <td>${type}</td>
+      <td>${c.topic||'<span class="muted">-</span>'}</td>
+      <td>${c.note?c.note:'<span class="muted">-</span>'}</td>
+      <td>${c.doc_url?'🖼️':'<span class="muted">-</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-warn btn-sm" onclick="editClass('${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delClass('${c.id}')">Delete</button>
+      </td></tr>`;
+  });
+  if(!CLASSES.length) tb.innerHTML='<tr><td colspan="11" class="muted" style="text-align:center;padding:26px">Belum ada kelas hari ini. Klik “＋ Add Class”.</td></tr>';
+  document.getElementById('kToday').textContent=CLASSES.length;
+  document.getElementById('kDone').textContent=done;
+  document.getElementById('kOngoing').textContent=ongoing;
+  document.getElementById('kStudents').textContent=STUDENTS.filter(s=>s.active!=='nonaktif').length;
+}
+
+/* ---- render other views ---- */
+function render(v){
+  if(v==='classes') renderAllClasses();
+  if(v==='attendance') renderAttendance();
+  if(v==='students') renderStudents();
+  if(v==='tutors') renderTutors();
+  if(v==='reports') renderReports();
+}
+async function renderAllClasses(){
+  const all=await API.getClasses({});
+  const tb=document.getElementById('allClassBody');
+  tb.innerHTML=all.map(c=>`<tr>
+    <td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${tName(c.tutor_id)}</td>
+    <td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
+    <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+    <td>${c.topic||'<span class="muted">-</span>'}</td>
+    <td><button class="btn btn-warn btn-sm" onclick="editClass('${c.id}')">Edit</button></td></tr>`).join('')
+    || '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>';
+}
+async function renderAttendance(){
+  const d=document.getElementById('attDate').value||todayStr();
+  const list=await API.getClasses({date:d});
+  const tb=document.getElementById('attBody');
+  tb.innerHTML=list.map(c=>`<tr data-id="${c.id}">
+    <td><b>${sName(c.student_id)}</b></td><td>${tName(c.tutor_id)}</td>
+    <td><input type="time" value="${c.stu_in||''}" class="ai" data-f="stu_in" style="padding:7px;border:1.5px solid var(--line);border-radius:8px"></td>
+    <td><input type="time" value="${c.stu_out||''}" class="ai" data-f="stu_out" style="padding:7px;border:1.5px solid var(--line);border-radius:8px"></td>
+    <td><input type="time" value="${c.tut_in||''}" class="ai" data-f="tut_in" style="padding:7px;border:1.5px solid var(--line);border-radius:8px"></td>
+    <td><input type="time" value="${c.tut_out||''}" class="ai" data-f="tut_out" style="padding:7px;border:1.5px solid var(--line);border-radius:8px"></td>
+    <td><button class="btn btn-green btn-sm" onclick="saveAtt('${c.id}',this)">Simpan</button></td></tr>`).join('')
+    || '<tr><td colspan="7" class="muted" style="text-align:center;padding:20px">Tidak ada kelas pada tanggal ini.</td></tr>';
+}
+document.getElementById('attDate').onchange=renderAttendance;
+async function saveAtt(id,btn){
+  const tr=btn.closest('tr'), p={id};
+  tr.querySelectorAll('.ai').forEach(i=>p[i.dataset.f]=i.value);
+  await API.updateClass(p); toast('Absensi disimpan','ok');
+}
+function renderStudents(){
+  const tb=document.getElementById('studentBody');
+  tb.innerHTML=STUDENTS.map(s=>`<tr>
+    <td><b>${s.nama}</b></td><td>${s.grade||'-'}</td><td>${s.parent_name||'-'}</td><td>${s.wa_ortu||'-'}</td>
+    <td>${tName(s.tutor_id)}</td><td>${s.schedule||'-'}</td><td>${fmtRp(s.fee_per_meeting)}</td>
+    <td>${s.deposit_meetings||0}×</td>
+    <td><button class="btn btn-warn btn-sm" onclick="openStudent('${s.id}')">Edit</button></td></tr>`).join('');
+}
+function renderTutors(){
+  const tb=document.getElementById('tutorBody');
+  tb.innerHTML=TUTORS.map(t=>`<tr>
+    <td><b>${t.nama}</b></td><td>${t.subject||'-'}</td><td>${t.wa||'-'}</td>
+    <td>${fmtRp(t.fee_onsite)}</td><td>${fmtRp(t.fee_online)}</td>
+    <td><button class="btn btn-warn btn-sm" onclick="openTutor('${t.id}')">Edit</button></td></tr>`).join('');
+}
+async function renderReports(){
+  const m=document.getElementById('repMonth').value||todayStr().slice(0,7);
+  const cls=await API.getClasses({month:m});
+  const tb=document.getElementById('repBody');
+  const byStu={};
+  cls.forEach(c=>{(byStu[c.student_id]=byStu[c.student_id]||[]).push(c);});
+  const html=STUDENTS.map(s=>{
+    const list=byStu[s.id]||[]; if(!list.length) return '';
+    const mins=list.reduce((a,c)=>a+(Number(c.duration)||0),0);
+    const est=Math.round(mins/(s.meeting_minutes||90))*(s.fee_per_meeting||0);
+    return `<tr><td><b>${s.nama}</b></td><td>${list.length}</td><td>${mins} min</td>
+      <td>${fmtRp(s.fee_per_meeting)}</td><td class="text-green"><b>${fmtRp(est)}</b></td>
+      <td><a class="btn btn-outline btn-sm" href="master-admin.html?student=${s.id}">Lihat</a></td></tr>`;
+  }).join('');
+  tb.innerHTML=html || '<tr><td colspan="6" class="muted" style="text-align:center;padding:20px">Belum ada kelas pada bulan ini.</td></tr>';
+}
+document.getElementById('repMonth').onchange=renderReports;
+
+/* ---- Class modal ---- */
+function fillSelect(el,arr,val){el.innerHTML='<option value="">Pilih…</option>'+arr.map(a=>`<option value="${a.id}" ${a.id===val?'selected':''}>${a.nama}</option>`).join('');}
+function openAddClass(){
+  document.getElementById('mClassTitle').textContent='Add Class';
+  document.getElementById('cId').value=''; document.getElementById('cDate').value=todayStr();
+  fillSelect(document.getElementById('cStudent'),STUDENTS); fillSelect(document.getElementById('cTutor'),TUTORS);
+  ['cStart','cEnd','cTopic','cNote','cDocName'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('cDur').value=90; document.querySelector('input[name=cType][value=onsite]').checked=true;
+  // auto-link student->tutor
+  document.getElementById('cStudent').onchange=e=>{const s=STUDENTS.find(x=>x.id===e.target.value);if(s&&s.tutor_id)document.getElementById('cTutor').value=s.tutor_id;};
+  openModal('mClass');
+}
+async function editClass(id){
+  const c=(await API.getClasses({})).find(x=>x.id===id); if(!c) return;
+  document.getElementById('mClassTitle').textContent='Edit Class';
+  document.getElementById('cId').value=c.id; document.getElementById('cDate').value=c.date;
+  fillSelect(document.getElementById('cStudent'),STUDENTS,c.student_id);
+  fillSelect(document.getElementById('cTutor'),TUTORS,c.tutor_id);
+  document.getElementById('cStart').value=c.start_time||''; document.getElementById('cEnd').value=c.end_time||'';
+  document.getElementById('cDur').value=c.duration||90; document.getElementById('cTopic').value=c.topic||'';
+  document.getElementById('cNote').value=c.note||'';
+  document.querySelector(`input[name=cType][value=${c.type||'onsite'}]`).checked=true;
+  openModal('mClass');
+}
+// auto duration from start/end
+['cStart','cEnd'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
+  const d=durMin(document.getElementById('cStart').value,document.getElementById('cEnd').value);
+  if(d&&d>0) document.getElementById('cDur').value=d;
+}));
+document.getElementById('cDoc').onchange=e=>document.getElementById('cDocName').textContent=e.target.files[0]?('📎 '+e.target.files[0].name):'';
+async function saveClass(){
+  const p={
+    id:document.getElementById('cId').value||undefined,
+    date:document.getElementById('cDate').value,
+    student_id:document.getElementById('cStudent').value,
+    tutor_id:document.getElementById('cTutor').value,
+    start_time:document.getElementById('cStart').value,
+    end_time:document.getElementById('cEnd').value,
+    duration:document.getElementById('cDur').value,
+    type:document.querySelector('input[name=cType]:checked').value,
+    topic:document.getElementById('cTopic').value,
+    note:document.getElementById('cNote').value,
+  };
+  if(!p.student_id){toast('Pilih murid dulu','err');return;}
+  if(document.getElementById('cDoc').files[0]) p.doc_url='uploaded';
+  if(p.id) await API.updateClass(p); else await API.addClass(p);
+  closeModal('mClass'); toast('Kelas disimpan','ok'); renderToday();
+}
+async function delClass(id){ if(!confirm('Hapus kelas ini?'))return; await API.deleteClass(id); toast('Terhapus','ok'); renderToday(); }
+
+/* ---- Student modal ---- */
+function openStudent(id){
+  document.getElementById('mStudentTitle').textContent=id?'Edit Murid':'Tambah Murid';
+  fillSelect(document.getElementById('sTutor'),TUTORS);
+  const s=id?STUDENTS.find(x=>x.id===id):{};
+  document.getElementById('sId').value=id||'';
+  document.getElementById('sNama').value=s.nama||''; document.getElementById('sGrade').value=s.grade||'';
+  document.getElementById('sParent').value=s.parent_name||''; document.getElementById('sWa').value=s.wa_ortu||'';
+  document.getElementById('sTutor').value=s.tutor_id||''; document.getElementById('sSchedule').value=s.schedule||'';
+  document.getElementById('sFee').value=s.fee_per_meeting||150000; document.getElementById('sMin').value=s.meeting_minutes||90;
+  document.getElementById('sDep').value=s.deposit_meetings||8;
+  openModal('mStudent');
+}
+async function saveStudent(){
+  const p={id:document.getElementById('sId').value||undefined,nama:document.getElementById('sNama').value,
+    grade:document.getElementById('sGrade').value,parent_name:document.getElementById('sParent').value,
+    wa_ortu:document.getElementById('sWa').value,tutor_id:document.getElementById('sTutor').value,
+    schedule:document.getElementById('sSchedule').value,fee_per_meeting:document.getElementById('sFee').value,
+    meeting_minutes:document.getElementById('sMin').value,deposit_meetings:document.getElementById('sDep').value};
+  if(!p.nama){toast('Nama wajib diisi','err');return;}
+  if(p.id) await API.updateStudent(p); else await API.addStudent(p);
+  STUDENTS=await API.getStudents(); closeModal('mStudent'); toast('Murid disimpan','ok'); renderStudents();
+}
+
+/* ---- Tutor modal ---- */
+function openTutor(id){
+  document.getElementById('mTutorTitle').textContent=id?'Edit Tentor':'Tambah Tentor';
+  const t=id?TUTORS.find(x=>x.id===id):{};
+  document.getElementById('tId').value=id||'';
+  document.getElementById('tNama').value=t.nama||''; document.getElementById('tSubject').value=t.subject||'';
+  document.getElementById('tWa').value=t.wa||''; document.getElementById('tOnsite').value=t.fee_onsite||150000;
+  document.getElementById('tOnline').value=t.fee_online||120000;
+  openModal('mTutor');
+}
+async function saveTutor(){
+  const p={id:document.getElementById('tId').value||undefined,nama:document.getElementById('tNama').value,
+    subject:document.getElementById('tSubject').value,wa:document.getElementById('tWa').value,
+    fee_onsite:document.getElementById('tOnsite').value,fee_online:document.getElementById('tOnline').value};
+  if(!p.nama){toast('Nama wajib diisi','err');return;}
+  if(p.id) await API.updateTutor(p); else await API.addTutor(p);
+  TUTORS=await API.getTutors(); closeModal('mTutor'); toast('Tentor disimpan','ok'); renderTutors();
+}
+
+boot();
+</script>
+</body>
+</html>

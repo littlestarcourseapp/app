@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Admin — Little Star Course</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .report-grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
+  @media(max-width:1100px){.report-grid{grid-template-columns:1fr}}
+  .wa-msg{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.7;white-space:pre-wrap;max-height:340px;overflow:auto}
+  .wa-total{background:#fff;border:1.5px dashed var(--green);border-radius:12px;padding:12px;text-align:center;margin:12px 0}
+  .wa-total .big{font-size:22px;font-weight:800;color:var(--green2)}
+  .search-hit{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:.15s;background:#fff}
+  .search-hit:hover{border-color:var(--blue);box-shadow:var(--shadow)}
+  .search-hit .av{width:44px;height:44px;border-radius:50%;background:var(--sky-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-head" id="logo"></div>
+    <div class="sidebar-role">Master Admin</div>
+    <nav class="nav">
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
+      <a data-view="search-student"><span class="ic">🔍</span> Search Student</a>
+      <a data-view="search-tutor"><span class="ic">🧑‍🏫</span> Search Tutor</a>
+      <a href="admin.html"><span class="ic">📅</span> All Classes</a>
+      <a href="admin.html"><span class="ic">🧑‍🎓</span> Students</a>
+      <a href="admin.html"><span class="ic">👩‍🏫</span> Tutors</a>
+      <div class="divider"></div>
+      <div class="sidebar-role" style="margin-top:0">Buka Portal Lain</div>
+      <a href="admin.html"><span class="ic">🗂️</span> Portal Admin</a>
+      <a href="teacher.html"><span class="ic">📘</span> Portal Teacher</a>
+      <a href="parent.html"><span class="ic">👨‍👩‍👧</span> Portal Parent</a>
+      <div class="divider"></div>
+      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="avatar">M</div>
+      <div class="who">Master Admin<small>Super Administrator</small></div>
+    </div>
+  </aside>
+  <div class="backdrop" onclick="toggleSidebar()"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="search"><span class="mag">🔎</span><input id="globalSearch" placeholder="Search student by name…"></div>
+      <div class="spacer"></div>
+      <div class="bell">🔔<span class="dot">5</span></div>
+      <div class="me"><div class="who">Master Admin<small>Super Administrator</small></div><div class="avatar">M</div></div>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <section class="view" id="view-dashboard">
+        <div class="page-head"><div><h1>Dashboard</h1><div class="sub">Ringkasan seluruh operasional Little Star Course</div></div></div>
+        <div class="grid grid-4" style="margin-bottom:22px">
+          <div class="stat tint-purple"><div class="lbl"><span class="icon">🧑‍🎓</span> Total Murid</div><div class="val" id="mStudents">0</div></div>
+          <div class="stat tint-blue"><div class="lbl"><span class="icon">👩‍🏫</span> Total Tentor</div><div class="val" id="mTutors">0</div></div>
+          <div class="stat tint-green"><div class="lbl"><span class="icon">📅</span> Kelas Bulan Ini</div><div class="val" id="mClasses">0</div></div>
+          <div class="stat tint-amber"><div class="lbl"><span class="icon">💰</span> Estimasi Fee Bln Ini</div><div class="val" id="mRevenue">Rp 0</div></div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">🔍 Cari & Buka Laporan Murid</div>
+          <div class="field"><input id="dashSearch" placeholder="Ketik nama murid… lalu klik hasil"></div>
+          <div id="dashHits" class="grid" style="gap:10px"></div>
+        </div>
+      </section>
+
+      <!-- SEARCH STUDENT -->
+      <section class="view hide" id="view-search-student">
+        <div class="page-head"><div><h1>Search Student</h1><div class="sub">Cari murid untuk membuka laporan lengkap</div></div></div>
+        <div class="card card-pad">
+          <div class="field"><input id="stuSearch" placeholder="Nama murid…"></div>
+          <div id="stuHits" class="grid" style="gap:10px"></div>
+        </div>
+      </section>
+
+      <!-- SEARCH TUTOR -->
+      <section class="view hide" id="view-search-tutor">
+        <div class="page-head"><div><h1>Search Tutor</h1><div class="sub">Cari tentor & lihat jadwal serta fee</div></div></div>
+        <div class="card card-pad">
+          <div class="field"><input id="tutSearch" placeholder="Nama tentor…"></div>
+          <div id="tutHits" class="grid" style="gap:10px"></div>
+        </div>
+      </section>
+
+      <!-- STUDENT REPORT -->
+      <section class="view hide" id="view-report">
+        <div class="page-head">
+          <div><h1>Student Report</h1>
+            <div class="breadcrumb">Dashboard › Search Student › <b id="crumb">—</b></div></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-green" onclick="openModal('mWa')">🟢 WA Parents</button>
+            <button class="btn btn-outline" onclick="window.print()">🧾 Convert to PDF</button>
+          </div>
+        </div>
+
+        <!-- header cards -->
+        <div class="grid" style="grid-template-columns:1.4fr 1fr 1fr 1fr;gap:16px;margin-bottom:20px" id="repHeader"></div>
+
+        <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="showView('search-student')">← Back to Search</button>
+
+        <!-- history -->
+        <div class="card">
+          <div class="card-pad" style="padding-bottom:0"><div class="card-title" id="rHist">📅 Riwayat Kelas</div></div>
+          <div class="table-wrap"><table class="tbl">
+            <thead><tr><th>No.</th><th>Tanggal</th><th>Tutor</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik / Material</th><th>Note</th><th>Doc</th></tr></thead>
+            <tbody id="rBody"></tbody>
+          </table></div>
+        </div>
+
+        <!-- fee summary -->
+        <div class="grid grid-4 mt-24" id="rSummary"></div>
+      </section>
+
+      <div class="foot-note">© 2026 Little Star Course. All rights reserved.</div>
+    </div>
+  </div>
+</div>
+
+<!-- WA MODAL -->
+<div class="modal-overlay" id="mWa">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head"><h3>Kirim WhatsApp ke Orang Tua</h3><button class="x" onclick="closeModal('mWa')">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Pilih Salam</label>
+        <select id="waGreet">
+          <option>Selamat Pagi 🌅</option><option>Selamat Siang ☀️</option><option>Selamat Sore 🌇</option><option>Selamat Malam 🌙</option>
+        </select></div>
+      <div class="field"><label>Preview Pesan</label><div class="wa-msg" id="waMsg">—</div></div>
+      <div class="wa-total"><div class="hint">GRAND TOTAL YANG HARUS DITRANSFER</div><div class="big" id="waTotal">Rp 0</div></div>
+    </div>
+    <div class="modal-foot" style="flex-direction:column;gap:10px">
+      <button class="btn btn-green btn-block" onclick="sendWa()">🟢 Kirim via WhatsApp</button>
+      <button class="btn btn-outline btn-block" onclick="copyWa()">📋 Copy Message</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+document.getElementById('logo').innerHTML=logoBlock('Little Star','Master Admin');
+let TUTORS=[],STUDENTS=[],CUR=null;
+function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
+function showView(v){
+  document.querySelectorAll('.nav a[data-view]').forEach(x=>x.classList.remove('active'));
+  document.querySelector(`.nav a[data-view="${v==='report'?'search-student':v}"]`)?.classList.add('active');
+  document.querySelectorAll('.view').forEach(x=>x.classList.add('hide'));
+  document.getElementById('view-'+v).classList.remove('hide');
+}
+document.querySelectorAll('.nav a[data-view]').forEach(a=>a.onclick=()=>{
+  showView(a.dataset.view); if(window.innerWidth<768)toggleSidebar();
+});
+
+async function boot(){
+  TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
+  const cls=await API.getClasses({month:todayStr().slice(0,7)});
+  document.getElementById('mStudents').textContent=STUDENTS.length;
+  document.getElementById('mTutors').textContent=TUTORS.length;
+  document.getElementById('mClasses').textContent=cls.length;
+  let rev=0; STUDENTS.forEach(s=>{const n=cls.filter(c=>c.student_id===s.id).length;rev+=n*(s.fee_per_meeting||0);});
+  document.getElementById('mRevenue').textContent=fmtRp(rev);
+  wireSearch('dashSearch','dashHits'); wireSearch('stuSearch','stuHits'); wireSearch('globalSearch','dashHits',true);
+  wireTutorSearch();
+  renderHits('dashHits',STUDENTS); renderHits('stuHits',STUDENTS); renderTutorHits(TUTORS);
+  // deep link
+  const q=new URLSearchParams(location.search);
+  if(q.get('student')){const s=STUDENTS.find(x=>x.id===q.get('student'));if(s)openReport(s.id);}
+}
+function wireSearch(inputId,hitsId,jump){
+  const inp=document.getElementById(inputId); if(!inp)return;
+  inp.oninput=()=>{
+    const q=inp.value.toLowerCase();
+    const list=STUDENTS.filter(s=>s.nama.toLowerCase().includes(q)||(s.parent_name||'').toLowerCase().includes(q));
+    if(jump)showView('dashboard');
+    renderHits(hitsId,list);
+  };
+}
+function renderHits(id,list){
+  const el=document.getElementById(id); if(!el)return;
+  el.innerHTML=list.map(s=>`<div class="search-hit" onclick="openReport('${s.id}')">
+    <div class="av">${s.nama[0]}</div>
+    <div style="flex:1"><b>${s.nama}</b> <span class="badge badge-active">Grade ${s.grade||'-'}</span>
+      <div class="hint text-muted">${s.parent_name||''} · ${tName(s.tutor_id)} · ${s.schedule||''}</div></div>
+    <div class="right-arrow">›</div></div>`).join('')||'<div class="text-muted" style="padding:8px">Tidak ada hasil.</div>';
+}
+function wireTutorSearch(){
+  const inp=document.getElementById('tutSearch');
+  inp.oninput=()=>renderTutorHits(TUTORS.filter(t=>t.nama.toLowerCase().includes(inp.value.toLowerCase())));
+}
+async function renderTutorHits(list){
+  const cls=await API.getClasses({month:todayStr().slice(0,7)});
+  document.getElementById('tutHits').innerHTML=list.map(t=>{
+    const my=cls.filter(c=>c.tutor_id===t.id);
+    const fee=my.reduce((a,c)=>a+((c.type==='online'?+t.fee_online:+t.fee_onsite)||0),0);
+    return `<div class="search-hit">
+      <div class="av">${t.nama[0]}</div>
+      <div style="flex:1"><b>${t.nama}</b> <span class="badge badge-onsite">${t.subject||'-'}</span>
+        <div class="hint text-muted">${my.length} kelas bln ini · Fee: ${fmtRp(fee)} · WA ${t.wa||'-'}</div></div>
+    </div>`;}).join('')||'<div class="text-muted" style="padding:8px">Tidak ada hasil.</div>';
+}
+
+/* ---- STUDENT REPORT ---- */
+async function openReport(id){
+  CUR=STUDENTS.find(s=>s.id===id); if(!CUR)return;
+  showView('report');
+  document.getElementById('crumb').textContent=CUR.nama;
+  document.getElementById('rHist').textContent=`📅 Riwayat Kelas ${CUR.nama.split(' ')[0]}`;
+  const dep=await API.getDeposit(id)||{};
+  const cls=await API.getClasses({student_id:id});
+  const perMin=CUR.meeting_minutes||90, meets=dep.paid_meetings||CUR.deposit_meetings||0;
+  const total=dep.minutes_total||meets*perMin, used=dep.minutes_used!=null?dep.minutes_used:cls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
+  // header cards
+  document.getElementById('repHeader').innerHTML=`
+    <div class="card card-pad" style="display:flex;gap:16px;align-items:center">
+      <div class="avatar-lg">🧑‍🎓</div>
+      <div><div style="font-size:20px;font-weight:800;color:var(--navy)">${CUR.nama} <span class="badge badge-active">Active</span></div>
+        <div class="hint">Grade ${CUR.grade||'-'}</div>
+        <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'}) 🟢</div></div></div>
+    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT</div><div class="val" style="font-size:18px">LUNAS ${meets}× MEETING</div><div class="hint">${meets}×${perMin} = ${fmtNum(total)} menit · ${prettyDate(dep.last_paid)}</div></div>
+    <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${fmtNum(used)} <span style="font-size:13px">menit</span></div><div class="hint">${Math.round(used/perMin)} meetings</div></div>
+    <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${fmtNum(left)} <span style="font-size:13px">menit</span></div><div class="hint">Setara ${Math.floor(left/perMin)} sesi</div></div>`;
+  // history
+  document.getElementById('rBody').innerHTML=cls.map((c,i)=>`<tr>
+    <td>${i+1}</td><td>${prettyDate(c.date)}<br><span class="muted">(${dayName(c.date)})</span></td>
+    <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
+    <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+    <td>${c.topic||'<span class="muted">-</span>'}</td><td>${c.note||'<span class="muted">-</span>'}</td>
+    <td>${c.doc_url?'🖼️':'<span class="muted">-</span>'}</td></tr>`).join('')
+    ||'<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Belum ada kelas.</td></tr>';
+  // summary
+  const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
+  const stdMin=monthCls.length*perMin, actMin=monthCls.reduce((a,c)=>a+(+c.duration||0),0), extraMin=Math.max(0,actMin-stdMin);
+  const feePerMin=(CUR.fee_per_meeting||0)/perMin;
+  document.getElementById('rSummary').innerHTML=`
+    <div class="stat tint-green"><div class="lbl">SISA DEPOSIT</div><div class="val">${fmtNum(left)} menit</div><div class="progress"><span style="width:${Math.min(100,Math.round(used/total*100))}%"></span></div><div class="hint">Terpakai ${fmtNum(used)}/${fmtNum(total)}</div></div>
+    <div class="stat tint-blue"><div class="lbl">TAMBAHAN MEETING</div><div class="val">${Math.round(extraMin/perMin*10)/10} sesi</div><div class="hint">= ${extraMin} menit</div></div>
+    <div class="stat tint-amber"><div class="lbl">TAMBAHAN FEE</div><div class="val">${fmtRp(Math.round(extraMin*feePerMin))}</div><div class="hint">dari tarif per meet</div></div>
+    <div class="stat tint-purple"><div class="lbl">TOTAL FEE BULAN INI</div><div class="val">${fmtRp(Math.round(actMin*feePerMin))}</div><div class="hint">${new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</div></div>`;
+  buildWa(dep,cls,{perMin,meets,total,used,extraMin,feePerMin,actMin});
+}
+
+/* ---- WA composer ---- */
+let WA_TEXT='',WA_NUM='';
+function buildWa(dep,cls,x){
+  const nm=CUR.nama.split(' ')[0], parent=(CUR.parent_name||'Bapak/Ibu').replace(/^(Ibu|Bpk\.?|Bapak)\s*/i,'');
+  const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
+  const monthName=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  const extraFee=Math.round(x.extraMin*x.feePerMin), monthFee=Math.round(x.actMin*x.feePerMin);
+  const nextMeets=CUR.deposit_meetings||8, nextDeposit=nextMeets*(CUR.fee_per_meeting||0);
+  const grand=extraFee+nextDeposit;
+  const g=document.getElementById('waGreet').value;
+  WA_TEXT=`${g}, ${CUR.parent_name||'Bapak/Ibu'} 😊
+
+Berikut laporan kelas ${nm} untuk bulan ${monthName} di Little Star Course.
+
+📅 Total pertemuan bulan ini: ${monthCls.length} kali
+⏱️ Total durasi: ${x.actMin} menit
+➕ Tambahan meeting: ${Math.round(x.extraMin/x.perMin*10)/10} sesi (${x.extraMin} menit)
+🧾 Tambahan fee: ${fmtRp(extraFee)}
+💰 Total fee bulan ini: ${fmtRp(monthFee)}
+
+Untuk deposit bulan depan, mohon pembayaran paket:
+• ${nextMeets} kali meeting (${nextMeets}×${x.perMin} menit)
+• Tarif per meeting: ${fmtRp(CUR.fee_per_meeting)}
+• Total deposit bulan depan: ${fmtRp(nextDeposit)}
+
+Terima kasih atas kepercayaannya kepada Little Star Course 🙏
+Semoga ${nm} terus semangat belajarnya!
+
+Salam hangat,
+Little Star Course ⭐`;
+  WA_NUM=(CUR.wa_ortu||'').replace(/[^0-9]/g,'').replace(/^0/,'62');
+  document.getElementById('waMsg').textContent=WA_TEXT;
+  document.getElementById('waTotal').textContent=fmtRp(grand);
+}
+document.getElementById('waGreet').onchange=()=>{if(CUR)openReport(CUR.id);};
+function sendWa(){window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(WA_TEXT)}`,'_blank');}
+function copyWa(){navigator.clipboard.writeText(WA_TEXT).then(()=>toast('Pesan disalin','ok'));}
+boot();
+</script>
+</body>
+</html>

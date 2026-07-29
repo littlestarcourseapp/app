@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parent — Little Star Course</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-head" id="logo"></div>
+    <div class="sidebar-role">Menu</div>
+    <nav class="nav">
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
+      <a data-view="class"><span class="ic">📅</span> My Class</a>
+      <a data-view="deposit"><span class="ic">💳</span> Deposit &amp; Payment</a>
+      <a data-view="material"><span class="ic">📄</span> Materi Belajar</a>
+      <div class="divider"></div>
+      <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
+      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="avatar" id="pav">A</div>
+      <div class="who" id="pwho">Orang Tua<small>Parent</small></div>
+    </div>
+  </aside>
+  <div class="backdrop" onclick="toggleSidebar()"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="search"><span class="mag">👨‍👩‍👧</span><input id="stuPick" placeholder="Pilih anak… (demo)"></div>
+      <div class="spacer"></div>
+      <div class="bell">🔔<span class="dot">1</span></div>
+      <div class="me"><div class="who" id="pwho2">Orang Tua<small>Parent</small></div><div class="avatar" id="pav2">A</div></div>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <section class="view" id="view-dashboard">
+        <div class="page-head">
+          <div><h1 id="hi">Hello! 👋</h1><div class="sub" id="subHi">Ringkasan aktivitas kelas & deposit anak Anda.</div></div>
+          <div class="btn btn-outline" style="cursor:default">📅 <span id="today">—</span></div>
+        </div>
+
+        <!-- deposit band -->
+        <div class="card card-pad" style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:18px">
+              <div class="stat icon tint-green" style="width:64px;height:64px;font-size:28px">💳</div>
+              <div>
+                <div class="lbl" style="color:var(--muted)">TOTAL DEPOSIT (PAID)</div>
+                <div style="font-size:24px;font-weight:800;color:var(--green2)" id="depTitle">—</div>
+                <div class="hint" id="depDetail">—</div>
+              </div>
+            </div>
+            <div class="stat tint-green" style="text-align:center;min-width:150px">
+              <div class="lbl" style="justify-content:center">STATUS</div>
+              <div class="val" id="depStatus">✅ LUNAS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- history -->
+        <div class="card">
+          <div class="card-pad" style="padding-bottom:0"><div class="card-title" id="histTitle">📅 Riwayat Kelas</div></div>
+          <div class="table-wrap"><table class="tbl">
+            <thead><tr><th>No.</th><th>Hari / Tanggal</th><th>Tentor</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik / Material</th><th>Note</th><th>Doc</th></tr></thead>
+            <tbody id="histBody"></tbody>
+          </table></div>
+        </div>
+
+        <!-- fee summary cards -->
+        <div class="grid grid-4 mt-24">
+          <div class="stat tint-green"><div class="lbl"><span class="icon">💳</span> SISA DEPOSIT</div><div class="val" id="cSisa">0 menit</div><div class="hint" id="cSisaHint">—</div>
+            <div class="progress"><span id="cBar" style="width:0%"></span></div><div class="hint" id="cUsed">—</div></div>
+          <div class="stat tint-blue"><div class="lbl"><span class="icon">📅</span> TAMBAHAN MEETING</div><div class="val" id="cExtra">0 sesi</div><div class="hint" id="cExtraHint">—</div></div>
+          <div class="stat tint-amber"><div class="lbl"><span class="icon">🧾</span> TAMBAHAN FEE</div><div class="val" id="cFeeExtra">Rp 0</div><div class="hint">dari tarif per meet</div></div>
+          <div class="stat tint-purple"><div class="lbl"><span class="icon">📨</span> TOTAL FEE BULAN INI</div><div class="val" id="cFeeMonth">Rp 0</div><div class="hint" id="cMonthLbl">—</div></div>
+        </div>
+
+        <div class="note-band mt-16">ℹ️ Data di atas diperbarui otomatis setiap kali kelas selesai dan diinput oleh admin.</div>
+      </section>
+
+      <!-- MY CLASS (same table, full) -->
+      <section class="view hide" id="view-class">
+        <div class="page-head"><div><h1>My Class</h1><div class="sub">Seluruh riwayat kelas anak Anda</div></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Hari / Tanggal</th><th>Tentor</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik</th><th>Note</th><th>Materi</th></tr></thead>
+          <tbody id="classBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- DEPOSIT -->
+      <section class="view hide" id="view-deposit">
+        <div class="page-head"><div><h1>Deposit &amp; Payment</h1><div class="sub">Sistem bayar di muka — deposit per jumlah pertemuan</div></div></div>
+        <div class="grid grid-3" style="margin-bottom:20px">
+          <div class="stat tint-green"><div class="lbl">Total Deposit</div><div class="val" id="dPaid">—</div></div>
+          <div class="stat tint-blue"><div class="lbl">Terpakai</div><div class="val" id="dUsed">—</div></div>
+          <div class="stat tint-amber"><div class="lbl">Sisa</div><div class="val" id="dLeft">—</div></div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">💳 Rincian Deposit</div>
+          <table class="tbl"><tbody id="depTable"></tbody></table>
+          <div class="note-band mt-16">💡 Untuk memperpanjang, silakan lakukan pembayaran deposit bulan berikutnya. Hubungi admin untuk konfirmasi.</div>
+        </div>
+      </section>
+
+      <!-- MATERIAL -->
+      <section class="view hide" id="view-material">
+        <div class="page-head"><div><h1>Materi Belajar</h1><div class="sub">Unduh materi PDF yang diberikan tentor</div></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Tanggal</th><th>Topik</th><th>Tentor</th><th>Materi</th></tr></thead>
+          <tbody id="matBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <div class="foot-note">© 2026 Little Star Course. All rights reserved.</div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+document.getElementById('logo').innerHTML=logoBlock('Little Star','Parent Portal');
+document.getElementById('today').textContent=longToday();
+const monLbl=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+document.getElementById('cMonthLbl').textContent=monLbl;
+
+let TUTORS=[],STUDENTS=[],ME=null;
+function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
+
+document.querySelectorAll('.nav a[data-view]').forEach(a=>a.onclick=()=>{
+  document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hide'));
+  document.getElementById('view-'+a.dataset.view).classList.remove('hide');
+  if(window.innerWidth<768)toggleSidebar();
+  if(a.dataset.view==='class')renderFullClass();
+  if(a.dataset.view==='deposit')renderDeposit();
+  if(a.dataset.view==='material')renderMaterial();
+});
+
+async function boot(){
+  TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
+  // read ?student= or ?id= link
+  const q=new URLSearchParams(location.search);
+  let s=STUDENTS.find(x=>x.id===q.get('student')||x.link_id===q.get('id'));
+  setMe(s||STUDENTS[0]);
+  const inp=document.getElementById('stuPick');
+  inp.setAttribute('list','slist');
+  inp.insertAdjacentHTML('afterend',`<datalist id="slist">${STUDENTS.map(s=>`<option value="${s.nama}">`).join('')}</datalist>`);
+  inp.onchange=()=>{const st=STUDENTS.find(x=>x.nama===inp.value);if(st)setMe(st);};
+}
+function setMe(s){
+  ME=s;
+  document.getElementById('hi').textContent=`Hello, orang tua ${s.nama.split(' ')[0]}! 👋`;
+  document.getElementById('subHi').textContent=`Berikut aktivitas kelas & deposit ${s.nama.split(' ')[0]}.`;
+  document.getElementById('histTitle').textContent=`📅 Riwayat Kelas ${s.nama.split(' ')[0]}`;
+  const init=(s.parent_name||s.nama)[0];
+  ['pav','pav2'].forEach(i=>document.getElementById(i).textContent=init);
+  ['pwho','pwho2'].forEach(i=>document.getElementById(i).innerHTML=`${s.parent_name||'Orang Tua'}<small>Wali ${s.nama.split(' ')[0]} · Grade ${s.grade||'-'}</small>`);
+  renderDash();
+}
+
+async function renderDash(){
+  const dep=await API.getDeposit(ME.id)||{};
+  const cls=await API.getClasses({student_id:ME.id});
+  // deposit band
+  const meets=dep.paid_meetings||ME.deposit_meetings||0;
+  const perMin=ME.meeting_minutes||90;
+  document.getElementById('depTitle').textContent=`LUNAS ${meets} KALI MEETING`;
+  document.getElementById('depDetail').textContent=`${meets} meetings × ${perMin} min = ${fmtNum(dep.minutes_total||meets*perMin)} menit · Bayar terakhir: ${prettyDate(dep.last_paid)}`;
+  // history (latest 5)
+  const tb=document.getElementById('histBody');
+  tb.innerHTML=cls.slice(0,5).map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);
+  // summary cards
+  const total=dep.minutes_total||meets*perMin;
+  const used=dep.minutes_used!=null?dep.minutes_used:cls.reduce((a,c)=>a+(Number(c.duration)||0),0);
+  const left=total-used;
+  document.getElementById('cSisa').textContent=fmtNum(left)+' menit';
+  document.getElementById('cSisaHint').textContent=`Setara ${Math.floor(left/perMin)} sesi × ${perMin} menit`;
+  document.getElementById('cBar').style.width=Math.min(100,Math.round(used/total*100))+'%';
+  document.getElementById('cUsed').textContent=`Terpakai ${fmtNum(used)} dari ${fmtNum(total)} menit`;
+  // extra minutes beyond standard
+  const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
+  const stdMin=monthCls.length*perMin;
+  const actualMin=monthCls.reduce((a,c)=>a+(Number(c.duration)||0),0);
+  const extraMin=Math.max(0,actualMin-stdMin);
+  const feePerMin=(ME.fee_per_meeting||0)/perMin;
+  document.getElementById('cExtra').textContent=(extraMin/perMin<1&&extraMin>0?'0.5':Math.round(extraMin/perMin*10)/10)+' sesi';
+  document.getElementById('cExtraHint').textContent=`= ${extraMin} menit tambahan`;
+  document.getElementById('cFeeExtra').textContent=fmtRp(Math.round(extraMin*feePerMin));
+  document.getElementById('cFeeMonth').textContent=fmtRp(Math.round(actualMin*feePerMin));
+}
+function rowHist(n,c){
+  return `<tr><td>${n}</td>
+    <td>${prettyDate(c.date)}<br><span class="muted">(${dayName(c.date)})</span></td>
+    <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
+    <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+    <td>${c.topic||'<span class="muted">-</span>'}</td>
+    <td>${c.note||'<span class="muted">-</span>'}</td>
+    <td>${c.doc_url?'🖼️':'<span class="muted">-</span>'}</td></tr>`;
+}
+function emptyRow(cols){return `<tr><td colspan="${cols}" class="muted" style="text-align:center;padding:24px">Belum ada riwayat kelas.</td></tr>`;}
+
+async function renderFullClass(){
+  const cls=await API.getClasses({student_id:ME.id});
+  document.getElementById('classBody').innerHTML=cls.map(c=>`<tr>
+    <td>${prettyDate(c.date)} <span class="muted">(${dayName(c.date)})</span></td>
+    <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
+    <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+    <td>${c.topic||'<span class="muted">-</span>'}</td><td>${c.note||'<span class="muted">-</span>'}</td>
+    <td>${c.material_url?`<a class="btn btn-outline btn-sm" href="${c.material_url}" download>📄 Unduh</a>`:'<span class="muted">-</span>'}</td></tr>`).join('')||emptyRow(8);
+}
+async function renderDeposit(){
+  const dep=await API.getDeposit(ME.id)||{};
+  const perMin=ME.meeting_minutes||90, meets=dep.paid_meetings||ME.deposit_meetings||0;
+  const total=dep.minutes_total||meets*perMin, used=dep.minutes_used||0, left=total-used;
+  document.getElementById('dPaid').textContent=meets+' meeting';
+  document.getElementById('dUsed').textContent=Math.round(used/perMin)+' meeting';
+  document.getElementById('dLeft').textContent=Math.floor(left/perMin)+' meeting';
+  document.getElementById('depTable').innerHTML=`
+    <tr><td>Jumlah meeting dibayar</td><td style="text-align:right"><b>${meets} ×</b></td></tr>
+    <tr><td>Durasi per meeting</td><td style="text-align:right">${perMin} menit</td></tr>
+    <tr><td>Total durasi deposit</td><td style="text-align:right">${fmtNum(total)} menit</td></tr>
+    <tr><td>Terpakai</td><td style="text-align:right">${fmtNum(used)} menit</td></tr>
+    <tr><td>Sisa</td><td style="text-align:right"><b class="text-green">${fmtNum(left)} menit</b></td></tr>
+    <tr><td>Tarif per meeting</td><td style="text-align:right">${fmtRp(ME.fee_per_meeting)}</td></tr>
+    <tr><td>Pembayaran terakhir</td><td style="text-align:right">${prettyDate(dep.last_paid)}</td></tr>
+    <tr><td>Status</td><td style="text-align:right"><span class="badge badge-paid">LUNAS</span></td></tr>`;
+}
+async function renderMaterial(){
+  const cls=(await API.getClasses({student_id:ME.id})).filter(c=>c.material_url);
+  document.getElementById('matBody').innerHTML=cls.map(c=>`<tr>
+    <td>${prettyDate(c.date)}</td><td><b>${c.topic||'-'}</b></td><td>${tName(c.tutor_id)}</td>
+    <td><a class="btn btn-green btn-sm" href="${c.material_url}" download>📄 Unduh PDF</a></td></tr>`).join('')
+    ||'<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">Belum ada materi yang diunggah.</td></tr>';
+}
+boot();
+</script>
+</body>
+</html>

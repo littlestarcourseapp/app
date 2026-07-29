@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher — Little Star Course</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-head" id="logo"></div>
+    <div class="sidebar-role">Menu</div>
+    <nav class="nav">
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
+      <a data-view="schedule"><span class="ic">📅</span> My Schedule</a>
+      <a data-view="fee"><span class="ic">💰</span> Fee Bulan Ini</a>
+      <div class="divider"></div>
+      <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
+      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="avatar" id="tavatar">Y</div>
+      <div class="who" id="twho">Tentor<small>Teacher</small></div>
+    </div>
+  </aside>
+  <div class="backdrop" onclick="toggleSidebar()"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="search"><span class="mag">🔎</span><input id="tutorPick" placeholder="Login sebagai tentor… (demo)"></div>
+      <div class="spacer"></div>
+      <div class="bell">🔔<span class="dot">1</span></div>
+      <div class="me"><div class="who" id="twho2">Tentor<small>Teacher</small></div><div class="avatar" id="tavatar2">Y</div></div>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <section class="view" id="view-dashboard">
+        <div class="page-head">
+          <div><h1 id="hi">Halo, Tentor 👋</h1><div class="sub" id="today">—</div></div>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom:22px">
+          <div class="stat tint-blue"><div class="lbl"><span class="icon">📅</span> Kelas Hari Ini</div><div class="val" id="cToday">0</div><div class="hint">jadwal tetap murid</div></div>
+          <div class="stat tint-green"><div class="lbl"><span class="icon">✅</span> Selesai Bulan Ini</div><div class="val" id="cMonth">0</div><div class="hint" id="mLabel">—</div></div>
+          <div class="stat tint-amber"><div class="lbl"><span class="icon">💰</span> Total Fee Bulan Ini</div><div class="val" id="feeMonth">Rp 0</div><div class="hint">estimasi berdasarkan sesi</div></div>
+          <div class="stat tint-purple"><div class="lbl"><span class="icon">🧑‍🎓</span> Murid Saya</div><div class="val" id="myStudents">0</div></div>
+        </div>
+
+        <div class="card card-pad">
+          <div class="card-title">📅 Jadwal Hari Ini</div>
+          <div class="table-wrap"><table class="tbl">
+            <thead><tr><th>Murid</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik & Catatan</th><th>Materi PDF</th><th>Action</th></tr></thead>
+            <tbody id="todayBody"></tbody>
+          </table></div>
+          <div class="note-band mt-16">📝 Tentor mengisi <b>Topik/Materi</b>, <b>Catatan</b>, dan meng-upload <b>materi PDF</b> yang bisa diunduh orang tua. Waktu & dokumentasi diisi admin.</div>
+        </div>
+      </section>
+
+      <!-- SCHEDULE -->
+      <section class="view hide" id="view-schedule">
+        <div class="page-head"><div><h1>My Schedule</h1><div class="sub">Semua kelas Anda</div></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Tanggal</th><th>Murid</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik</th><th>Action</th></tr></thead>
+          <tbody id="schedBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- FEE -->
+      <section class="view hide" id="view-fee">
+        <div class="page-head"><div><h1>Fee Bulan Ini</h1><div class="sub" id="feeLabel">—</div></div>
+          <input type="month" id="feeMonthPick" class="btn btn-outline" style="font-weight:600"></div>
+        <div class="grid grid-3" style="margin-bottom:20px">
+          <div class="stat tint-green"><div class="lbl">Total Fee</div><div class="val" id="feeTotal">Rp 0</div></div>
+          <div class="stat tint-blue"><div class="lbl">Sesi Onsite</div><div class="val" id="feeOnsite">0</div></div>
+          <div class="stat tint-amber"><div class="lbl">Sesi Online</div><div class="val" id="feeOnline">0</div></div>
+        </div>
+        <div class="card"><div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Tanggal</th><th>Murid</th><th>Durasi</th><th>Type</th><th>Fee</th></tr></thead>
+          <tbody id="feeBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <div class="foot-note">© 2026 Little Star Course. All rights reserved.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: fill topic/note/material -->
+<div class="modal-overlay" id="mFill">
+  <div class="modal">
+    <div class="modal-head"><h3>Isi Laporan Kelas</h3><button class="x" onclick="closeModal('mFill')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="fId">
+      <div class="field"><label>Topic / Material <span class="req">*</span></label><input id="fTopic" placeholder="cth: Linear Equation"></div>
+      <div class="field"><label>Catatan untuk Orang Tua</label><textarea id="fNote" placeholder="cth: Anton cukup aktif dan memahami materi dengan baik."></textarea></div>
+      <div class="field"><label>Materi Belajar (PDF — bisa diunduh orang tua)</label>
+        <label class="dropzone" for="fPdf"><span class="zi">📄</span><div><b>Choose PDF</b> atau drag &amp; drop<br><span class="help">PDF up to 10MB</span></div></label>
+        <input type="file" id="fPdf" accept="application/pdf" class="hide"><div class="help" id="fPdfName"></div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('mFill')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFill()">Simpan Laporan</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+document.getElementById('logo').innerHTML=logoBlock('Little Star','Teacher Portal');
+document.getElementById('today').textContent='📅 '+longToday();
+document.getElementById('feeMonthPick').value=todayStr().slice(0,7);
+const monLabel=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+document.getElementById('mLabel').textContent=monLabel;
+document.getElementById('feeLabel').textContent=monLabel;
+
+let TUTORS=[],STUDENTS=[],ME=null;
+
+document.querySelectorAll('.nav a[data-view]').forEach(a=>a.onclick=()=>{
+  document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hide'));
+  document.getElementById('view-'+a.dataset.view).classList.remove('hide');
+  if(window.innerWidth<768)toggleSidebar();
+  if(a.dataset.view==='schedule')renderSchedule();
+  if(a.dataset.view==='fee')renderFee();
+});
+
+function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
+function setMe(t){
+  ME=t;
+  ['tavatar','tavatar2'].forEach(i=>document.getElementById(i).textContent=(t.nama||'T')[0]);
+  ['twho','twho2'].forEach(i=>document.getElementById(i).innerHTML=`${t.nama}<small>${t.subject||'Teacher'}</small>`);
+  document.getElementById('hi').textContent=`Halo, ${t.nama.split(' ')[0]} 👋`;
+  renderToday(); renderStats();
+}
+
+async function boot(){
+  TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
+  setMe(TUTORS[0]); // demo: first tutor
+  // tutor picker (demo)
+  const inp=document.getElementById('tutorPick');
+  inp.setAttribute('list','tlist');
+  inp.insertAdjacentHTML('afterend',`<datalist id="tlist">${TUTORS.map(t=>`<option value="${t.nama}">`).join('')}</datalist>`);
+  inp.onchange=()=>{const t=TUTORS.find(x=>x.nama===inp.value);if(t)setMe(t);};
+}
+
+async function renderToday(){
+  const list=(await API.getClasses({date:todayStr(),tutor_id:ME.id}));
+  const tb=document.getElementById('todayBody');
+  tb.innerHTML=list.map(c=>`<tr>
+    <td><b>${sName(c.student_id)}</b></td><td>${timeRange(c.start_time,c.end_time)}</td>
+    <td>${c.duration||'-'} min</td>
+    <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+    <td>${c.topic?`<b>${c.topic}</b><br><span class="muted">${c.note||''}</span>`:'<span class="muted">Belum diisi</span>'}</td>
+    <td>${c.material_url?'📄 <span class="text-green">Ada</span>':'<span class="muted">-</span>'}</td>
+    <td><button class="btn btn-primary btn-sm" onclick="openFill('${c.id}')">Isi</button></td></tr>`).join('')
+    || '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Tidak ada jadwal hari ini.</td></tr>';
+  document.getElementById('cToday').textContent=list.length;
+}
+async function renderStats(){
+  const m=todayStr().slice(0,7);
+  const cls=(await API.getClasses({month:m,tutor_id:ME.id}));
+  document.getElementById('cMonth').textContent=cls.length;
+  document.getElementById('myStudents').textContent=STUDENTS.filter(s=>s.tutor_id===ME.id).length;
+  let fee=0;
+  cls.forEach(c=>{fee+=(c.type==='online'?Number(ME.fee_online):Number(ME.fee_onsite))||0;});
+  document.getElementById('feeMonth').textContent=fmtRp(fee);
+}
+async function renderSchedule(){
+  const cls=await API.getClasses({tutor_id:ME.id});
+  document.getElementById('schedBody').innerHTML=cls.map(c=>`<tr>
+    <td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${timeRange(c.start_time,c.end_time)}</td>
+    <td>${c.duration||'-'} min</td>
+    <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+    <td>${c.topic||'<span class="muted">-</span>'}</td>
+    <td><button class="btn btn-warn btn-sm" onclick="openFill('${c.id}')">Isi</button></td></tr>`).join('')
+    ||'<tr><td colspan="7" class="muted" style="text-align:center;padding:20px">Belum ada.</td></tr>';
+}
+async function renderFee(){
+  const m=document.getElementById('feeMonthPick').value||todayStr().slice(0,7);
+  document.getElementById('feeLabel').textContent=new Date(m+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  const cls=await API.getClasses({month:m,tutor_id:ME.id});
+  let total=0,on=0,onl=0;
+  const body=cls.map(c=>{
+    const f=(c.type==='online'?Number(ME.fee_online):Number(ME.fee_onsite))||0;
+    total+=f; if(c.type==='online')onl++;else on++;
+    return `<tr><td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${c.duration||'-'} min</td>
+      <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+      <td><b>${fmtRp(f)}</b></td></tr>`;
+  }).join('');
+  document.getElementById('feeBody').innerHTML=body||'<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">Belum ada kelas.</td></tr>';
+  document.getElementById('feeTotal').textContent=fmtRp(total);
+  document.getElementById('feeOnsite').textContent=on; document.getElementById('feeOnline').textContent=onl;
+}
+document.getElementById('feeMonthPick').onchange=renderFee;
+
+/* fill modal */
+async function openFill(id){
+  const c=(await API.getClasses({})).find(x=>x.id===id); if(!c)return;
+  document.getElementById('fId').value=id;
+  document.getElementById('fTopic').value=c.topic||''; document.getElementById('fNote').value=c.note||'';
+  document.getElementById('fPdfName').textContent=c.material_url?('📎 '+c.material_url.split('/').pop()):'';
+  openModal('mFill');
+}
+document.getElementById('fPdf').onchange=e=>document.getElementById('fPdfName').textContent=e.target.files[0]?('📎 '+e.target.files[0].name):'';
+async function saveFill(){
+  const p={id:document.getElementById('fId').value,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value};
+  if(document.getElementById('fPdf').files[0]) p.material_url='materi/'+document.getElementById('fPdf').files[0].name;
+  await API.updateClass(p); closeModal('mFill'); toast('Laporan tersimpan','ok'); renderToday();
+}
+boot();
+</script>
+</body>
+</html>
