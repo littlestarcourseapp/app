@@ -21,7 +21,7 @@ const STAR_SVG = `
 </svg>`;
 
 function logoBlock(name, sub){
-  return `<div class="ls-logo">${STAR_SVG}<div class="ls-name">${name||'Little Star'}<small>${sub||'Course'}</small></div></div>`;
+  return `<div class="ls-logo"><img src="assets/logo.jpeg" class="ls-logo-img" alt="Little Star Course">${sub?`<span class="ls-sub">${sub}</span>`:''}</div>`;
 }
 
 /* ---- Formatting -------------------------------------------- */
