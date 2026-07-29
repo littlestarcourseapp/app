@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Little Star Course — Portal</title>
+<link rel="icon" href="assets/logo.jpeg">
 <link rel="stylesheet" href="assets/style.css">
 <style>
   body{background:linear-gradient(180deg,#eaf6fc 0%,#f4f6fb 55%)}
@@ -13,7 +14,7 @@
   .hero h1{font-size:clamp(28px,5vw,42px);font-weight:800;color:var(--navy);line-height:1.15;letter-spacing:-.5px}
   .hero h1 .shine{color:var(--green)}
   .hero p{color:var(--muted);font-size:14.5px;max-width:460px;margin:14px auto 0;line-height:1.7}
-  .hero .stars{font-size:40px;margin-bottom:6px}
+  .hero .stars{width:104px;height:104px;margin:0 auto 12px;border-radius:22px;background:#fff;padding:8px;box-shadow:0 8px 26px rgba(0,0,128,.14)}
   main{max-width:640px;margin:0 auto;padding:10px 20px 60px;width:100%}
   .sec{text-align:center;margin:38px 0 22px}
   .sec h2{font-size:22px;font-weight:800;color:var(--navy)}
@@ -47,7 +48,7 @@
 </div>
 
 <section class="hero">
-  <div class="stars">⭐</div>
+  <img src="assets/logo.jpeg" class="stars" alt="Little Star Course">
   <div class="badge-hero">🎓 Cambridge Excellence in Surabaya</div>
   <h1>Little Star Course<br><span class="shine">Management Portal</span></h1>
   <p>Satu tempat untuk absensi, laporan belajar, materi, dan pembayaran — di mana setiap murid bersinar lebih terang setiap hari.</p>
@@ -111,6 +112,6 @@
 </footer>
 
 <script src="assets/app.js"></script>
-<script>document.getElementById('logo').innerHTML = logoBlock('Little Star','Course Management');</script>
+<script>document.getElementById('logo').innerHTML = logoBlock('Little Star','Manajemen Kursus');</script>
 </body>
 </html>

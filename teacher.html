@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teacher — Little Star Course</title>
+<title>Tentor — Little Star Course</title>
+<link rel="icon" href="assets/logo.jpeg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -12,12 +13,12 @@
     <div class="sidebar-head" id="logo"></div>
     <div class="sidebar-role">Menu</div>
     <nav class="nav">
-      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
-      <a data-view="schedule"><span class="ic">📅</span> My Schedule</a>
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Beranda</a>
+      <a data-view="schedule"><span class="ic">📅</span> Jadwal Saya</a>
       <a data-view="fee"><span class="ic">💰</span> Fee Bulan Ini</a>
       <div class="divider"></div>
       <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
-      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+      <a href="index.html"><span class="ic">🚪</span> Keluar</a>
     </nav>
     <div class="sidebar-foot">
       <div class="avatar" id="tavatar">Y</div>
@@ -61,7 +62,7 @@
 
       <!-- SCHEDULE -->
       <section class="view hide" id="view-schedule">
-        <div class="page-head"><div><h1>My Schedule</h1><div class="sub">Semua kelas Anda</div></div></div>
+        <div class="page-head"><div><h1>Jadwal Saya</h1><div class="sub">Semua kelas Anda</div></div></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Tanggal</th><th>Murid</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik</th><th>Action</th></tr></thead>
           <tbody id="schedBody"></tbody>
@@ -109,7 +110,7 @@
 
 <script src="assets/app.js"></script>
 <script>
-document.getElementById('logo').innerHTML=logoBlock('Little Star','Teacher Portal');
+document.getElementById('logo').innerHTML=logoBlock('Little Star','Portal Tentor');
 document.getElementById('today').textContent='📅 '+longToday();
 document.getElementById('feeMonthPick').value=todayStr().slice(0,7);
 const monLabel=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});

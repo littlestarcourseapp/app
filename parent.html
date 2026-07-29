@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parent — Little Star Course</title>
+<title>Orang Tua — Little Star Course</title>
+<link rel="icon" href="assets/logo.jpeg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -12,13 +13,13 @@
     <div class="sidebar-head" id="logo"></div>
     <div class="sidebar-role">Menu</div>
     <nav class="nav">
-      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
-      <a data-view="class"><span class="ic">📅</span> My Class</a>
-      <a data-view="deposit"><span class="ic">💳</span> Deposit &amp; Payment</a>
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Beranda</a>
+      <a data-view="class"><span class="ic">📅</span> Kelas Anak</a>
+      <a data-view="deposit"><span class="ic">💳</span> Deposit &amp; Pembayaran</a>
       <a data-view="material"><span class="ic">📄</span> Materi Belajar</a>
       <div class="divider"></div>
       <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
-      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+      <a href="index.html"><span class="ic">🚪</span> Keluar</a>
     </nav>
     <div class="sidebar-foot">
       <div class="avatar" id="pav">A</div>
@@ -85,7 +86,7 @@
 
       <!-- MY CLASS (same table, full) -->
       <section class="view hide" id="view-class">
-        <div class="page-head"><div><h1>My Class</h1><div class="sub">Seluruh riwayat kelas anak Anda</div></div></div>
+        <div class="page-head"><div><h1>Kelas Anak</h1><div class="sub">Seluruh riwayat kelas anak Anda</div></div></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Hari / Tanggal</th><th>Tentor</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik</th><th>Note</th><th>Materi</th></tr></thead>
           <tbody id="classBody"></tbody>
@@ -94,7 +95,7 @@
 
       <!-- DEPOSIT -->
       <section class="view hide" id="view-deposit">
-        <div class="page-head"><div><h1>Deposit &amp; Payment</h1><div class="sub">Sistem bayar di muka — deposit per jumlah pertemuan</div></div></div>
+        <div class="page-head"><div><h1>Deposit &amp; Pembayaran</h1><div class="sub">Sistem bayar di muka — deposit per jumlah pertemuan</div></div></div>
         <div class="grid grid-3" style="margin-bottom:20px">
           <div class="stat tint-green"><div class="lbl">Total Deposit</div><div class="val" id="dPaid">—</div></div>
           <div class="stat tint-blue"><div class="lbl">Terpakai</div><div class="val" id="dUsed">—</div></div>
@@ -123,7 +124,7 @@
 
 <script src="assets/app.js"></script>
 <script>
-document.getElementById('logo').innerHTML=logoBlock('Little Star','Parent Portal');
+document.getElementById('logo').innerHTML=logoBlock('Little Star','Portal Orang Tua');
 document.getElementById('today').textContent=longToday();
 const monLbl=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
 document.getElementById('cMonthLbl').textContent=monLbl;

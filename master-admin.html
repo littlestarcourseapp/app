@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Master Admin — Little Star Course</title>
+<link rel="icon" href="assets/logo.jpeg">
 <link rel="stylesheet" href="assets/style.css">
 <style>
   .report-grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
@@ -22,19 +23,19 @@
     <div class="sidebar-head" id="logo"></div>
     <div class="sidebar-role">Master Admin</div>
     <nav class="nav">
-      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
-      <a data-view="search-student"><span class="ic">🔍</span> Search Student</a>
-      <a data-view="search-tutor"><span class="ic">🧑‍🏫</span> Search Tutor</a>
-      <a href="admin.html"><span class="ic">📅</span> All Classes</a>
-      <a href="admin.html"><span class="ic">🧑‍🎓</span> Students</a>
-      <a href="admin.html"><span class="ic">👩‍🏫</span> Tutors</a>
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Beranda</a>
+      <a data-view="search-student"><span class="ic">🔍</span> Cari Murid</a>
+      <a data-view="search-tutor"><span class="ic">🧑‍🏫</span> Cari Tentor</a>
+      <a href="admin.html"><span class="ic">📅</span> Semua Kelas</a>
+      <a href="admin.html"><span class="ic">🧑‍🎓</span> Murid</a>
+      <a href="admin.html"><span class="ic">👩‍🏫</span> Tentor</a>
       <div class="divider"></div>
       <div class="sidebar-role" style="margin-top:0">Buka Portal Lain</div>
       <a href="admin.html"><span class="ic">🗂️</span> Portal Admin</a>
-      <a href="teacher.html"><span class="ic">📘</span> Portal Teacher</a>
-      <a href="parent.html"><span class="ic">👨‍👩‍👧</span> Portal Parent</a>
+      <a href="teacher.html"><span class="ic">📘</span> Portal Tentor</a>
+      <a href="parent.html"><span class="ic">👨‍👩‍👧</span> Portal Orang Tua</a>
       <div class="divider"></div>
-      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+      <a href="index.html"><span class="ic">🚪</span> Keluar</a>
     </nav>
     <div class="sidebar-foot">
       <div class="avatar">M</div>
@@ -55,7 +56,7 @@
     <div class="content">
       <!-- DASHBOARD -->
       <section class="view" id="view-dashboard">
-        <div class="page-head"><div><h1>Dashboard</h1><div class="sub">Ringkasan seluruh operasional Little Star Course</div></div></div>
+        <div class="page-head"><div><h1>Beranda</h1><div class="sub">Ringkasan seluruh operasional Little Star Course</div></div></div>
         <div class="grid grid-4" style="margin-bottom:22px">
           <div class="stat tint-purple"><div class="lbl"><span class="icon">🧑‍🎓</span> Total Murid</div><div class="val" id="mStudents">0</div></div>
           <div class="stat tint-blue"><div class="lbl"><span class="icon">👩‍🏫</span> Total Tentor</div><div class="val" id="mTutors">0</div></div>
@@ -71,7 +72,7 @@
 
       <!-- SEARCH STUDENT -->
       <section class="view hide" id="view-search-student">
-        <div class="page-head"><div><h1>Search Student</h1><div class="sub">Cari murid untuk membuka laporan lengkap</div></div></div>
+        <div class="page-head"><div><h1>Cari Murid</h1><div class="sub">Cari murid untuk membuka laporan lengkap</div></div></div>
         <div class="card card-pad">
           <div class="field"><input id="stuSearch" placeholder="Nama murid…"></div>
           <div id="stuHits" class="grid" style="gap:10px"></div>
@@ -80,7 +81,7 @@
 
       <!-- SEARCH TUTOR -->
       <section class="view hide" id="view-search-tutor">
-        <div class="page-head"><div><h1>Search Tutor</h1><div class="sub">Cari tentor & lihat jadwal serta fee</div></div></div>
+        <div class="page-head"><div><h1>Cari Tentor</h1><div class="sub">Cari tentor & lihat jadwal serta fee</div></div></div>
         <div class="card card-pad">
           <div class="field"><input id="tutSearch" placeholder="Nama tentor…"></div>
           <div id="tutHits" class="grid" style="gap:10px"></div>
@@ -90,18 +91,18 @@
       <!-- STUDENT REPORT -->
       <section class="view hide" id="view-report">
         <div class="page-head">
-          <div><h1>Student Report</h1>
-            <div class="breadcrumb">Dashboard › Search Student › <b id="crumb">—</b></div></div>
+          <div><h1>Laporan Murid</h1>
+            <div class="breadcrumb">Beranda › Cari Murid › <b id="crumb">—</b></div></div>
           <div style="display:flex;gap:10px">
-            <button class="btn btn-green" onclick="openModal('mWa')">🟢 WA Parents</button>
-            <button class="btn btn-outline" onclick="window.print()">🧾 Convert to PDF</button>
+            <button class="btn btn-green" onclick="openModal('mWa')">🟢 WA Orang Tua</button>
+            <button class="btn btn-outline" onclick="window.print()">🧾 Simpan PDF</button>
           </div>
         </div>
 
         <!-- header cards -->
         <div class="grid" style="grid-template-columns:1.4fr 1fr 1fr 1fr;gap:16px;margin-bottom:20px" id="repHeader"></div>
 
-        <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="showView('search-student')">← Back to Search</button>
+        <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="showView('search-student')">← Kembali ke Pencarian</button>
 
         <!-- history -->
         <div class="card">

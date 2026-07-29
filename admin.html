@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Little Star Course</title>
+<link rel="icon" href="assets/logo.jpeg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -13,16 +14,16 @@
     <div class="sidebar-head" id="logo"></div>
     <div class="sidebar-role">Menu</div>
     <nav class="nav">
-      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a>
-      <a data-view="classes"><span class="ic">📅</span> Classes</a>
-      <a data-view="calendar"><span class="ic">🗓️</span> Weekly Calendar</a>
-      <a data-view="attendance"><span class="ic">🕒</span> Attendance</a>
-      <a data-view="students"><span class="ic">🧑‍🎓</span> Students</a>
-      <a data-view="tutors"><span class="ic">👩‍🏫</span> Tutors</a>
-      <a data-view="reports"><span class="ic">📊</span> Reports</a>
+      <a data-view="dashboard" class="active"><span class="ic">🏠</span> Beranda</a>
+      <a data-view="classes"><span class="ic">📅</span> Kelas</a>
+      <a data-view="calendar"><span class="ic">🗓️</span> Kalender Mingguan</a>
+      <a data-view="attendance"><span class="ic">🕒</span> Absensi</a>
+      <a data-view="students"><span class="ic">🧑‍🎓</span> Murid</a>
+      <a data-view="tutors"><span class="ic">👩‍🏫</span> Tentor</a>
+      <a data-view="reports"><span class="ic">📊</span> Laporan</a>
       <div class="divider"></div>
       <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
-      <a href="index.html"><span class="ic">🚪</span> Logout</a>
+      <a href="index.html"><span class="ic">🚪</span> Keluar</a>
     </nav>
     <div class="sidebar-foot">
       <div class="avatar">A</div>
@@ -45,7 +46,7 @@
       <section class="view" id="view-dashboard">
         <div class="page-head">
           <div>
-            <h1>Today's Class</h1>
+            <h1>Kelas Hari Ini</h1>
             <div class="sub" id="todayDate">—</div>
           </div>
           <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button>
@@ -84,7 +85,7 @@
 
       <!-- ============ WEEKLY CALENDAR ============ -->
       <section class="view hide" id="view-calendar">
-        <div class="page-head"><div><h1>Weekly Calendar</h1><div class="sub">Jadwal kelas satu minggu — klik kelas untuk edit</div></div>
+        <div class="page-head"><div><h1>Kalender Mingguan</h1><div class="sub">Jadwal kelas satu minggu — klik kelas untuk edit</div></div>
           <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button></div>
         <div class="cal">
           <div class="cal-toolbar">
@@ -103,7 +104,7 @@
 
       <!-- ============ ATTENDANCE ============ -->
       <section class="view hide" id="view-attendance">
-        <div class="page-head"><div><h1>Attendance</h1><div class="sub">Catat jam datang & pulang — murid dan tentor</div></div>
+        <div class="page-head"><div><h1>Absensi</h1><div class="sub">Catat jam datang & pulang — murid dan tentor</div></div>
           <input type="date" id="attDate" class="btn btn-outline" style="font-weight:600"></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Murid</th><th>Tentor</th><th>Murid Datang</th><th>Murid Pulang</th><th>Tentor Datang</th><th>Tentor Pulang</th><th>Simpan</th></tr></thead>
@@ -114,7 +115,7 @@
 
       <!-- ============ STUDENTS ============ -->
       <section class="view hide" id="view-students">
-        <div class="page-head"><div><h1>Students</h1><div class="sub">Data murid & jadwal tetap</div></div>
+        <div class="page-head"><div><h1>Murid</h1><div class="sub">Data murid & jadwal tetap</div></div>
           <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Nama</th><th>Grade</th><th>Orang Tua</th><th>WA</th><th>Jadwal</th><th>Fee/Meet</th><th>Deposit</th><th>Action</th></tr></thead>
@@ -124,7 +125,7 @@
 
       <!-- ============ TUTORS ============ -->
       <section class="view hide" id="view-tutors">
-        <div class="page-head"><div><h1>Tutors</h1><div class="sub">Data tentor & honor</div></div>
+        <div class="page-head"><div><h1>Tentor</h1><div class="sub">Data tentor & honor</div></div>
           <button class="btn btn-primary" onclick="openTutor()">＋ Tambah Tentor</button></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Nama</th><th>Subject</th><th>WA</th><th>Fee Onsite</th><th>Fee Online</th><th>Action</th></tr></thead>
@@ -134,7 +135,7 @@
 
       <!-- ============ REPORTS ============ -->
       <section class="view hide" id="view-reports">
-        <div class="page-head"><div><h1>Reports</h1><div class="sub">Rekap kelas per murid untuk laporan bulanan</div></div>
+        <div class="page-head"><div><h1>Laporan</h1><div class="sub">Rekap kelas per murid untuk laporan bulanan</div></div>
           <input type="month" id="repMonth" class="btn btn-outline" style="font-weight:600"></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Murid</th><th>Jml Kelas</th><th>Total Menit</th><th>Fee/Meet</th><th>Estimasi</th><th></th></tr></thead>
@@ -238,7 +239,7 @@
 
 <script src="assets/app.js"></script>
 <script>
-document.getElementById('logo').innerHTML = logoBlock('Little Star','Admin Portal');
+document.getElementById('logo').innerHTML = logoBlock('Little Star','Portal Admin');
 document.getElementById('todayDate').textContent = '📅 ' + longToday();
 document.getElementById('attDate').value = todayStr();
 document.getElementById('repMonth').value = todayStr().slice(0,7);
