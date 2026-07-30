@@ -43,12 +43,22 @@ Buka `index.html` di browser. Tanpa setup apa pun, semua portal sudah jalan mema
 
 ## Alur kerja (sesuai catatan)
 
-- **Murid punya jadwal tetap** → tentor mengikuti. Set di **Admin → Students** (kolom Tentor & Jadwal).
+- **Kelola Murid & Tentor** (tambah/edit, PIN, fee) → hanya di **Master Admin**. Data murid termasuk School, Address, Date of Birth, Fee Orang Tua, dan **Fee Tentor** (dipakai hitung fee di portal tentor).
+- **Portal Admin** hanya untuk: **Kelas Hari Ini (Add Class)**, **Absensi**, dan **Kalender Mingguan**.
 - **Murid datang** → Admin klik **Add Class**, pilih murid + tentor, isi start time. Saat kelas selesai klik **Edit** untuk isi end time + dokumentasi foto.
 - **Tentor** login → isi **Topik**, **Catatan**, dan upload **materi PDF** (bisa diunduh orang tua).
 - **Absensi** murid & tentor (jam datang/pulang) di **Admin → Attendance**.
 - **Pembayaran di muka** (deposit per jumlah meeting) → tampil di portal **Parent → Deposit**.
 - **Akhir bulan** → **Master Admin → Search Student → buka laporan → WA Parents** (pesan otomatis) atau **Convert to PDF**.
+
+## Login Tentor (PIN)
+
+- Setiap tentor punya **PIN 4 digit** yang dibuat otomatis saat admin menambah tentor (kolom **PIN Login** di Admin → Tentor).
+- Admin bisa membuat ulang PIN kapan saja lewat tombol 🔄 di tabel Tentor.
+- Tentor membuka **Portal Tentor** → pilih nama + masukkan PIN → masuk. PIN salah / nama tak cocok ditolak.
+- Demo PIN (sebelum konek Sheets): Mr. Yesaya `2468`, Ms. Dian `1357`, Mr. Kevin `9753`.
+
+> **Setelah mengubah `Code.gs`** (mis. update ini), **deploy ulang**: Apps Script → **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy**. URL `/exec` tetap sama, tidak perlu ganti di `app.js`.
 
 ## Catatan
 

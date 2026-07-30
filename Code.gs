@@ -73,6 +73,7 @@ function doPost(e){
       case 'addTutor':        return ok(addTutor(p));
       case 'updateTutor':     return ok(updateTutor(p));
       case 'deleteTutor':     return ok(del('Tutors',p.id));
+      case 'tutorLogin':      return ok(tutorLogin(p));
       // Classes / reports
       case 'getClasses':      return ok(getClasses(p));
       case 'addClass':        return ok(addClass(p));
@@ -94,9 +95,9 @@ function doPost(e){
 /* ---------- Setup ---------- */
 function setupSheets(){
   const schema={
-    Students:['id','nama','grade','parent_name','wa_ortu','tutor_id','schedule',
-              'fee_per_meeting','meeting_minutes','deposit_meetings','active','link_id','tgl_masuk'],
-    Tutors:  ['id','nama','subject','wa','fee_onsite','fee_online'],
+    Students:['id','nama','school','address','dob','grade','parent_name','wa_ortu','tutor_id','schedule',
+              'fee_per_meeting','fee_tentor','meeting_minutes','deposit_meetings','active','link_id','tgl_masuk'],
+    Tutors:  ['id','nama','subject','level','wa','pin'],
     Classes: ['id','date','student_id','tutor_id','start_time','end_time','duration','type',
               'topic','note','material_url','doc_url','stu_in','stu_out','tut_in','tut_out'],
     Deposit: ['student_id','paid_meetings','minutes_total','minutes_used','fee_per_meeting','last_paid','status'],
@@ -130,14 +131,18 @@ function getStudentByLink(link){
   return s;
 }
 function addStudent(p){
-  const sh=getSheet('Students'), id=uid();
+  const sh=getSheet('Students');
+  ['school','address','dob','fee_tentor'].forEach(c=>ensureCol(sh,c));
+  const id=uid();
   const link=(p.nama||'siswa').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')+'-'+id.slice(0,5);
   const head=sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
   const row=new Array(head.length).fill('');
   const set=(k,v)=>{const i=head.indexOf(k);if(i>=0)row[i]=v;};
-  set('id',id); set('nama',p.nama||''); set('grade',p.grade||''); set('parent_name',p.parent_name||'');
+  set('id',id); set('nama',p.nama||''); set('school',p.school||''); set('address',p.address||''); set('dob',p.dob||'');
+  set('grade',p.grade||''); set('parent_name',p.parent_name||'');
   set('wa_ortu',p.wa_ortu||''); set('tutor_id',p.tutor_id||''); set('schedule',p.schedule||'');
-  set('fee_per_meeting',Number(p.fee_per_meeting)||0); set('meeting_minutes',Number(p.meeting_minutes)||90);
+  set('fee_per_meeting',Number(p.fee_per_meeting)||0); set('fee_tentor',Number(p.fee_tentor)||0);
+  set('meeting_minutes',Number(p.meeting_minutes)||90);
   set('deposit_meetings',Number(p.deposit_meetings)||0); set('active',p.active||'aktif');
   set('link_id',link); set('tgl_masuk',p.tgl_masuk||'');
   sh.appendRow(row);
@@ -145,25 +150,51 @@ function addStudent(p){
   return {id,link_id:link};
 }
 function updateStudent(p){
+  const sh=getSheet('Students');
+  ['school','address','dob','fee_tentor'].forEach(c=>ensureCol(sh,c));
   const ctx=findRow('Students',p.id); if(!ctx) throw new Error('Student tidak ditemukan');
-  setFields(ctx,{nama:p.nama,grade:p.grade,parent_name:p.parent_name,wa_ortu:p.wa_ortu,tutor_id:p.tutor_id,
-    schedule:p.schedule,fee_per_meeting:Number(p.fee_per_meeting),meeting_minutes:Number(p.meeting_minutes),
+  setFields(ctx,{nama:p.nama,school:p.school,address:p.address,dob:p.dob,grade:p.grade,parent_name:p.parent_name,
+    wa_ortu:p.wa_ortu,tutor_id:p.tutor_id,schedule:p.schedule,fee_per_meeting:Number(p.fee_per_meeting),
+    fee_tentor:Number(p.fee_tentor),meeting_minutes:Number(p.meeting_minutes),
     deposit_meetings:Number(p.deposit_meetings),active:p.active});
   return {updated:p.id};
 }
 
 /* ---------- Tutors ---------- */
+function genPin(){ return String(Math.floor(1000+Math.random()*9000)); }
+function ensureCol(sh,name){
+  const head=sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  let i=head.indexOf(name);
+  if(i<0){ i=head.length; sh.getRange(1,i+1).setValue(name).setBackground('#000080').setFontColor('#fff').setFontWeight('bold'); }
+  return i;
+}
 function addTutor(p){
-  const sh=getSheet('Tutors'), id=uid();
-  sh.appendRow([id,p.nama||'',p.subject||'',p.wa||'',Number(p.fee_onsite)||0,Number(p.fee_online)||0]);
-  const head=sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0], c=head.indexOf('wa');
-  if(c>=0) sh.getRange(sh.getLastRow(),c+1).setNumberFormat('@');
-  return {id};
+  const sh=getSheet('Tutors'); ensureCol(sh,'level'); ensureCol(sh,'pin'); const id=uid();
+  const head=sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  const row=new Array(head.length).fill('');
+  const set=(k,v)=>{const i=head.indexOf(k);if(i>=0)row[i]=v;};
+  const pin=p.pin||genPin();
+  set('id',id); set('nama',p.nama||''); set('subject',p.subject||''); set('level',p.level||''); set('wa',p.wa||''); set('pin',pin);
+  sh.appendRow(row);
+  const c=head.indexOf('wa');  if(c>=0)  sh.getRange(sh.getLastRow(),c+1).setNumberFormat('@');
+  const pc=head.indexOf('pin');if(pc>=0) sh.getRange(sh.getLastRow(),pc+1).setNumberFormat('@');
+  return {id,pin};
 }
 function updateTutor(p){
+  const sh=getSheet('Tutors'); ensureCol(sh,'level'); ensureCol(sh,'pin');
   const ctx=findRow('Tutors',p.id); if(!ctx) throw new Error('Tutor tidak ditemukan');
-  setFields(ctx,{nama:p.nama,subject:p.subject,wa:p.wa,fee_onsite:Number(p.fee_onsite),fee_online:Number(p.fee_online)});
+  const f={nama:p.nama,subject:p.subject,level:p.level,wa:p.wa};
+  if(p.pin!==undefined) f.pin=p.pin;
+  setFields(ctx,f);
   return {updated:p.id};
+}
+function tutorLogin(p){
+  const list=rows('Tutors');
+  const key=String(p.login||'').toLowerCase().trim();
+  const t=list.find(x=>x.id===p.login || String(x.nama||'').toLowerCase().trim()===key);
+  if(!t) throw new Error('Tentor tidak ditemukan');
+  if(String(t.pin)!==String(p.pin)) throw new Error('PIN salah');
+  return t;
 }
 
 /* ---------- Classes ---------- */

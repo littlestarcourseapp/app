@@ -25,6 +25,7 @@ function logoBlock(name, sub){
 }
 
 /* ---- Formatting -------------------------------------------- */
+const genPin  = () => String(Math.floor(1000+Math.random()*9000));
 const fmtRp   = n => 'Rp ' + (Number(n)||0).toLocaleString('id-ID');
 const fmtNum  = n => (Number(n)||0).toLocaleString('id-ID');
 const pad2    = n => String(n).padStart(2,'0');
@@ -92,6 +93,7 @@ const API = {
   addTutor    : (d)    => API._post({action:'addTutor',...d}),
   updateTutor : (d)    => API._post({action:'updateTutor',...d}),
   deleteTutor : (id)   => API._post({action:'deleteTutor',id}),
+  tutorLogin  : (login,pin) => API._post({action:'tutorLogin',login,pin}),
 
   getClasses  : (o={}) => API._post({action:'getClasses',...o}),
   addClass    : (d)    => API._post({action:'addClass',...d}),
@@ -109,19 +111,19 @@ const API = {
    ============================================================ */
 const DEMO = {
   tutors:[
-    {id:'t1',nama:'Mr. Yesaya',subject:'Math',wa:'081200000001',fee_onsite:150000,fee_online:120000},
-    {id:'t2',nama:'Ms. Dian',  subject:'Science',wa:'081200000002',fee_onsite:150000,fee_online:120000},
-    {id:'t3',nama:'Mr. Kevin', subject:'English',wa:'081200000003',fee_onsite:140000,fee_online:110000},
+    {id:'t1',nama:'Mr. Yesaya',subject:'Math',   level:'Upper Secondary (SMA)',wa:'081200000001',pin:'2468'},
+    {id:'t2',nama:'Ms. Dian',  subject:'Science',level:'Lower Secondary (SMP)',wa:'081200000002',pin:'1357'},
+    {id:'t3',nama:'Mr. Kevin', subject:'English',level:'Primary (SD)',         wa:'081200000003',pin:'9753'},
   ],
   students:[
-    {id:'s1',nama:'Anton Wijaya',grade:'7',parent_name:'Ibu Rina Wijaya',wa_ortu:'081234567890',
-     tutor_id:'t1',schedule:'Sen & Kam · 19.00',fee_per_meeting:150000,meeting_minutes:90,
+    {id:'s1',nama:'Anton Wijaya',school:'SMP Petra 1',address:'Jl. Kertajaya 12, Surabaya',dob:'2013-05-14',grade:'7',parent_name:'Ibu Rina Wijaya',wa_ortu:'081234567890',
+     tutor_id:'t1',schedule:'Sen & Kam · 19.00',fee_per_meeting:150000,fee_tentor:90000,meeting_minutes:90,
      deposit_meetings:16,active:'aktif',link_id:'anton-s1'},
-    {id:'s2',nama:'Budi Santoso',grade:'8',parent_name:'Bpk. Hadi',wa_ortu:'081234500011',
-     tutor_id:'t2',schedule:'Sel · 16.00',fee_per_meeting:150000,meeting_minutes:90,
+    {id:'s2',nama:'Budi Santoso',school:'SMP Cita Hati',address:'Jl. Diponegoro 45, Surabaya',dob:'2012-09-03',grade:'8',parent_name:'Bpk. Hadi',wa_ortu:'081234500011',
+     tutor_id:'t2',schedule:'Sel · 16.00',fee_per_meeting:150000,fee_tentor:90000,meeting_minutes:90,
      deposit_meetings:8,active:'aktif',link_id:'budi-s2'},
-    {id:'s3',nama:'Clara Halim',grade:'6',parent_name:'Ibu Mega',wa_ortu:'081234500022',
-     tutor_id:'t3',schedule:'Rab & Jum · 15.30',fee_per_meeting:140000,meeting_minutes:90,
+    {id:'s3',nama:'Clara Halim',school:'SD Gloria',address:'Jl. Mayjend Sungkono 8, Surabaya',dob:'2014-01-22',grade:'6',parent_name:'Ibu Mega',wa_ortu:'081234500022',
+     tutor_id:'t3',schedule:'Rab & Jum · 15.30',fee_per_meeting:140000,fee_tentor:85000,meeting_minutes:90,
      deposit_meetings:12,active:'aktif',link_id:'clara-s3'},
   ],
   classes:[
@@ -147,8 +149,8 @@ const DEMO = {
     s3:{paid_meetings:12,minutes_total:1080,minutes_used:540,fee_per_meeting:140000,last_paid:'2026-07-10'},
   },
   handle(p){
-    return new Promise(res=>{
-      setTimeout(()=>res(this._route(p)),120); // tiny delay to feel real
+    return new Promise((res,rej)=>{
+      setTimeout(()=>{ try{ res(this._route(p)); }catch(e){ rej(e); } },120); // tiny delay to feel real
     });
   },
   _route(p){
@@ -179,7 +181,15 @@ const DEMO = {
       }
       case 'getDeposit': return clone(this.deposits[p.student_id]||null);
       case 'addStudent': { const id='s'+Date.now(); this.students.push({id,active:'aktif',...p}); return {id}; }
-      case 'addTutor':   { const id='t'+Date.now(); this.tutors.push({id,...p}); return {id}; }
+      case 'addTutor':   { const id='t'+Date.now(); const pin=p.pin||genPin(); this.tutors.push({id,pin,...p}); return {id,pin}; }
+      case 'updateTutor':{ const t=this.tutors.find(x=>x.id===p.id); if(t) Object.assign(t,p); return {updated:p.id}; }
+      case 'tutorLogin':{
+        const key=String(p.login||'').toLowerCase().trim();
+        const t=this.tutors.find(x=>x.id===p.login||x.nama.toLowerCase().trim()===key);
+        if(!t) throw new Error('Tentor tidak ditemukan');
+        if(String(t.pin)!==String(p.pin)) throw new Error('PIN salah');
+        return clone(t);
+      }
       case 'getAttendance': return clone(this.classes.filter(c=>!p.date||c.date===p.date));
       default: return null;
     }

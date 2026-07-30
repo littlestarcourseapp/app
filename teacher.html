@@ -8,6 +8,23 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+
+<!-- LOGIN GATE -->
+<div id="loginGate" style="position:fixed;inset:0;z-index:500;background:linear-gradient(180deg,#eaf6fc,#f4f6fb);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div class="card card-pad" style="max-width:380px;width:100%;text-align:center">
+    <img src="assets/logo.jpeg" style="width:84px;height:84px;border-radius:18px;padding:6px;background:#fff;box-shadow:var(--shadow);margin:0 auto 14px">
+    <h2 style="color:var(--navy);font-size:20px;margin-bottom:4px">Login Tentor</h2>
+    <p class="text-muted" style="font-size:13px;margin-bottom:18px">Masuk dengan nama & PIN 4 digit dari admin</p>
+    <div class="field" style="text-align:left"><label>Nama Tentor</label><select id="lgName"></select></div>
+    <div class="field" style="text-align:left"><label>PIN (4 digit)</label>
+      <input id="lgPin" maxlength="4" inputmode="numeric" placeholder="••••" style="letter-spacing:8px;text-align:center;font-size:20px;font-weight:800"
+             onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Masuk →</button>
+    <div class="help" id="lgErr" style="color:var(--red);margin-top:10px;font-weight:600"></div>
+    <div class="help" style="margin-top:14px"><a href="index.html" style="color:var(--muted)">← Kembali ke pemilihan portal</a></div>
+  </div>
+</div>
+
 <div class="app">
   <aside class="sidebar">
     <div class="sidebar-head" id="logo"></div>
@@ -15,7 +32,7 @@
     <nav class="nav">
       <a data-view="dashboard" class="active"><span class="ic">🏠</span> Beranda</a>
       <a data-view="schedule"><span class="ic">📅</span> Jadwal Saya</a>
-      <a data-view="fee"><span class="ic">💰</span> Fee Bulan Ini</a>
+      <a data-view="fee"><span class="ic">📊</span> Rekap Bulan Ini</a>
       <div class="divider"></div>
       <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
       <a href="index.html"><span class="ic">🚪</span> Keluar</a>
@@ -30,7 +47,6 @@
   <div class="main">
     <div class="topbar">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
-      <div class="search"><span class="mag">🔎</span><input id="tutorPick" placeholder="Login sebagai tentor… (demo)"></div>
       <div class="spacer"></div>
       <div class="bell">🔔<span class="dot">1</span></div>
       <div class="me"><div class="who" id="twho2">Tentor<small>Teacher</small></div><div class="avatar" id="tavatar2">Y</div></div>
@@ -46,7 +62,7 @@
         <div class="grid grid-4" style="margin-bottom:22px">
           <div class="stat tint-blue"><div class="lbl"><span class="icon">📅</span> Kelas Hari Ini</div><div class="val" id="cToday">0</div><div class="hint">jadwal tetap murid</div></div>
           <div class="stat tint-green"><div class="lbl"><span class="icon">✅</span> Selesai Bulan Ini</div><div class="val" id="cMonth">0</div><div class="hint" id="mLabel">—</div></div>
-          <div class="stat tint-amber"><div class="lbl"><span class="icon">💰</span> Total Fee Bulan Ini</div><div class="val" id="feeMonth">Rp 0</div><div class="hint">estimasi berdasarkan sesi</div></div>
+          <div class="stat tint-amber"><div class="lbl"><span class="icon">💰</span> Total Fee Bulan Ini</div><div class="val" id="feeMonth">Rp 0</div><div class="hint">dari fee tentor tiap murid</div></div>
           <div class="stat tint-purple"><div class="lbl"><span class="icon">🧑‍🎓</span> Murid Saya</div><div class="val" id="myStudents">0</div></div>
         </div>
 
@@ -71,12 +87,13 @@
 
       <!-- FEE -->
       <section class="view hide" id="view-fee">
-        <div class="page-head"><div><h1>Fee Bulan Ini</h1><div class="sub" id="feeLabel">—</div></div>
+        <div class="page-head"><div><h1>Rekap Bulan Ini</h1><div class="sub" id="feeLabel">—</div></div>
           <input type="month" id="feeMonthPick" class="btn btn-outline" style="font-weight:600"></div>
-        <div class="grid grid-3" style="margin-bottom:20px">
+        <div class="grid grid-4" style="margin-bottom:20px">
           <div class="stat tint-green"><div class="lbl">Total Fee</div><div class="val" id="feeTotal">Rp 0</div></div>
-          <div class="stat tint-blue"><div class="lbl">Sesi Onsite</div><div class="val" id="feeOnsite">0</div></div>
-          <div class="stat tint-amber"><div class="lbl">Sesi Online</div><div class="val" id="feeOnline">0</div></div>
+          <div class="stat tint-blue"><div class="lbl">Total Sesi</div><div class="val" id="feeSessions">0</div></div>
+          <div class="stat tint-purple"><div class="lbl">Total Menit</div><div class="val" id="feeMinutes">0</div></div>
+          <div class="stat tint-amber"><div class="lbl">Onsite / Online</div><div class="val" id="feeMix">0 / 0</div></div>
         </div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Tanggal</th><th>Murid</th><th>Durasi</th><th>Type</th><th>Fee</th></tr></thead>
@@ -129,6 +146,7 @@ document.querySelectorAll('.nav a[data-view]').forEach(a=>a.onclick=()=>{
 });
 
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
+function sFee(id){return Number((STUDENTS.find(s=>s.id===id)||{}).fee_tentor)||0;}
 function setMe(t){
   ME=t;
   ['tavatar','tavatar2'].forEach(i=>document.getElementById(i).textContent=(t.nama||'T')[0]);
@@ -139,12 +157,19 @@ function setMe(t){
 
 async function boot(){
   TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
-  setMe(TUTORS[0]); // demo: first tutor
-  // tutor picker (demo)
-  const inp=document.getElementById('tutorPick');
-  inp.setAttribute('list','tlist');
-  inp.insertAdjacentHTML('afterend',`<datalist id="tlist">${TUTORS.map(t=>`<option value="${t.nama}">`).join('')}</datalist>`);
-  inp.onchange=()=>{const t=TUTORS.find(x=>x.nama===inp.value);if(t)setMe(t);};
+  const sel=document.getElementById('lgName');
+  sel.innerHTML='<option value="">Pilih nama…</option>'+TUTORS.map(t=>`<option value="${t.id}">${t.nama}</option>`).join('');
+}
+async function doLogin(){
+  const id=document.getElementById('lgName').value, pin=document.getElementById('lgPin').value;
+  const err=document.getElementById('lgErr');
+  if(!id){err.textContent='Pilih nama tentor dulu';return;}
+  if(!/^\d{4}$/.test(pin)){err.textContent='PIN harus 4 digit angka';return;}
+  try{
+    const t=await API.tutorLogin(id,pin);
+    document.getElementById('loginGate').style.display='none';
+    setMe(t); STUDENTS=await API.getStudents();
+  }catch(e){ err.textContent=e.message||'Login gagal'; }
 }
 
 async function renderToday(){
@@ -166,8 +191,7 @@ async function renderStats(){
   document.getElementById('cMonth').textContent=cls.length;
   const myStu=new Set((await API.getClasses({tutor_id:ME.id})).map(c=>c.student_id));
   document.getElementById('myStudents').textContent=myStu.size;
-  let fee=0;
-  cls.forEach(c=>{fee+=(c.type==='online'?Number(ME.fee_online):Number(ME.fee_onsite))||0;});
+  const fee=cls.reduce((a,c)=>a+sFee(c.student_id),0);
   document.getElementById('feeMonth').textContent=fmtRp(fee);
 }
 async function renderSchedule(){
@@ -184,17 +208,18 @@ async function renderFee(){
   const m=document.getElementById('feeMonthPick').value||todayStr().slice(0,7);
   document.getElementById('feeLabel').textContent=new Date(m+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
   const cls=await API.getClasses({month:m,tutor_id:ME.id});
-  let total=0,on=0,onl=0;
+  let fee=0,mins=0,on=0,onl=0;
   const body=cls.map(c=>{
-    const f=(c.type==='online'?Number(ME.fee_online):Number(ME.fee_onsite))||0;
-    total+=f; if(c.type==='online')onl++;else on++;
+    const f=sFee(c.student_id); fee+=f; mins+=Number(c.duration)||0; if(c.type==='online')onl++;else on++;
     return `<tr><td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${c.duration||'-'} min</td>
       <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
       <td><b>${fmtRp(f)}</b></td></tr>`;
   }).join('');
   document.getElementById('feeBody').innerHTML=body||'<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">Belum ada kelas.</td></tr>';
-  document.getElementById('feeTotal').textContent=fmtRp(total);
-  document.getElementById('feeOnsite').textContent=on; document.getElementById('feeOnline').textContent=onl;
+  document.getElementById('feeTotal').textContent=fmtRp(fee);
+  document.getElementById('feeSessions').textContent=cls.length;
+  document.getElementById('feeMinutes').textContent=fmtNum(mins);
+  document.getElementById('feeMix').textContent=on+' / '+onl;
 }
 document.getElementById('feeMonthPick').onchange=renderFee;
 
