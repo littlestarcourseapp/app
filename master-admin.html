@@ -24,8 +24,6 @@
     <div class="sidebar-role">Master Admin</div>
     <nav class="nav">
       <a data-view="dashboard" class="active"><span class="ic">🏠</span> Beranda</a>
-      <a data-view="search-student"><span class="ic">🔍</span> Cari Murid</a>
-      <a data-view="search-tutor"><span class="ic">🧑‍🏫</span> Cari Tentor</a>
       <a data-view="all-classes"><span class="ic">📅</span> Semua Kelas</a>
       <a data-view="students"><span class="ic">🧑‍🎓</span> Murid</a>
       <a data-view="tutors"><span class="ic">👩‍🏫</span> Tentor</a>
@@ -48,7 +46,7 @@
   <div class="main">
     <div class="topbar">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
-      <div class="search"><span class="mag">🔎</span><input id="globalSearch" placeholder="Search student by name…"></div>
+      <div class="search"><span class="mag">🔎</span><input id="globalSearch" placeholder="Cari murid atau tentor…"></div>
       <div class="spacer"></div>
       <div class="bell">🔔<span class="dot">5</span></div>
       <div class="me"><div class="who">Master Admin<small>Super Administrator</small></div><div class="avatar">M</div></div>
@@ -71,22 +69,10 @@
         </div>
       </section>
 
-      <!-- SEARCH STUDENT -->
-      <section class="view hide" id="view-search-student">
-        <div class="page-head"><div><h1>Cari Murid</h1><div class="sub">Cari murid untuk membuka laporan lengkap</div></div></div>
-        <div class="card card-pad">
-          <div class="field"><input id="stuSearch" placeholder="Nama murid…"></div>
-          <div id="stuHits" class="grid" style="gap:10px"></div>
-        </div>
-      </section>
-
-      <!-- SEARCH TUTOR -->
-      <section class="view hide" id="view-search-tutor">
-        <div class="page-head"><div><h1>Cari Tentor</h1><div class="sub">Cari tentor & lihat jadwal serta fee</div></div></div>
-        <div class="card card-pad">
-          <div class="field"><input id="tutSearch" placeholder="Nama tentor…"></div>
-          <div id="tutHits" class="grid" style="gap:10px"></div>
-        </div>
+      <!-- COMBINED SEARCH RESULTS -->
+      <section class="view hide" id="view-search">
+        <div class="page-head"><div><h1>Hasil Pencarian</h1><div class="sub">Murid &amp; tentor — klik untuk membuka</div></div></div>
+        <div class="card card-pad"><div id="searchHits" class="grid" style="gap:10px"></div></div>
       </section>
 
       <!-- STUDENT REPORT -->
@@ -103,7 +89,7 @@
         <!-- header cards -->
         <div class="grid" style="grid-template-columns:1.4fr 1fr 1fr 1fr;gap:16px;margin-bottom:20px" id="repHeader"></div>
 
-        <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="showView('search-student')">← Kembali ke Pencarian</button>
+        <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="showView('search')">← Kembali ke Pencarian</button>
 
         <!-- history -->
         <div class="card">
@@ -264,7 +250,7 @@ function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 function showView(v){
   document.querySelectorAll('.nav a[data-view]').forEach(x=>x.classList.remove('active'));
-  document.querySelector(`.nav a[data-view="${v==='report'?'search-student':v}"]`)?.classList.add('active');
+  document.querySelector(`.nav a[data-view="${v}"]`)?.classList.add('active');
   document.querySelectorAll('.view').forEach(x=>x.classList.add('hide'));
   document.getElementById('view-'+v).classList.remove('hide');
 }
@@ -382,9 +368,9 @@ async function boot(){
   document.getElementById('mClasses').textContent=cls.length;
   let rev=0; STUDENTS.forEach(s=>{const n=cls.filter(c=>c.student_id===s.id).length;rev+=n*(s.fee_per_meeting||0);});
   document.getElementById('mRevenue').textContent=fmtRp(rev);
-  wireSearch('dashSearch','dashHits'); wireSearch('stuSearch','stuHits'); wireSearch('globalSearch','dashHits',true);
-  wireTutorSearch();
-  renderHits('dashHits',STUDENTS); renderHits('stuHits',STUDENTS); renderTutorHits(TUTORS);
+  wireSearch('dashSearch','dashHits');   // pencarian cepat murid di dashboard
+  wireGlobalSearch();                    // kolom atas → gabungan murid + tentor
+  renderHits('dashHits',STUDENTS);
   // deep link
   const q=new URLSearchParams(location.search);
   if(q.get('student')){const s=STUDENTS.find(x=>x.id===q.get('student'));if(s)openReport(s.id);}
@@ -406,20 +392,31 @@ function renderHits(id,list){
       <div class="hint text-muted">${s.parent_name||''} · ${s.schedule||''}</div></div>
     <div class="right-arrow">›</div></div>`).join('')||'<div class="text-muted" style="padding:8px">Tidak ada hasil.</div>';
 }
-function wireTutorSearch(){
-  const inp=document.getElementById('tutSearch');
-  inp.oninput=()=>renderTutorHits(TUTORS.filter(t=>t.nama.toLowerCase().includes(inp.value.toLowerCase())));
+function wireGlobalSearch(){
+  const inp=document.getElementById('globalSearch');
+  inp.oninput=()=>{ showView('search'); renderCombined(inp.value.trim().toLowerCase()); };
 }
-async function renderTutorHits(list){
+async function renderCombined(q){
   const cls=await API.getClasses({month:todayStr().slice(0,7)});
-  document.getElementById('tutHits').innerHTML=list.map(t=>{
-    const my=cls.filter(c=>c.tutor_id===t.id);
-    const mins=my.reduce((a,c)=>a+(Number(c.duration)||0),0);
-    return `<div class="search-hit">
-      <div class="av">${t.nama[0]}</div>
-      <div style="flex:1"><b>${t.nama}</b> <span class="badge badge-onsite">${t.subject||'-'}</span> ${t.level?`<span class="badge badge-active">${t.level}</span>`:''}
+  const grp=t=>`<div style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);margin:12px 2px 4px;text-transform:uppercase">${t}</div>`;
+  const stu=STUDENTS.filter(s=>!q||(s.nama||'').toLowerCase().includes(q)||(s.parent_name||'').toLowerCase().includes(q)||(s.school||'').toLowerCase().includes(q));
+  const tut=TUTORS.filter(t=>!q||(t.nama||'').toLowerCase().includes(q)||(t.subject||'').toLowerCase().includes(q));
+  const sHtml=stu.map(s=>`<div class="search-hit" onclick="openReport('${s.id}')">
+    <div class="av">${(s.nama||'?')[0]}</div>
+    <div style="flex:1"><b>${s.nama}</b> <span class="badge badge-active">Murid · Grade ${s.grade||'-'}</span>
+      <div class="hint text-muted">${s.parent_name||''}${s.school?' · '+s.school:''}${s.schedule?' · '+s.schedule:''}</div></div>
+    <div class="right-arrow">›</div></div>`).join('');
+  const tHtml=tut.map(t=>{
+    const my=cls.filter(c=>c.tutor_id===t.id); const mins=my.reduce((a,c)=>a+(Number(c.duration)||0),0);
+    return `<div class="search-hit" onclick="openTutor('${t.id}')">
+      <div class="av">${(t.nama||'?')[0]}</div>
+      <div style="flex:1"><b>${t.nama}</b> <span class="badge badge-onsite">Tentor · ${t.subject||'-'}</span> ${t.level?`<span class="badge badge-active">${t.level}</span>`:''}
         <div class="hint text-muted">${my.length} kelas · ${mins} menit bln ini · WA ${t.wa||'-'}</div></div>
-    </div>`;}).join('')||'<div class="text-muted" style="padding:8px">Tidak ada hasil.</div>';
+      <div class="right-arrow">›</div></div>`;
+  }).join('');
+  const el=document.getElementById('searchHits');
+  el.innerHTML = ((stu.length?grp('Murid ('+stu.length+')')+sHtml:'')+(tut.length?grp('Tentor ('+tut.length+')')+tHtml:''))
+    || '<div class="text-muted" style="padding:8px">Tidak ada hasil.</div>';
 }
 
 /* ---- STUDENT REPORT ---- */
