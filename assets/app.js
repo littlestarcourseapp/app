@@ -111,9 +111,9 @@ const API = {
    ============================================================ */
 const DEMO = {
   tutors:[
-    {id:'t1',nama:'Mr. Yesaya',subject:'Math',   level:'Upper Secondary (SMA)',wa:'081200000001',pin:'2468'},
-    {id:'t2',nama:'Ms. Dian',  subject:'Science',level:'Lower Secondary (SMP)',wa:'081200000002',pin:'1357'},
-    {id:'t3',nama:'Mr. Kevin', subject:'English',level:'Primary (SD)',         wa:'081200000003',pin:'9753'},
+    {id:'t1',nama:'Mr. Yesaya',subject:'Math',   level:'Upper Secondary (SMA)',address:'Jl. Ngagel 3, Surabaya',dob:'1995-04-10',wa:'081200000001',pin:'2468'},
+    {id:'t2',nama:'Ms. Dian',  subject:'Science',level:'Lower Secondary (SMP)',address:'Jl. Manyar 7, Surabaya',dob:'1996-11-02',wa:'081200000002',pin:'1357'},
+    {id:'t3',nama:'Mr. Kevin', subject:'English',level:'Primary (SD)',         address:'Jl. Darmo 21, Surabaya',dob:'1994-07-19',wa:'081200000003',pin:'9753'},
   ],
   students:[
     {id:'s1',nama:'Anton Wijaya',school:'SMP Petra 1',address:'Jl. Kertajaya 12, Surabaya',dob:'2013-05-14',grade:'7',parent_name:'Ibu Rina Wijaya',wa_ortu:'081234567890',

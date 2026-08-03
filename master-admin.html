@@ -238,6 +238,10 @@
           </select></div>
         <div class="field"><label>WhatsApp</label><input id="tWa" placeholder="08xxxx"></div>
       </div>
+      <div class="field-row">
+        <div class="field"><label>Address (Alamat)</label><input id="tAddress" placeholder="Alamat rumah"></div>
+        <div class="field"><label>Date of Birth</label><input type="date" id="tDob"></div>
+      </div>
       <div class="field"><label>PIN Login Tentor (4 digit)</label>
         <div style="display:flex;gap:10px;align-items:center">
           <input id="tPin" maxlength="4" readonly style="max-width:120px;font-weight:800;letter-spacing:5px;text-align:center;font-size:18px">
@@ -350,12 +354,14 @@ function openTutor(id){
   document.getElementById('tId').value=id||'';
   document.getElementById('tNama').value=t.nama||''; document.getElementById('tSubject').value=t.subject||'';
   document.getElementById('tLevel').value=t.level||''; document.getElementById('tWa').value=t.wa||'';
+  document.getElementById('tAddress').value=t.address||''; document.getElementById('tDob').value=t.dob||'';
   document.getElementById('tPin').value=t.pin||genPin();
   openModal('mTutor');
 }
 async function saveTutor(){
   const g=id=>document.getElementById(id).value;
-  const p={id:g('tId')||undefined,nama:g('tNama'),subject:g('tSubject'),level:g('tLevel'),wa:g('tWa'),pin:g('tPin')||genPin()};
+  const p={id:g('tId')||undefined,nama:g('tNama'),subject:g('tSubject'),level:g('tLevel'),
+    address:g('tAddress'),dob:g('tDob'),wa:g('tWa'),pin:g('tPin')||genPin()};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
   if(p.id) await API.updateTutor(p); else await API.addTutor(p);
   TUTORS=await API.getTutors(); closeModal('mTutor'); toast('Tentor disimpan · PIN '+p.pin,'ok'); renderTutorsM();
