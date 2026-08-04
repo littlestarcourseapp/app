@@ -156,8 +156,8 @@ document.querySelectorAll('.nav a[data-view]').forEach(a=>{
 });
 
 async function boot(){
-  TUTORS=await API.getTutors();
-  STUDENTS=await API.getStudents();
+  try{ TUTORS=await API.getTutors(); }catch(e){ TUTORS=[]; toast('Gagal memuat tentor','err'); }
+  try{ STUDENTS=await API.getStudents(); }catch(e){ STUDENTS=[]; toast('Gagal memuat murid','err'); }
   renderToday();
 }
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}

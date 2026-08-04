@@ -44,12 +44,12 @@ const HEADER_ALIASES = {
   },
   Tutors:{
     id:['id'],
-    nama:['nama',"tutor's name",'tentor','nama tentor','name'],
+    nama:['nama',"tutor's name","tentor's name","student's name",'tentor','nama tentor','nama guru','guru','name'],
     subject:['subject','pelajaran','mata pelajaran'],
     level:['level','jenjang'],
     address:['address','alamat'],
     dob:['dob','date of birth','tanggal lahir','tgl lahir'],
-    wa:['wa','whatsapp','no wa','wa tentor'],
+    wa:['wa','whatsapp','wa number','no wa','no wa number','nomor wa','no. wa','no hp','whatsapp number','wa tentor'],
     pin:['pin','pin login']
   },
   Classes:{
@@ -91,6 +91,9 @@ function rows(name){
       let v=r[i];
       if(v instanceof Date) v=Utilities.formatDate(v,tz,'yyyy-MM-dd');
       if(WA.includes(k)) v=String(v||'');
+      // If two columns map to the same key, keep the one that actually has a value
+      const cur=o[k];
+      if(cur!==undefined && cur!=='' && cur!=null && (v===''||v==null)) return;
       o[k]=v;
     });
     return o;
@@ -184,6 +187,30 @@ function ensureHeaders(sh, sheetName, cols){
       sh.getRange(1,head.length).setValue(c).setBackground('#000080').setFontColor('#fff').setFontWeight('bold');
     }
   });
+}
+
+// One-time cleanup: remove empty duplicate columns (e.g. a blank "nama" next to "Tentor's Name").
+// Run this once from the Apps Script editor if you see doubled columns.
+function dedupeColumns(){
+  const out=[];
+  Object.keys(SCHEMAS).forEach(name=>{
+    const sh=getSheet(name);
+    if(sh.getLastColumn()<1 || sh.getLastRow()<1) return;
+    const data=sh.getDataRange().getValues();
+    const head=data[0];
+    const seen={};
+    head.forEach((h,c)=>{ const k=keyOf(name,h); (seen[k]=seen[k]||[]).push(c); });
+    const toDelete=[];
+    Object.values(seen).forEach(cols=>{
+      if(cols.length<2) return;
+      const hasData=c=>data.slice(1).some(r=>r[c]!==''&&r[c]!=null);
+      const withData=cols.filter(hasData);
+      const keep = withData.length? withData[0] : cols[0];
+      cols.forEach(c=>{ if(c!==keep && !hasData(c)) toDelete.push(c); });
+    });
+    toDelete.sort((a,b)=>b-a).forEach(c=>{ sh.deleteColumn(c+1); out.push(name+': removed empty duplicate col '+(c+1)); });
+  });
+  return out.length? out : ['No duplicate columns found'];
 }
 
 function setupSheets(){

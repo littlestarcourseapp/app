@@ -324,13 +324,15 @@ function openStudent(id){
   openModal('mStudent');
 }
 async function saveStudent(){
-  const g=id=>document.getElementById(id).value;
+  const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
   const p={id:g('sId')||undefined,nama:g('sNama'),school:g('sSchool'),address:g('sAddress'),dob:g('sDob'),
     grade:g('sGrade'),schedule:g('sSchedule'),parent_name:g('sParent'),wa_ortu:g('sWa'),
     fee_per_meeting:g('sFee'),fee_tentor:g('sFeeTutor'),meeting_minutes:g('sMin'),deposit_meetings:g('sDep')};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
-  if(p.id) await API.updateStudent(p); else await API.addStudent(p);
-  STUDENTS=await API.getStudents(); closeModal('mStudent'); toast('Murid disimpan','ok'); renderStudentsM();
+  try{
+    if(p.id) await API.updateStudent(p); else await API.addStudent(p);
+    STUDENTS=await API.getStudents(); closeModal('mStudent'); toast('Murid disimpan','ok'); renderStudentsM();
+  }catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
 }
 
 /* ---- Tutor CRUD ---- */
@@ -345,12 +347,14 @@ function openTutor(id){
   openModal('mTutor');
 }
 async function saveTutor(){
-  const g=id=>document.getElementById(id).value;
+  const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
   const p={id:g('tId')||undefined,nama:g('tNama'),subject:g('tSubject'),level:g('tLevel'),
     address:g('tAddress'),dob:g('tDob'),wa:g('tWa'),pin:g('tPin')||genPin()};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
-  if(p.id) await API.updateTutor(p); else await API.addTutor(p);
-  TUTORS=await API.getTutors(); closeModal('mTutor'); toast('Tentor disimpan · PIN '+p.pin,'ok'); renderTutorsM();
+  try{
+    if(p.id) await API.updateTutor(p); else await API.addTutor(p);
+    TUTORS=await API.getTutors(); closeModal('mTutor'); toast('Tentor disimpan · PIN '+p.pin,'ok'); renderTutorsM();
+  }catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
 }
 async function regenPin(id){
   const t=TUTORS.find(x=>x.id===id); if(!t) return;
