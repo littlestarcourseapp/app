@@ -164,8 +164,10 @@ function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 
 /* ---- KELAS HARI INI ---- */
+const byStart=(a,b)=>(a.start_time||'99:99').localeCompare(b.start_time||'99:99');
 async function renderToday(){
   CLASSES=await API.getClasses({date:todayStr()});
+  CLASSES.sort(byStart);
   const tb=document.getElementById('todayBody'); tb.innerHTML='';
   let done=0,ongoing=0;
   CLASSES.forEach((c,i)=>{
@@ -192,7 +194,7 @@ async function renderToday(){
 /* ---- ATTENDANCE ---- */
 async function renderAttendance(){
   const d=document.getElementById('attDate').value||todayStr();
-  const list=await API.getClasses({date:d});
+  const list=(await API.getClasses({date:d})).sort(byStart);
   const tb=document.getElementById('attBody');
   tb.innerHTML=list.map(c=>`<tr data-id="${c.id}">
     <td><b>${sName(c.student_id)}</b></td><td>${tName(c.tutor_id)}</td>
