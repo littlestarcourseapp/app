@@ -39,6 +39,8 @@ const HEADER_ALIASES = {
     fee_tentor:['fee_tentor','fee tentor/meet','fee tentor','honor tentor','fee tutor'],
     meeting_minutes:['meeting_minutes','duration','durasi','menit'],
     deposit_meetings:['deposit_meetings','deposit (meetings)','deposit','deposit meeting'],
+    add_fee:['add_fee','additional fee','biaya tambahan','fee tambahan'],
+    add_fee_note:['add_fee_note','additional fee note','note additional fee','catatan tambahan','ket tambahan'],
     active:['active','status','aktif'],
     link_id:['link_id','link id']
   },
@@ -162,7 +164,7 @@ function doPost(e){
 // Canonical column layout for every sheet (single source of truth)
 const SCHEMAS = {
   Students:['id','nama','school','address','dob','grade','parent_name','wa_ortu','tutor_id','schedule',
-            'fee_per_meeting','fee_tentor','meeting_minutes','deposit_meetings','active','link_id'],
+            'fee_per_meeting','fee_tentor','meeting_minutes','deposit_meetings','add_fee','add_fee_note','active','link_id'],
   Tutors:  ['id','nama','subject','level','address','dob','wa','pin'],
   Classes: ['id','date','student_id','tutor_id','start_time','end_time','duration','type',
             'topic','note','material_url','doc_url','stu_in','stu_out','tut_in','tut_out'],
@@ -256,7 +258,9 @@ function addStudent(p){
   set('wa_ortu',p.wa_ortu||''); set('tutor_id',p.tutor_id||''); set('schedule',p.schedule||'');
   set('fee_per_meeting',Number(p.fee_per_meeting)||0); set('fee_tentor',Number(p.fee_tentor)||0);
   set('meeting_minutes',Number(p.meeting_minutes)||90);
-  set('deposit_meetings',Number(p.deposit_meetings)||0); set('active',p.active||'aktif');
+  set('deposit_meetings',Number(p.deposit_meetings)||0);
+  set('add_fee',Number(p.add_fee)||0); set('add_fee_note',p.add_fee_note||'');
+  set('active',p.active||'aktif');
   set('link_id',link);
   sh.appendRow(row);
   const c=idxOf(head,'Students','wa_ortu'); if(c>=0) sh.getRange(sh.getLastRow(),c+1).setNumberFormat('@');
@@ -268,7 +272,7 @@ function updateStudent(p){
   setFields(ctx,{nama:p.nama,school:p.school,address:p.address,dob:p.dob,grade:p.grade,parent_name:p.parent_name,
     wa_ortu:p.wa_ortu,tutor_id:p.tutor_id,schedule:p.schedule,fee_per_meeting:Number(p.fee_per_meeting),
     fee_tentor:Number(p.fee_tentor),meeting_minutes:Number(p.meeting_minutes),
-    deposit_meetings:Number(p.deposit_meetings),active:p.active});
+    deposit_meetings:Number(p.deposit_meetings),add_fee:Number(p.add_fee)||0,add_fee_note:p.add_fee_note||'',active:p.active});
   return {updated:p.id};
 }
 

@@ -170,9 +170,9 @@ async function renderDash(){
   // deposit band
   const meets=dep.paid_meetings||ME.deposit_meetings||0;
   const perMin=ME.meeting_minutes||90;
-  const perMeet=ME.fee_per_meeting||0, depTotal=perMeet*meets;
+  const perMeet=ME.fee_per_meeting||0, base=perMeet*meets, addFee=Number(ME.add_fee)||0, depTotal=base+addFee;
   document.getElementById('depTitle').textContent=`LUNAS ${meets}× MEETING`;
-  document.getElementById('depDetail').innerHTML=`Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(dep.minutes_total||meets*perMin)} menit<br>Total dibayar: <b class="text-green">${fmtRp(depTotal)}</b> · Bayar terakhir: ${prettyDate(dep.last_paid)}`;
+  document.getElementById('depDetail').innerHTML=`Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(dep.minutes_total||meets*perMin)} menit<br>Paket: <b>${fmtRp(base)}</b>${addFee?` + Tambahan: <b>${fmtRp(addFee)}</b>${ME.add_fee_note?` <span class="muted">(${esc(ME.add_fee_note)})</span>`:''}`:''}<br>Total dibayar: <b class="text-green">${fmtRp(depTotal)}</b> · Bayar terakhir: ${prettyDate(dep.last_paid)}`;
   // history (latest 5)
   const tb=document.getElementById('histBody');
   tb.innerHTML=cls.slice(0,5).map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);

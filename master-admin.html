@@ -15,6 +15,40 @@
   .search-hit{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:.15s;background:#fff}
   .search-hit:hover{border-color:var(--blue);box-shadow:var(--shadow)}
   .search-hit .av{width:44px;height:44px;border-radius:50%;background:var(--sky-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy)}
+  /* ---- Print header (only shows when printing / Save as PDF) ---- */
+  .print-only{display:none}
+  .print-head{border-bottom:2.5px solid var(--navy);padding-bottom:10px;margin-bottom:16px}
+  .print-head .pt{font-size:19px;font-weight:800;color:var(--navy)}
+  .print-head .pl{font-size:13px;color:#333;margin-top:3px}
+  .print-head img{height:44px;border-radius:8px}
+  @media print{
+    @page{margin:12mm}
+    body{background:#fff}
+    .sidebar,.backdrop,.topbar,.foot-note{display:none!important}
+    .main{display:block}
+    .content{padding:0!important}
+    .view:not(#view-report){display:none!important}
+    #view-report .page-head,.no-print{display:none!important}
+    .print-only{display:block!important}
+    .report-grid{grid-template-columns:1fr!important}   /* WA composer column hidden below */
+    #view-report .drawer,#view-report [id^=mWa]{display:none!important}
+    .card{box-shadow:none!important;border:1px solid #ddd}
+    .table-wrap{overflow:visible!important}
+    table.tbl{font-size:10.5px;table-layout:fixed;width:100%}
+    table.tbl th,table.tbl td{padding:6px 7px;word-break:break-word;white-space:normal!important;vertical-align:top}
+    #view-report table.tbl th:nth-child(1),#view-report table.tbl td:nth-child(1){width:4%}
+    #view-report table.tbl th:nth-child(2),#view-report table.tbl td:nth-child(2){width:10%}
+    #view-report table.tbl th:nth-child(3),#view-report table.tbl td:nth-child(3){width:9%}
+    #view-report table.tbl th:nth-child(4),#view-report table.tbl td:nth-child(4){width:9%}
+    #view-report table.tbl th:nth-child(5),#view-report table.tbl td:nth-child(5){width:6%}
+    #view-report table.tbl th:nth-child(6),#view-report table.tbl td:nth-child(6){width:8%}
+    #view-report table.tbl th:nth-child(7),#view-report table.tbl td:nth-child(7){width:20%}
+    #view-report table.tbl th:nth-child(8),#view-report table.tbl td:nth-child(8){width:20%}
+    #view-report table.tbl th:nth-child(9),#view-report table.tbl td:nth-child(9){width:14%}
+    table.tbl .thumb,.docthumb{width:90px!important;height:auto!important;max-height:70px}
+    .stat{break-inside:avoid}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
 </style>
 </head>
 <body>
@@ -80,16 +114,29 @@
         <div class="page-head">
           <div><h1>Laporan Murid</h1>
             <div class="breadcrumb">Beranda › Cari Murid › <b id="crumb">—</b></div></div>
-          <div style="display:flex;gap:10px">
+          <div style="display:flex;gap:10px;align-items:center" class="no-print">
+            <input type="month" id="repMonthSel" class="btn btn-outline" style="font-weight:600" title="Pilih periode laporan" onchange="if(CUR)openReport(CUR.id,this.value)">
             <button class="btn btn-green" onclick="openModal('mWa')">🟢 WA Orang Tua</button>
             <button class="btn btn-outline" onclick="window.print()">🧾 Simpan PDF</button>
+          </div>
+        </div>
+
+        <!-- clean header shown only in the printed / PDF version -->
+        <div class="print-only print-head">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img src="assets/logo.jpeg" alt="Little Star">
+            <div>
+              <div class="pt">Laporan Murid — Little Star Course</div>
+              <div class="pl">Nama: <b id="phName">—</b></div>
+              <div class="pl">Periode: <b id="phPeriod">—</b></div>
+            </div>
           </div>
         </div>
 
         <!-- header cards -->
         <div class="grid" style="grid-template-columns:1.4fr 1fr 1fr 1fr;gap:16px;margin-bottom:20px" id="repHeader"></div>
 
-        <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="showView('search')">← Kembali ke Pencarian</button>
+        <button class="btn btn-outline btn-sm no-print" style="margin-bottom:16px" onclick="showView('search')">← Kembali ke Pencarian</button>
 
         <!-- history -->
         <div class="card">
@@ -196,6 +243,13 @@
         <div class="field"><label>Durasi (menit)</label><input type="number" id="sMin" value="90"></div>
         <div class="field"><label>Deposit (jumlah meeting)</label><input type="number" id="sDep" value="8"></div>
       </div>
+      <div style="border-top:1px dashed var(--line);margin:6px 0 14px;padding-top:12px">
+        <div class="field-row">
+          <div class="field"><label>Additional Fee <span class="help" style="display:inline">(opsional)</span></label><input type="number" id="sAddFee" placeholder="0"></div>
+          <div class="field"><label>Note Additional Fee <span class="help" style="display:inline">(opsional)</span></label><input id="sAddNote" placeholder="cth: biaya les olimpiade"></div>
+        </div>
+        <div class="help">Biaya tambahan di luar paket (mis. olimpiade). Muncul di Total Deposit Payment. Kosongkan jika tidak ada.</div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('mStudent')">Cancel</button>
@@ -245,7 +299,7 @@
 <script src="assets/app.js"></script>
 <script>
 document.getElementById('logo').innerHTML=logoBlock('Little Star','Master Admin');
-let TUTORS=[],STUDENTS=[],CUR=null;
+let TUTORS=[],STUDENTS=[],CUR=null,REP_MONTH=todayStr().slice(0,7);
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 function showView(v){
@@ -321,13 +375,15 @@ function openStudent(id){
   V('sDob',s.dob||''); V('sSchedule',s.schedule||''); V('sParent',s.parent_name||''); V('sWa',s.wa_ortu||'');
   V('sFee',s.fee_per_meeting||150000); V('sFeeTutor',s.fee_tentor||90000);
   V('sMin',s.meeting_minutes||90); V('sDep',s.deposit_meetings||8);
+  V('sAddFee',s.add_fee||''); V('sAddNote',s.add_fee_note||'');
   openModal('mStudent');
 }
 async function saveStudent(){
   const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
   const p={id:g('sId')||undefined,nama:g('sNama'),school:g('sSchool'),address:g('sAddress'),dob:g('sDob'),
     grade:g('sGrade'),schedule:g('sSchedule'),parent_name:g('sParent'),wa_ortu:g('sWa'),
-    fee_per_meeting:g('sFee'),fee_tentor:g('sFeeTutor'),meeting_minutes:g('sMin'),deposit_meetings:g('sDep')};
+    fee_per_meeting:g('sFee'),fee_tentor:g('sFeeTutor'),meeting_minutes:g('sMin'),deposit_meetings:g('sDep'),
+    add_fee:g('sAddFee'),add_fee_note:g('sAddNote')};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
   try{
     if(p.id) await API.updateStudent(p); else await API.addStudent(p);
@@ -424,15 +480,22 @@ async function renderCombined(q){
 }
 
 /* ---- STUDENT REPORT ---- */
-async function openReport(id){
+async function openReport(id, month){
   CUR=STUDENTS.find(s=>s.id===id); if(!CUR)return;
+  REP_MONTH = month || REP_MONTH || todayStr().slice(0,7);
   showView('report');
+  const sel=document.getElementById('repMonthSel'); if(sel) sel.value=REP_MONTH;
+  const periodName=new Date(REP_MONTH+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
   document.getElementById('crumb').textContent=CUR.nama;
-  document.getElementById('rHist').textContent=`📅 Riwayat Kelas ${CUR.nama.split(' ')[0]}`;
+  document.getElementById('rHist').textContent=`📅 Riwayat Kelas ${CUR.nama.split(' ')[0]} · ${periodName}`;
+  document.getElementById('phName').textContent=CUR.nama;
+  document.getElementById('phPeriod').textContent=periodName;
   const dep=await API.getDeposit(id)||{};
-  const cls=await API.getClasses({student_id:id});
+  const allCls=await API.getClasses({student_id:id});
+  const cls=allCls.filter(c=>String(c.date).startsWith(REP_MONTH));
   const perMin=CUR.meeting_minutes||90, meets=dep.paid_meetings||CUR.deposit_meetings||0;
-  const total=dep.minutes_total||meets*perMin, used=dep.minutes_used!=null?dep.minutes_used:cls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
+  const total=dep.minutes_total||meets*perMin, used=dep.minutes_used!=null?dep.minutes_used:allCls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
+  const addFee=Number(CUR.add_fee)||0, base=(CUR.fee_per_meeting||0)*meets, grand=base+addFee;
   // header cards
   document.getElementById('repHeader').innerHTML=`
     <div class="card card-pad" style="display:flex;gap:16px;align-items:center">
@@ -442,7 +505,7 @@ async function openReport(id){
         <div class="hint">Date of Birth: ${CUR.dob?prettyDate(CUR.dob):'-'}</div>
         <div class="hint">Address: ${CUR.address||'-'}</div>
         <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'}) 🟢</div></div></div>
-    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT</div><div class="val" style="font-size:18px">LUNAS ${meets}× MEETING</div><div class="hint">Per meet: ${fmtRp(CUR.fee_per_meeting)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Total: <b>${fmtRp((CUR.fee_per_meeting||0)*meets)}</b> · ${prettyDate(dep.last_paid)}</div></div>
+    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">LUNAS ${meets}× MEETING</div><div class="hint">Per meet: ${fmtRp(CUR.fee_per_meeting)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Paket: <b>${fmtRp(base)}</b>${addFee?` + Tambahan: <b>${fmtRp(addFee)}</b>`:''} · Total: <b class="text-green">${fmtRp(grand)}</b>${(addFee&&CUR.add_fee_note)?`<br><span class="muted">🏷️ ${esc(CUR.add_fee_note)}</span>`:''}</div></div>
     <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${fmtNum(used)} <span style="font-size:13px">menit</span></div><div class="hint">${Math.round(used/perMin)} meetings</div></div>
     <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${fmtNum(left)} <span style="font-size:13px">menit</span></div><div class="hint">Setara ${Math.floor(left/perMin)} sesi</div></div>`;
   // history
@@ -452,16 +515,15 @@ async function openReport(id){
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
     <td>${multiline(c.topic)}</td><td>${multiline(c.note)}</td>
     <td>${docCell(c.doc_url)}</td></tr>`).join('')
-    ||'<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Belum ada kelas.</td></tr>';
-  // summary
-  const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
-  const stdMin=monthCls.length*perMin, actMin=monthCls.reduce((a,c)=>a+(+c.duration||0),0), extraMin=Math.max(0,actMin-stdMin);
+    ||`<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Belum ada kelas pada ${periodName}.</td></tr>`;
+  // summary (based on selected month)
+  const stdMin=cls.length*perMin, actMin=cls.reduce((a,c)=>a+(+c.duration||0),0), extraMin=Math.max(0,actMin-stdMin);
   const feePerMin=(CUR.fee_per_meeting||0)/perMin;
   document.getElementById('rSummary').innerHTML=`
     <div class="stat tint-green"><div class="lbl">SISA DEPOSIT</div><div class="val">${fmtNum(left)} menit</div><div class="progress"><span style="width:${Math.min(100,Math.round(used/total*100))}%"></span></div><div class="hint">Terpakai ${fmtNum(used)}/${fmtNum(total)}</div></div>
     <div class="stat tint-blue"><div class="lbl">TAMBAHAN MEETING</div><div class="val">${Math.round(extraMin/perMin*10)/10} sesi</div><div class="hint">= ${extraMin} menit</div></div>
     <div class="stat tint-amber"><div class="lbl">TAMBAHAN FEE</div><div class="val">${fmtRp(Math.round(extraMin*feePerMin))}</div><div class="hint">dari tarif per meet</div></div>
-    <div class="stat tint-purple"><div class="lbl">TOTAL DEPOSIT DIBAYAR</div><div class="val">${fmtRp((CUR.fee_per_meeting||0)*meets)}</div><div class="hint">${meets}× ${fmtRp(CUR.fee_per_meeting)}</div></div>`;
+    <div class="stat tint-purple"><div class="lbl">TOTAL DEPOSIT DIBAYAR</div><div class="val">${fmtRp(grand)}</div><div class="hint">${meets}× ${fmtRp(CUR.fee_per_meeting)}${addFee?` + tambahan ${fmtRp(addFee)}`:''}</div></div>`;
   buildWa(dep,cls,{perMin,meets,total,used,extraMin,feePerMin,actMin});
 }
 
@@ -469,8 +531,8 @@ async function openReport(id){
 let WA_TEXT='',WA_NUM='';
 function buildWa(dep,cls,x){
   const nm=CUR.nama.split(' ')[0], parent=(CUR.parent_name||'Bapak/Ibu').replace(/^(Ibu|Bpk\.?|Bapak)\s*/i,'');
-  const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
-  const monthName=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  const monthCls=cls;
+  const monthName=new Date(REP_MONTH+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
   const extraFee=Math.round(x.extraMin*x.feePerMin), monthFee=Math.round(x.actMin*x.feePerMin);
   const nextMeets=CUR.deposit_meetings||8, nextDeposit=nextMeets*(CUR.fee_per_meeting||0);
   const grand=extraFee+nextDeposit;

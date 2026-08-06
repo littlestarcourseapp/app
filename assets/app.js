@@ -156,7 +156,7 @@ const DEMO = {
   students:[
     {id:'s1',nama:'Anton Wijaya',school:'SMP Petra 1',address:'Jl. Kertajaya 12, Surabaya',dob:'2013-05-14',grade:'7',parent_name:'Ibu Rina Wijaya',wa_ortu:'081234567890',
      tutor_id:'t1',schedule:'Sen & Kam · 19.00',fee_per_meeting:150000,fee_tentor:90000,meeting_minutes:90,
-     deposit_meetings:16,active:'aktif',link_id:'anton-s1'},
+     deposit_meetings:16,add_fee:300000,add_fee_note:'Biaya les olimpiade (Agustus)',active:'aktif',link_id:'anton-s1'},
     {id:'s2',nama:'Budi Santoso',school:'SMP Cita Hati',address:'Jl. Diponegoro 45, Surabaya',dob:'2012-09-03',grade:'8',parent_name:'Bpk. Hadi',wa_ortu:'081234500011',
      tutor_id:'t2',schedule:'Sel · 16.00',fee_per_meeting:150000,fee_tentor:90000,meeting_minutes:90,
      deposit_meetings:8,active:'aktif',link_id:'budi-s2'},
