@@ -78,7 +78,7 @@
             <div class="progress"><span id="cBar" style="width:0%"></span></div><div class="hint" id="cUsed">—</div></div>
           <div class="stat tint-blue"><div class="lbl"><span class="icon">📅</span> TAMBAHAN MEETING</div><div class="val" id="cExtra">0 sesi</div><div class="hint" id="cExtraHint">—</div></div>
           <div class="stat tint-amber"><div class="lbl"><span class="icon">🧾</span> TAMBAHAN FEE</div><div class="val" id="cFeeExtra">Rp 0</div><div class="hint">dari tarif per meet</div></div>
-          <div class="stat tint-purple"><div class="lbl"><span class="icon">📨</span> TOTAL FEE BULAN INI</div><div class="val" id="cFeeMonth">Rp 0</div><div class="hint" id="cMonthLbl">—</div></div>
+          <div class="stat tint-purple"><div class="lbl"><span class="icon">💰</span> TOTAL DEPOSIT DIBAYAR</div><div class="val" id="cFeeMonth">Rp 0</div><div class="hint" id="cMonthLbl">—</div></div>
         </div>
 
         <div class="note-band mt-16">ℹ️ Data di atas diperbarui otomatis setiap kali kelas selesai dan diinput oleh admin.</div>
@@ -170,8 +170,9 @@ async function renderDash(){
   // deposit band
   const meets=dep.paid_meetings||ME.deposit_meetings||0;
   const perMin=ME.meeting_minutes||90;
-  document.getElementById('depTitle').textContent=`LUNAS ${meets} KALI MEETING`;
-  document.getElementById('depDetail').textContent=`${meets} meetings × ${perMin} min = ${fmtNum(dep.minutes_total||meets*perMin)} menit · Bayar terakhir: ${prettyDate(dep.last_paid)}`;
+  const perMeet=ME.fee_per_meeting||0, depTotal=perMeet*meets;
+  document.getElementById('depTitle').textContent=`LUNAS ${meets}× MEETING`;
+  document.getElementById('depDetail').innerHTML=`Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(dep.minutes_total||meets*perMin)} menit<br>Total dibayar: <b class="text-green">${fmtRp(depTotal)}</b> · Bayar terakhir: ${prettyDate(dep.last_paid)}`;
   // history (latest 5)
   const tb=document.getElementById('histBody');
   tb.innerHTML=cls.slice(0,5).map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);
@@ -192,16 +193,16 @@ async function renderDash(){
   document.getElementById('cExtra').textContent=(extraMin/perMin<1&&extraMin>0?'0.5':Math.round(extraMin/perMin*10)/10)+' sesi';
   document.getElementById('cExtraHint').textContent=`= ${extraMin} menit tambahan`;
   document.getElementById('cFeeExtra').textContent=fmtRp(Math.round(extraMin*feePerMin));
-  document.getElementById('cFeeMonth').textContent=fmtRp(Math.round(actualMin*feePerMin));
+  document.getElementById('cFeeMonth').textContent=fmtRp(depTotal);
 }
 function rowHist(n,c){
   return `<tr><td>${n}</td>
     <td>${prettyDate(c.date)}<br><span class="muted">(${dayName(c.date)})</span></td>
     <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
-    <td>${c.topic||'<span class="muted">-</span>'}</td>
-    <td>${c.note||'<span class="muted">-</span>'}</td>
-    <td>${c.doc_url?'🖼️':'<span class="muted">-</span>'}</td></tr>`;
+    <td>${multiline(c.topic)}</td>
+    <td>${multiline(c.note)}</td>
+    <td>${docCell(c.doc_url)}</td></tr>`;
 }
 function emptyRow(cols){return `<tr><td colspan="${cols}" class="muted" style="text-align:center;padding:24px">Belum ada riwayat kelas.</td></tr>`;}
 
@@ -211,7 +212,7 @@ async function renderFullClass(){
     <td>${prettyDate(c.date)} <span class="muted">(${dayName(c.date)})</span></td>
     <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
-    <td>${c.topic||'<span class="muted">-</span>'}</td><td>${c.note||'<span class="muted">-</span>'}</td>
+    <td>${multiline(c.topic)}</td><td>${multiline(c.note)}</td>
     <td>${c.material_url?`<a class="btn btn-outline btn-sm" href="${c.material_url}" download>📄 Unduh</a>`:'<span class="muted">-</span>'}</td></tr>`).join('')||emptyRow(8);
 }
 async function renderDeposit(){

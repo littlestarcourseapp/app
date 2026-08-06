@@ -64,6 +64,44 @@ function toast(msg,type){
   clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);
 }
 
+/* ---- Text & media helpers ---------------------------------- */
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Render multi-line text (preserve Enter / line breaks) in a table cell
+function multiline(s){ return (s && String(s).trim()) ? `<span style="white-space:pre-line">${esc(s)}</span>` : '<span class="muted">-</span>'; }
+// Render a documentation photo cell: real thumbnail if it's an image, else dash
+function docCell(u){ return (u && (String(u).startsWith('data:')||String(u).startsWith('http'))) ? `<img src="${u}" class="thumb docthumb" style="cursor:zoom-in" alt="foto">` : '<span class="muted">-</span>'; }
+// Click any .docthumb to view it larger
+document.addEventListener('click',e=>{ if(e.target && e.target.classList && e.target.classList.contains('docthumb')) viewImg(e.target.src); });
+function viewImg(src){
+  if(!src) return;
+  let o=document.getElementById('__imgview');
+  if(!o){o=document.createElement('div');o.id='__imgview';
+    o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:zoom-out;padding:24px';
+    o.onclick=()=>o.remove();document.body.appendChild(o);}
+  o.innerHTML=`<img src="${src}" style="max-width:95%;max-height:95%;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.5)">`;
+}
+// Downscale a chosen image to a small JPEG data-URL that fits in a sheet cell (<45k chars)
+function resizeImageToDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const draw=(maxDim,q)=>{
+        let w=img.width,h=img.height;
+        if(w>h && w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}
+        else if(h>=w && h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        return cv.toDataURL('image/jpeg',q);
+      };
+      let maxDim=440,q=0.6,out=draw(maxDim,q);
+      for(let i=0;i<5 && out.length>45000;i++){ maxDim=Math.round(maxDim*0.8); q=Math.max(0.35,q-0.08); out=draw(maxDim,q); }
+      resolve(out);
+    };
+    img.onerror=reject; img.src=url;
+  });
+}
+
 /* ---- Modal helpers ----------------------------------------- */
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}

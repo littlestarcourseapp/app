@@ -179,7 +179,7 @@ async function renderToday(){
     <td><b>${sName(c.student_id)}</b></td><td>${timeRange(c.start_time,c.end_time)}</td>
     <td>${c.duration||'-'} min</td>
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
-    <td>${c.topic?`<b>${c.topic}</b><br><span class="muted">${c.note||''}</span>`:'<span class="muted">Belum diisi</span>'}</td>
+    <td>${c.topic?`<b style="white-space:pre-line">${esc(c.topic)}</b><br><span class="muted" style="white-space:pre-line">${esc(c.note||'')}</span>`:'<span class="muted">Belum diisi</span>'}</td>
     <td>${c.material_url?'📄 <span class="text-green">Ada</span>':'<span class="muted">-</span>'}</td>
     <td><button class="btn btn-primary btn-sm" onclick="openFill('${c.id}')">Isi</button></td></tr>`).join('')
     || '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Tidak ada jadwal hari ini.</td></tr>';

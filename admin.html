@@ -177,8 +177,8 @@ async function renderToday(){
       <td>${i+1}</td><td><b>${sName(c.student_id)}</b></td><td>${tName(c.tutor_id)}</td>
       <td>${c.start_time||'-'}</td><td>${c.end_time||'<span class="muted">-</span>'}</td>
       <td>${c.duration||'-'} min</td><td>${type}</td>
-      <td>${c.topic||'<span class="muted">-</span>'}</td><td>${c.note||'<span class="muted">-</span>'}</td>
-      <td>${c.doc_url?'🖼️':'<span class="muted">-</span>'}</td>
+      <td>${multiline(c.topic)}</td><td>${multiline(c.note)}</td>
+      <td>${docCell(c.doc_url)}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-warn btn-sm" onclick="editClass('${c.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="delClass('${c.id}')">Delete</button>
@@ -221,6 +221,22 @@ function calMove(n){calWeek.setDate(calWeek.getDate()+n);renderCalendar();}
 function calToday(){calWeek=mondayOf(new Date());renderCalendar();}
 const DNAME=['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
 const MNAME=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+// Side-by-side layout for overlapping classes: assign each a lane + total columns
+function layoutLanes(evs){
+  let i=0;
+  while(i<evs.length){
+    let clusterEnd=evs[i].end, j=i+1;
+    while(j<evs.length && evs[j].start < clusterEnd){ clusterEnd=Math.max(clusterEnd,evs[j].end); j++; }
+    const cluster=evs.slice(i,j), colEnds=[];
+    cluster.forEach(ev=>{
+      let placed=false;
+      for(let k=0;k<colEnds.length;k++){ if(colEnds[k]<=ev.start){ ev.lane=k; colEnds[k]=ev.end; placed=true; break; } }
+      if(!placed){ ev.lane=colEnds.length; colEnds.push(ev.end); }
+    });
+    cluster.forEach(ev=>ev.cols=colEnds.length);
+    i=j;
+  }
+}
 async function renderCalendar(){
   const days=[...Array(7)].map((_,i)=>{const d=new Date(calWeek);d.setDate(d.getDate()+i);return d;});
   const isos=days.map(isoOf); const tIso=todayStr();
@@ -231,15 +247,21 @@ async function renderCalendar(){
   let html=`<div class="cal-times">`+hours.map(h=>`<div class="th">${pad2(h)}:00</div>`).join('')+`</div>`;
   const all=await API.getClasses({});
   days.forEach((d,i)=>{
-    const evs=all.filter(c=>c.date===isos[i]&&c.start_time);
-    const lines=hours.map(()=>`<div class="hourline"></div>`).join('');
-    const chips=evs.map(c=>{
+    let evs=all.filter(c=>c.date===isos[i]&&c.start_time).map(c=>{
       const [sh,sm]=c.start_time.split(':').map(Number);
-      const top=((sh*60+sm)-CAL_START*60)/60*PXH;
+      const start=sh*60+sm;
       const dur=Number(c.duration)||(c.end_time?durMin(c.start_time,c.end_time):60)||60;
-      const hgt=Math.max(26,dur/60*PXH-3);
+      return {c,start,end:start+dur};
+    }).sort((a,b)=>a.start-b.start||a.end-b.end);
+    layoutLanes(evs); // assign side-by-side columns for overlapping classes
+    const lines=hours.map(()=>`<div class="hourline"></div>`).join('');
+    const chips=evs.map(ev=>{
+      const c=ev.c;
+      const top=(ev.start-CAL_START*60)/60*PXH;
+      const hgt=Math.max(26,(ev.end-ev.start)/60*PXH-3);
       if(top<0) return '';
-      return `<div class="cal-ev ${c.type==='online'?'online':'onsite'}" style="top:${top}px;height:${hgt}px" onclick="editClass('${c.id}')">
+      const w=100/ev.cols, leftPct=ev.lane*w;
+      return `<div class="cal-ev ${c.type==='online'?'online':'onsite'}" style="top:${top}px;height:${hgt}px;left:calc(${leftPct}% + 2px);width:calc(${w}% - 4px);right:auto" onclick="editClass('${c.id}')">
         ${sName(c.student_id)}<small>${c.start_time}${c.end_time?'–'+c.end_time:''} · ${tName(c.tutor_id)}</small></div>`;
     }).join('');
     html+=`<div class="cal-col ${isos[i]===tIso?'today':''}">${lines}${chips}</div>`;
@@ -289,9 +311,12 @@ async function saveClass(){
   };
   if(!p.student_id){toast('Pilih murid dulu','err');return;}
   if(!p.tutor_id){toast('Pilih tentor dulu','err');return;}
-  if(document.getElementById('cDoc').files[0]) p.doc_url='uploaded';
-  if(p.id) await API.updateClass(p); else await API.addClass(p);
-  closeModal('mClass'); toast('Kelas disimpan','ok'); renderToday();
+  const df=document.getElementById('cDoc').files[0];
+  if(df){ try{ toast('Memproses foto…'); p.doc_url=await resizeImageToDataURL(df); }catch(e){ toast('Foto gagal diproses','err'); } }
+  try{
+    if(p.id) await API.updateClass(p); else await API.addClass(p);
+    closeModal('mClass'); toast('Kelas disimpan','ok'); renderToday();
+  }catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
 }
 async function delClass(id){ if(!confirm('Hapus kelas ini?'))return; await API.deleteClass(id); toast('Terhapus','ok'); renderToday(); }
 

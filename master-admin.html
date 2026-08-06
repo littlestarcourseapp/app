@@ -442,7 +442,7 @@ async function openReport(id){
         <div class="hint">Date of Birth: ${CUR.dob?prettyDate(CUR.dob):'-'}</div>
         <div class="hint">Address: ${CUR.address||'-'}</div>
         <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'}) 🟢</div></div></div>
-    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT</div><div class="val" style="font-size:18px">LUNAS ${meets}× MEETING</div><div class="hint">${meets}×${perMin} = ${fmtNum(total)} menit · ${prettyDate(dep.last_paid)}</div></div>
+    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT</div><div class="val" style="font-size:18px">LUNAS ${meets}× MEETING</div><div class="hint">Per meet: ${fmtRp(CUR.fee_per_meeting)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Total: <b>${fmtRp((CUR.fee_per_meeting||0)*meets)}</b> · ${prettyDate(dep.last_paid)}</div></div>
     <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${fmtNum(used)} <span style="font-size:13px">menit</span></div><div class="hint">${Math.round(used/perMin)} meetings</div></div>
     <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${fmtNum(left)} <span style="font-size:13px">menit</span></div><div class="hint">Setara ${Math.floor(left/perMin)} sesi</div></div>`;
   // history
@@ -450,8 +450,8 @@ async function openReport(id){
     <td>${i+1}</td><td>${prettyDate(c.date)}<br><span class="muted">(${dayName(c.date)})</span></td>
     <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
-    <td>${c.topic||'<span class="muted">-</span>'}</td><td>${c.note||'<span class="muted">-</span>'}</td>
-    <td>${c.doc_url?'🖼️':'<span class="muted">-</span>'}</td></tr>`).join('')
+    <td>${multiline(c.topic)}</td><td>${multiline(c.note)}</td>
+    <td>${docCell(c.doc_url)}</td></tr>`).join('')
     ||'<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Belum ada kelas.</td></tr>';
   // summary
   const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
@@ -461,7 +461,7 @@ async function openReport(id){
     <div class="stat tint-green"><div class="lbl">SISA DEPOSIT</div><div class="val">${fmtNum(left)} menit</div><div class="progress"><span style="width:${Math.min(100,Math.round(used/total*100))}%"></span></div><div class="hint">Terpakai ${fmtNum(used)}/${fmtNum(total)}</div></div>
     <div class="stat tint-blue"><div class="lbl">TAMBAHAN MEETING</div><div class="val">${Math.round(extraMin/perMin*10)/10} sesi</div><div class="hint">= ${extraMin} menit</div></div>
     <div class="stat tint-amber"><div class="lbl">TAMBAHAN FEE</div><div class="val">${fmtRp(Math.round(extraMin*feePerMin))}</div><div class="hint">dari tarif per meet</div></div>
-    <div class="stat tint-purple"><div class="lbl">TOTAL FEE BULAN INI</div><div class="val">${fmtRp(Math.round(actMin*feePerMin))}</div><div class="hint">${new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</div></div>`;
+    <div class="stat tint-purple"><div class="lbl">TOTAL DEPOSIT DIBAYAR</div><div class="val">${fmtRp((CUR.fee_per_meeting||0)*meets)}</div><div class="hint">${meets}× ${fmtRp(CUR.fee_per_meeting)}</div></div>`;
   buildWa(dep,cls,{perMin,meets,total,used,extraMin,feePerMin,actMin});
 }
 

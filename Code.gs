@@ -85,11 +85,12 @@ function rows(name){
   const tz=Session.getScriptTimeZone();
   const keys=data[0].map(h=>keyOf(name,h));
   const WA=['wa_ortu','wa'];
+  const TIME=['start_time','end_time','stu_in','stu_out','tut_in','tut_out'];
   return data.slice(1).map(r=>{
     const o={};
     keys.forEach((k,i)=>{
       let v=r[i];
-      if(v instanceof Date) v=Utilities.formatDate(v,tz,'yyyy-MM-dd');
+      if(v instanceof Date) v=Utilities.formatDate(v,tz, TIME.includes(k)?'HH:mm':'yyyy-MM-dd');
       if(WA.includes(k)) v=String(v||'');
       // If two columns map to the same key, keep the one that actually has a value
       const cur=o[k];
