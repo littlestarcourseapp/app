@@ -165,35 +165,39 @@ function setMe(s){
 }
 
 async function renderDash(){
-  const dep=await API.getDeposit(ME.id)||{};
   const cls=await API.getClasses({student_id:ME.id});
+  const pays=await API.getPayments({student_id:ME.id});
+  const pay=pays[0]||null; // latest payment/billing
+  const perMin=pay?Number(pay.duration)||90:(ME.meeting_minutes||90);
+  const meets=pay?Number(pay.meetings)||0:(ME.deposit_meetings||0);
+  const perMeet=pay?Number(pay.price_per_meet)||0:(ME.fee_per_meeting||0);
+  const base=pay?Number(pay.deposit_total)||perMeet*meets:perMeet*meets;
+  const addFee1=pay?Number(pay.add_fee1)||0:0, addFee2=pay?Number(pay.add_fee2)||0:0;
+  const addFee2Note=pay?pay.add_fee2_note||'':'';
+  const nextDep=pay?Number(pay.next_deposit)||0:0;
+  const grandBill=pay?Number(pay.grand_total)||(addFee1+addFee2+nextDep):(addFee1+addFee2+nextDep);
   // deposit band
-  const meets=dep.paid_meetings||ME.deposit_meetings||0;
-  const perMin=ME.meeting_minutes||90;
-  const perMeet=ME.fee_per_meeting||0, base=perMeet*meets, addFee=Number(ME.add_fee)||0, depTotal=base+addFee;
-  document.getElementById('depTitle').textContent=`LUNAS ${meets}× MEETING`;
-  document.getElementById('depDetail').innerHTML=`Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(dep.minutes_total||meets*perMin)} menit<br>Paket: <b>${fmtRp(base)}</b>${addFee?` + Tambahan: <b>${fmtRp(addFee)}</b>${ME.add_fee_note?` <span class="muted">(${esc(ME.add_fee_note)})</span>`:''}`:''}<br>Total dibayar: <b class="text-green">${fmtRp(depTotal)}</b> · Bayar terakhir: ${prettyDate(dep.last_paid)}`;
+  document.getElementById('depTitle').textContent = pay?`LUNAS ${meets}× MEETING`:'BELUM ADA DEPOSIT';
+  document.getElementById('depDetail').innerHTML = pay
+    ? `Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(meets*perMin)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b> · Bayar: ${prettyDate(pay.pay_date)}`
+    : 'Hubungi admin untuk info pembayaran.';
   // history (latest 5)
   const tb=document.getElementById('histBody');
   tb.innerHTML=cls.slice(0,5).map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);
   // summary cards
-  const total=dep.minutes_total||meets*perMin;
-  const used=dep.minutes_used!=null?dep.minutes_used:cls.reduce((a,c)=>a+(Number(c.duration)||0),0);
-  const left=total-used;
-  document.getElementById('cSisa').textContent=fmtNum(left)+' menit';
-  document.getElementById('cSisaHint').textContent=`Setara ${Math.floor(left/perMin)} sesi × ${perMin} menit`;
-  document.getElementById('cBar').style.width=Math.min(100,Math.round(used/total*100))+'%';
-  document.getElementById('cUsed').textContent=`Terpakai ${fmtNum(used)} dari ${fmtNum(total)} menit`;
-  // extra minutes beyond standard
+  const total=meets*perMin;
   const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
-  const stdMin=monthCls.length*perMin;
-  const actualMin=monthCls.reduce((a,c)=>a+(Number(c.duration)||0),0);
-  const extraMin=Math.max(0,actualMin-stdMin);
-  const feePerMin=(ME.fee_per_meeting||0)/perMin;
-  document.getElementById('cExtra').textContent=(extraMin/perMin<1&&extraMin>0?'0.5':Math.round(extraMin/perMin*10)/10)+' sesi';
+  const used=monthCls.reduce((a,c)=>a+(Number(c.duration)||0),0);
+  const left=Math.max(0,total-used);
+  document.getElementById('cSisa').textContent=fmtNum(left)+' menit';
+  document.getElementById('cSisaHint').textContent=`Setara ${Math.floor(left/(perMin||90))} sesi × ${perMin} menit`;
+  document.getElementById('cBar').style.width=(total?Math.min(100,Math.round(used/total*100)):0)+'%';
+  document.getElementById('cUsed').textContent=`Terpakai ${fmtNum(used)} dari ${fmtNum(total)} menit`;
+  const extraMin=pay?Number(pay.extra_minutes)||0:0;
+  document.getElementById('cExtra').textContent=(Math.round(extraMin/(perMin||90)*10)/10)+' sesi';
   document.getElementById('cExtraHint').textContent=`= ${extraMin} menit tambahan`;
-  document.getElementById('cFeeExtra').textContent=fmtRp(Math.round(extraMin*feePerMin));
-  document.getElementById('cFeeMonth').textContent=fmtRp(depTotal);
+  document.getElementById('cFeeExtra').textContent=fmtRp(addFee1);
+  document.getElementById('cFeeMonth').textContent=fmtRp(base);
 }
 function rowHist(n,c){
   return `<tr><td>${n}</td>

@@ -153,6 +153,10 @@ function doPost(e){
       // Deposit
       case 'getDeposit':      return ok(getDeposit(p.student_id));
       case 'setDeposit':      return ok(setDeposit(p));
+      // Payments
+      case 'getPayments':     return ok(getPayments(p));
+      case 'savePayment':     return ok(savePayment(p));
+      case 'deletePayment':   return ok(del('Payments',p.id));
       // Uploads
       case 'uploadFile':      return ok(uploadFile(p));
       default:                return err('Unknown action: '+p.action);
@@ -169,6 +173,8 @@ const SCHEMAS = {
   Classes: ['id','date','student_id','tutor_id','start_time','end_time','duration','type',
             'topic','note','material_url','doc_url','stu_in','stu_out','tut_in','tut_out'],
   Deposit: ['student_id','paid_meetings','minutes_total','minutes_used','fee_per_meeting','last_paid','status'],
+  Payments:['id','student_id','month','pay_date','meetings','price_per_meet','duration','deposit_total',
+            'extra_minutes','add_fee1','add_fee2','add_fee2_note','next_meetings','next_deposit','grand_total','status'],
 };
 
 // Guarantee the header row exists & contains every column.
@@ -367,6 +373,38 @@ function findRow2(name,key,val){
   const idx=idxOf(data[0],name,key);
   for(let i=1;i<data.length;i++) if(String(data[i][idx])===String(val)) return {sh,i,head:data[0],name};
   return null;
+}
+
+/* ---------- Payments (deposit + monthly billing) ---------- */
+function payFields(p){
+  return {
+    student_id:p.student_id||'', month:p.month||'', pay_date:p.pay_date||'',
+    meetings:Number(p.meetings)||0, price_per_meet:Number(p.price_per_meet)||0, duration:Number(p.duration)||0,
+    deposit_total:Number(p.deposit_total)||0, extra_minutes:Number(p.extra_minutes)||0,
+    add_fee1:Number(p.add_fee1)||0, add_fee2:Number(p.add_fee2)||0, add_fee2_note:p.add_fee2_note||'',
+    next_meetings:Number(p.next_meetings)||0, next_deposit:Number(p.next_deposit)||0,
+    grand_total:Number(p.grand_total)||0, status:p.status||'LUNAS'
+  };
+}
+function getPayments(p){
+  let r=rows('Payments');
+  if(p.student_id) r=r.filter(x=>x.student_id===p.student_id);
+  if(p.month)      r=r.filter(x=>x.month===p.month);
+  return r.sort((a,b)=>String(b.month).localeCompare(String(a.month)));
+}
+function savePayment(p){
+  const sh=getSheet('Payments'); ensureHeaders(sh,'Payments',SCHEMAS.Payments);
+  if(p.id){
+    const ctx=findRow('Payments',p.id);
+    if(ctx){ setFields(ctx,payFields(p)); return {updated:p.id}; }
+  }
+  const id=uid();
+  const head=sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  const row=new Array(head.length).fill('');
+  const f=payFields(p); f.id=id;
+  Object.entries(f).forEach(([k,v])=>{ const i=idxOf(head,'Payments',k); if(i>=0) row[i]=v; });
+  sh.appendRow(row);
+  return {id};
 }
 
 /* ---------- Generic delete + upload ---------- */

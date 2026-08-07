@@ -27,9 +27,9 @@
     .sidebar,.backdrop,.topbar,.foot-note{display:none!important}
     .main{display:block}
     .content{padding:0!important}
-    .view:not(#view-report){display:none!important}
-    #view-report .page-head,.no-print{display:none!important}
+    .page-head,.no-print{display:none!important}
     .print-only{display:block!important}
+    .pill-tabs{display:none!important}
     .report-grid{grid-template-columns:1fr!important}   /* WA composer column hidden below */
     #view-report .drawer,#view-report [id^=mWa]{display:none!important}
     .card{box-shadow:none!important;border:1px solid #ddd}
@@ -62,6 +62,7 @@
       <a data-view="students"><span class="ic">🧑‍🎓</span> Murid</a>
       <a data-view="tutors"><span class="ic">👩‍🏫</span> Tentor</a>
       <a data-view="laporan"><span class="ic">📊</span> Laporan</a>
+      <a data-view="payment"><span class="ic">💳</span> Payment</a>
       <div class="divider"></div>
       <div class="sidebar-role" style="margin-top:0">Buka Portal Lain</div>
       <a href="admin.html"><span class="ic">🗂️</span> Portal Admin</a>
@@ -166,7 +167,7 @@
         <div class="page-head"><div><h1>Murid</h1><div class="sub">Kelola data murid — Edit atau buka laporan</div></div>
           <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
-          <thead><tr><th>Nama</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>Deposit</th><th>Action</th></tr></thead>
+          <thead><tr><th>Nama</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>Action</th></tr></thead>
           <tbody id="msBody"></tbody>
         </table></div></div>
       </section>
@@ -189,6 +190,38 @@
           <thead><tr><th>Murid</th><th>Jml Kelas</th><th>Total Menit</th><th>Fee Ortu/Meet</th><th>Estimasi Tagihan</th><th></th></tr></thead>
           <tbody id="repBody"></tbody>
         </table></div></div>
+      </section>
+
+      <!-- PAYMENT -->
+      <section class="view hide" id="view-payment">
+        <div class="page-head">
+          <div><h1>Student Payment</h1><div class="breadcrumb">Payment › <b id="payCrumb">Pilih murid</b></div></div>
+          <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Cetak Invoice</button>
+        </div>
+
+        <div class="print-only print-head">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img src="assets/logo.jpeg" alt="Little Star">
+            <div>
+              <div class="pt" id="payPrintTitle">Invoice — Little Star Course</div>
+              <div class="pl">Nama: <b id="payPhName">—</b></div>
+              <div class="pl" id="payPhSub">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-pad no-print" style="margin-bottom:16px">
+          <label style="font-weight:700;font-size:12.5px">Search Student</label>
+          <select id="paySel" onchange="renderPayment(this.value)" style="width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:11px;margin-top:6px;font-family:inherit;font-size:14px"></select>
+        </div>
+
+        <div class="pill-tabs no-print" id="payTabs" style="display:none">
+          <button id="ptDeposit" class="active" onclick="showPayTab('deposit')">💳 Deposit Payment</button>
+          <button id="ptBilling" onclick="showPayTab('billing')">🧾 Laporan Akhir Penagihan</button>
+        </div>
+
+        <div id="payDeposit"></div>
+        <div id="payBilling" class="hide"></div>
       </section>
 
       <div class="foot-note">© 2026 Little Star Course. All rights reserved.</div>
@@ -239,10 +272,7 @@
         <div class="field"><label>Fee / Meeting (Orang Tua)</label><input type="number" id="sFee" value="150000"></div>
         <div class="field"><label>Fee Tentor / Meeting</label><input type="number" id="sFeeTutor" value="90000"><div class="help">Untuk hitung fee di portal tentor</div></div>
       </div>
-      <div class="field-row">
-        <div class="field"><label>Durasi (menit)</label><input type="number" id="sMin" value="90"></div>
-        <div class="field"><label>Deposit (jumlah meeting)</label><input type="number" id="sDep" value="8"></div>
-      </div>
+      <input type="hidden" id="sMin" value="90"><input type="hidden" id="sDep" value="0">
       <div style="border-top:1px dashed var(--line);margin:6px 0 14px;padding-top:12px">
         <div class="field-row">
           <div class="field"><label>Additional Fee <span class="help" style="display:inline">(opsional)</span></label><input type="number" id="sAddFee" placeholder="0"></div>
@@ -299,7 +329,7 @@
 <script src="assets/app.js"></script>
 <script>
 document.getElementById('logo').innerHTML=logoBlock('Little Star','Master Admin');
-let TUTORS=[],STUDENTS=[],CUR=null,REP_MONTH=todayStr().slice(0,7);
+let TUTORS=[],STUDENTS=[],CUR=null,REP_MONTH=todayStr().slice(0,7),PAY_SID=null,PAY_LIST=[];
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 function showView(v){
@@ -316,7 +346,157 @@ function renderM(v){
   if(v==='students')    renderStudentsM();
   if(v==='tutors')      renderTutorsM();
   if(v==='laporan')     renderLaporan();
+  if(v==='payment')     initPayment();
 }
+
+/* ================= PAYMENT MODULE ================= */
+function initPayment(){
+  const sel=document.getElementById('paySel');
+  sel.innerHTML='<option value="">— Pilih murid —</option>'+STUDENTS.map(s=>`<option value="${s.id}" ${s.id===PAY_SID?'selected':''}>${s.nama}</option>`).join('');
+  if(PAY_SID) renderPayment(PAY_SID);
+}
+async function renderPayment(sid){
+  PAY_SID=sid||null;
+  document.getElementById('payTabs').style.display = sid?'flex':'none';
+  if(!sid){ document.getElementById('payDeposit').innerHTML=''; document.getElementById('payBilling').innerHTML=''; document.getElementById('payCrumb').textContent='Pilih murid'; return; }
+  const st=STUDENTS.find(s=>s.id===sid);
+  document.getElementById('payCrumb').textContent=st.nama;
+  document.getElementById('payPhName').textContent=st.nama;
+  PAY_LIST=await API.getPayments({student_id:sid});
+  renderDepositPane(st,PAY_LIST);
+  renderBillingPane(st,PAY_LIST);
+  showPayTab('deposit');
+}
+function showPayTab(tab){
+  const dep=tab==='deposit';
+  document.getElementById('payDeposit').classList.toggle('hide',!dep);
+  document.getElementById('payBilling').classList.toggle('hide',dep);
+  document.getElementById('ptDeposit').classList.toggle('active',dep);
+  document.getElementById('ptBilling').classList.toggle('active',!dep);
+  document.getElementById('payPrintTitle').textContent = dep?'Invoice Deposit — Little Star Course':'Invoice Penagihan — Little Star Course';
+  document.getElementById('payPhSub').textContent = dep?'Rincian Pembayaran Deposit':'Laporan Akhir Penagihan';
+}
+function renderDepositPane(st,list){
+  document.getElementById('payDeposit').innerHTML=`
+    <div class="card card-pad no-print" style="margin-bottom:16px">
+      <div class="card-title" style="color:var(--green2)">🧾 DEPOSIT PAYMENT</div>
+      <div class="grid grid-3">
+        <div class="field"><label>Jumlah Meeting (Deposit)</label><input type="number" id="pdMeet" value="8" oninput="calcDeposit()"></div>
+        <div class="field"><label>Periode (Bulan)</label><input type="month" id="pdMonth" value="${todayStr().slice(0,7)}"></div>
+        <div class="field"><label>Tanggal Bayar</label><input type="date" id="pdDate" value="${todayStr()}"></div>
+        <div class="field"><label>Harga per Meet</label><input type="number" id="pdPrice" value="${st.fee_per_meeting||150000}" oninput="calcDeposit()"></div>
+        <div class="field"><label>Durasi per Meet (menit)</label><input type="number" id="pdDur" value="${st.meeting_minutes||90}"></div>
+        <div class="field"><label>Total Payment</label><div id="pdTotal" style="font-size:22px;font-weight:800;color:var(--green2);padding-top:4px">Rp 0</div></div>
+      </div>
+      <div style="text-align:right"><button class="btn btn-green" onclick="saveDeposit()">＋ Simpan Deposit</button></div>
+    </div>
+    <div class="card">
+      <div class="card-pad" style="padding-bottom:0"><div class="card-title">Rincian Payment</div></div>
+      <div class="table-wrap"><table class="tbl">
+        <thead><tr><th>No</th><th>Tanggal Bayar</th><th>Deposit Meeting</th><th>Harga/Meet</th><th>Durasi</th><th>Total Payment</th><th>Status</th><th class="no-print">Aksi</th></tr></thead>
+        <tbody>${list.map((p,i)=>`<tr>
+          <td>${i+1}</td><td>${prettyDate(p.pay_date)}</td><td>${p.meetings} meetings</td>
+          <td>${fmtRp(p.price_per_meet)}</td><td>${p.duration} menit</td><td><b>${fmtRp(p.deposit_total)}</b></td>
+          <td><span class="badge badge-paid">${p.status||'LUNAS'}</span></td>
+          <td class="no-print"><button class="btn btn-danger btn-sm" onclick="delPayment('${p.id}')">Hapus</button></td></tr>`).join('')
+          || '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">Belum ada pembayaran.</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
+  calcDeposit();
+}
+function calcDeposit(){
+  const m=Number((document.getElementById('pdMeet')||{}).value)||0, pr=Number((document.getElementById('pdPrice')||{}).value)||0;
+  const el=document.getElementById('pdTotal'); if(el) el.textContent=fmtRp(m*pr);
+}
+async function saveDeposit(){
+  const m=Number(document.getElementById('pdMeet').value)||0, pr=Number(document.getElementById('pdPrice').value)||0;
+  const month=document.getElementById('pdMonth').value;
+  if(!month){toast('Isi periode dulu','err');return;}
+  const p={student_id:PAY_SID,month,pay_date:document.getElementById('pdDate').value,meetings:m,price_per_meet:pr,
+    duration:Number(document.getElementById('pdDur').value)||90,deposit_total:m*pr,
+    next_meetings:m,next_deposit:m*pr,grand_total:m*pr,status:'LUNAS'};
+  try{ await API.savePayment(p); toast('Deposit tersimpan','ok'); renderPayment(PAY_SID); }
+  catch(e){ toast('Gagal: '+(e.message||e),'err'); }
+}
+async function delPayment(id){
+  if(!confirm('Hapus pembayaran ini?'))return;
+  try{ await API.deletePayment(id); toast('Terhapus','ok'); renderPayment(PAY_SID); }catch(e){ toast('Gagal: '+(e.message||e),'err'); }
+}
+function renderBillingPane(st,list){
+  const opts=list.map(p=>`<option value="${p.id}">${new Date(p.month+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</option>`).join('');
+  document.getElementById('payBilling').innerHTML=`
+    <div class="card card-pad no-print" style="margin-bottom:16px">
+      <label style="font-weight:700;font-size:12.5px">Pilih Periode Penagihan</label>
+      <select id="blSel" onchange="loadBilling()" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-top:6px">${opts||'<option value="">(belum ada deposit)</option>'}</select>
+    </div>
+    <div id="blContent"></div>`;
+  if(list.length) loadBilling();
+  else document.getElementById('blContent').innerHTML='<div class="card card-pad muted" style="text-align:center">Belum ada data deposit. Isi di tab Deposit Payment dulu.</div>';
+}
+function curPay(){ return PAY_LIST.find(x=>x.id===(document.getElementById('blSel')||{}).value)||PAY_LIST[0]; }
+function loadBilling(){
+  const st=STUDENTS.find(s=>s.id===PAY_SID), p=curPay(); if(!p)return;
+  const dur=Number(p.duration)||90, price=Number(p.price_per_meet)||0;
+  document.getElementById('blContent').innerHTML=`
+    <div class="card card-pad" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap">
+      <div><div class="lbl muted">Murid</div><b>${st.nama}</b></div>
+      <div><div class="lbl muted">Orang Tua</div><b>${st.parent_name||'-'}</b></div>
+      <div><div class="lbl muted">Durasi Normal</div><b>${dur} menit</b></div>
+      <div><div class="lbl muted">Harga per Meet</div><b>${fmtRp(price)}</b></div>
+    </div>
+    <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="stat tint-green"><div class="lbl">TOTAL PAYMENT BULAN INI</div><div class="val">${fmtRp(p.deposit_total)}</div><div class="hint">meeting yang sudah dijalankan</div></div>
+      <div class="stat tint-blue"><div class="lbl">TAMBAHAN SESI (LEBIH DURASI)</div>
+        <input type="number" id="blExtra" value="${p.extra_minutes||0}" oninput="calcBilling()" placeholder="menit tambahan" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
+        <div class="hint">Additional Fee 1 (otomatis)</div><div style="font-weight:800;color:var(--blue);font-size:16px" id="blFee1">Rp 0</div>
+        <div class="hint" id="blFee1Calc"></div></div>
+      <div class="stat tint-amber"><div class="lbl">ADDITIONAL FEE 2 (MANUAL)</div>
+        <input type="number" id="blFee2" value="${p.add_fee2||0}" oninput="calcBilling()" placeholder="nominal" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
+        <textarea id="blFee2Note" placeholder="Keterangan" style="width:100%;min-height:42px;padding:8px;border:1.5px solid var(--line);border-radius:9px">${esc(p.add_fee2_note||'')}</textarea></div>
+      <div class="stat tint-purple"><div class="lbl">DEPOSIT NEXT MONTH</div>
+        <input type="number" id="blNext" value="${p.next_meetings||p.meetings||8}" oninput="calcBilling()" placeholder="meetings" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
+        <div class="hint">Total Deposit</div><div style="font-weight:800;color:var(--purple);font-size:16px" id="blNextDep">Rp 0</div></div>
+    </div>
+    <div class="card card-pad" style="background:var(--purple-soft)">
+      <div class="card-title" style="color:var(--purple)">RINGKASAN TAGIHAN</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px">
+        Additional Fee 1: <b id="sFee1">Rp 0</b> + Additional Fee 2: <b id="sFee2">Rp 0</b> + Deposit Next Month: <b id="sNext">Rp 0</b>
+        <span style="margin-left:auto;font-size:12px;color:var(--muted)">TOTAL YANG HARUS DIBAYAR</span>
+        <span style="font-size:24px;font-weight:800;color:var(--purple)" id="blGrand">Rp 0</span>
+      </div>
+      <div style="text-align:right;margin-top:12px" class="no-print"><button class="btn btn-primary" onclick="saveBilling('${p.id}')">💾 Simpan Penagihan</button></div>
+    </div>
+    <div class="note-band mt-16 no-print">ℹ️ Data ini otomatis muncul di Laporan murid & pesan WA. Deposit bulan depan jadi pembayaran meeting berikutnya.</div>`;
+  calcBilling();
+}
+function calcBilling(){
+  const p=curPay(); if(!p)return;
+  const dur=Number(p.duration)||90, price=Number(p.price_per_meet)||0;
+  const extra=Number(document.getElementById('blExtra').value)||0;
+  const fee1=Math.round(price/dur*extra);
+  const fee2=Number(document.getElementById('blFee2').value)||0;
+  const nextMeet=Number(document.getElementById('blNext').value)||0;
+  const nextDep=nextMeet*price, grand=fee1+fee2+nextDep;
+  document.getElementById('blFee1').textContent=fmtRp(fee1);
+  document.getElementById('blFee1Calc').textContent=`(${fmtRp(price)}/${dur} mnt) × ${extra} mnt`;
+  document.getElementById('blNextDep').textContent=fmtRp(nextDep);
+  document.getElementById('sFee1').textContent=fmtRp(fee1);
+  document.getElementById('sFee2').textContent=fmtRp(fee2);
+  document.getElementById('sNext').textContent=fmtRp(nextDep);
+  document.getElementById('blGrand').textContent=fmtRp(grand);
+}
+async function saveBilling(id){
+  const p=PAY_LIST.find(x=>x.id===id); if(!p)return;
+  const dur=Number(p.duration)||90, price=Number(p.price_per_meet)||0;
+  const extra=Number(document.getElementById('blExtra').value)||0;
+  const fee1=Math.round(price/dur*extra);
+  const fee2=Number(document.getElementById('blFee2').value)||0, note=document.getElementById('blFee2Note').value;
+  const nextMeet=Number(document.getElementById('blNext').value)||0, nextDep=nextMeet*price;
+  const upd={...p,extra_minutes:extra,add_fee1:fee1,add_fee2:fee2,add_fee2_note:note,next_meetings:nextMeet,next_deposit:nextDep,grand_total:fee1+fee2+nextDep};
+  try{ await API.savePayment(upd); toast('Penagihan tersimpan','ok'); PAY_LIST=await API.getPayments({student_id:PAY_SID}); loadBilling(); }
+  catch(e){ toast('Gagal: '+(e.message||e),'err'); }
+}
+/* ============== end PAYMENT MODULE ============== */
 async function renderAllClasses(){
   const m=document.getElementById('acMonth').value;
   const all=await API.getClasses(m?{month:m}:{});
@@ -331,11 +511,11 @@ function renderStudentsM(){
   document.getElementById('msBody').innerHTML=STUDENTS.map(s=>`<tr>
     <td><b>${s.nama}</b></td><td>${s.school||'<span class="muted">-</span>'}</td><td>${s.grade||'-'}</td>
     <td>${s.parent_name||'-'}</td><td>${s.schedule||'-'}</td>
-    <td>${fmtRp(s.fee_per_meeting)}</td><td>${fmtRp(s.fee_tentor)}</td><td>${s.deposit_meetings||0}×</td>
+    <td>${fmtRp(s.fee_per_meeting)}</td><td>${fmtRp(s.fee_tentor)}</td>
     <td style="white-space:nowrap">
       <button class="btn btn-warn btn-sm" onclick="openStudent('${s.id}')">Edit</button>
       <button class="btn btn-outline btn-sm" onclick="openReport('${s.id}')">Laporan →</button></td></tr>`).join('')
-    ||'<tr><td colspan="9" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
+    ||'<tr><td colspan="8" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
 }
 function renderTutorsM(){
   document.getElementById('mtBody').innerHTML=TUTORS.map(t=>`<tr>
@@ -490,12 +670,21 @@ async function openReport(id, month){
   document.getElementById('rHist').textContent=`📅 Riwayat Kelas ${CUR.nama.split(' ')[0]} · ${periodName}`;
   document.getElementById('phName').textContent=CUR.nama;
   document.getElementById('phPeriod').textContent=periodName;
-  const dep=await API.getDeposit(id)||{};
   const allCls=await API.getClasses({student_id:id});
   const cls=allCls.filter(c=>String(c.date).startsWith(REP_MONTH));
-  const perMin=CUR.meeting_minutes||90, meets=dep.paid_meetings||CUR.deposit_meetings||0;
-  const total=dep.minutes_total||meets*perMin, used=dep.minutes_used!=null?dep.minutes_used:allCls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
-  const addFee=Number(CUR.add_fee)||0, base=(CUR.fee_per_meeting||0)*meets, grand=base+addFee;
+  // deposit & billing now come from the Payment tab
+  const pays=await API.getPayments({student_id:id});
+  const pay=pays.find(x=>x.month===REP_MONTH)||pays[0]||null;
+  const perMin=pay?Number(pay.duration)||90:(CUR.meeting_minutes||90);
+  const meets=pay?Number(pay.meetings)||0:(CUR.deposit_meetings||0);
+  const perMeet=pay?Number(pay.price_per_meet)||0:(CUR.fee_per_meeting||0);
+  const base=pay?Number(pay.deposit_total)||perMeet*meets:perMeet*meets;
+  const total=meets*perMin, used=cls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
+  const addFee1=pay?Number(pay.add_fee1)||0:0, addFee2=pay?Number(pay.add_fee2)||0:0;
+  const addFee2Note=pay?pay.add_fee2_note||'':'';
+  const nextDep=pay?Number(pay.next_deposit)||0:0;
+  const grandBill=pay?Number(pay.grand_total)||(addFee1+addFee2+nextDep):(addFee1+addFee2+nextDep);
+  const hasPay=!!pay;
   // header cards
   document.getElementById('repHeader').innerHTML=`
     <div class="card card-pad" style="display:flex;gap:16px;align-items:center">
@@ -505,7 +694,7 @@ async function openReport(id, month){
         <div class="hint">Date of Birth: ${CUR.dob?prettyDate(CUR.dob):'-'}</div>
         <div class="hint">Address: ${CUR.address||'-'}</div>
         <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'}) 🟢</div></div></div>
-    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">LUNAS ${meets}× MEETING</div><div class="hint">Per meet: ${fmtRp(CUR.fee_per_meeting)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Paket: <b>${fmtRp(base)}</b>${addFee?` + Tambahan: <b>${fmtRp(addFee)}</b>`:''} · Total: <b class="text-green">${fmtRp(grand)}</b>${(addFee&&CUR.add_fee_note)?`<br><span class="muted">🏷️ ${esc(CUR.add_fee_note)}</span>`:''}</div></div>
+    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">${hasPay?`LUNAS ${meets}× MEETING`:'BELUM ADA'}</div><div class="hint">${hasPay?`Per meet: ${fmtRp(perMeet)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b> · ${prettyDate(pay.pay_date)}`:'Input di tab Payment dulu'}</div></div>
     <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${fmtNum(used)} <span style="font-size:13px">menit</span></div><div class="hint">${Math.round(used/perMin)} meetings</div></div>
     <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${fmtNum(left)} <span style="font-size:13px">menit</span></div><div class="hint">Setara ${Math.floor(left/perMin)} sesi</div></div>`;
   // history
@@ -516,50 +705,36 @@ async function openReport(id, month){
     <td>${multiline(c.topic)}</td><td>${multiline(c.note)}</td>
     <td>${docCell(c.doc_url)}</td></tr>`).join('')
     ||`<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Belum ada kelas pada ${periodName}.</td></tr>`;
-  // summary (based on selected month)
-  const stdMin=cls.length*perMin, actMin=cls.reduce((a,c)=>a+(+c.duration||0),0), extraMin=Math.max(0,actMin-stdMin);
-  const feePerMin=(CUR.fee_per_meeting||0)/perMin;
+  // billing summary (from Payment tab)
   document.getElementById('rSummary').innerHTML=`
-    <div class="stat tint-green"><div class="lbl">SISA DEPOSIT</div><div class="val">${fmtNum(left)} menit</div><div class="progress"><span style="width:${Math.min(100,Math.round(used/total*100))}%"></span></div><div class="hint">Terpakai ${fmtNum(used)}/${fmtNum(total)}</div></div>
-    <div class="stat tint-blue"><div class="lbl">TAMBAHAN MEETING</div><div class="val">${Math.round(extraMin/perMin*10)/10} sesi</div><div class="hint">= ${extraMin} menit</div></div>
-    <div class="stat tint-amber"><div class="lbl">TAMBAHAN FEE</div><div class="val">${fmtRp(Math.round(extraMin*feePerMin))}</div><div class="hint">dari tarif per meet</div></div>
-    <div class="stat tint-purple"><div class="lbl">TOTAL DEPOSIT DIBAYAR</div><div class="val">${fmtRp(grand)}</div><div class="hint">${meets}× ${fmtRp(CUR.fee_per_meeting)}${addFee?` + tambahan ${fmtRp(addFee)}`:''}</div></div>`;
-  buildWa(dep,cls,{perMin,meets,total,used,extraMin,feePerMin,actMin});
+    <div class="stat tint-blue"><div class="lbl">ADDITIONAL FEE 1 (Sesi Tambahan)</div><div class="val">${fmtRp(addFee1)}</div><div class="hint">${pay?(Number(pay.extra_minutes)||0):0} menit tambahan</div></div>
+    <div class="stat tint-amber"><div class="lbl">ADDITIONAL FEE 2 (Manual)</div><div class="val">${fmtRp(addFee2)}</div><div class="hint">${addFee2Note?esc(addFee2Note):'-'}</div></div>
+    <div class="stat tint-green"><div class="lbl">DEPOSIT BULAN DEPAN</div><div class="val">${fmtRp(nextDep)}</div><div class="hint">${pay?(Number(pay.next_meetings)||0):0}× meeting</div></div>
+    <div class="stat tint-purple"><div class="lbl">TOTAL YANG HARUS DIBAYAR</div><div class="val">${fmtRp(grandBill)}</div><div class="hint">Fee1 + Fee2 + Deposit depan</div></div>`;
+  buildWa(cls,{periodName,perMin,perMeet,meets,base,used,addFee1,addFee2,addFee2Note,nextDep,grandBill,pay});
 }
 
 /* ---- WA composer ---- */
 let WA_TEXT='',WA_NUM='';
-function buildWa(dep,cls,x){
-  const nm=CUR.nama.split(' ')[0], parent=(CUR.parent_name||'Bapak/Ibu').replace(/^(Ibu|Bpk\.?|Bapak)\s*/i,'');
-  const monthCls=cls;
-  const monthName=new Date(REP_MONTH+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-  const extraFee=Math.round(x.extraMin*x.feePerMin), monthFee=Math.round(x.actMin*x.feePerMin);
-  const nextMeets=CUR.deposit_meetings||8, nextDeposit=nextMeets*(CUR.fee_per_meeting||0);
-  const grand=extraFee+nextDeposit;
+function buildWa(cls,x){
+  const nm=CUR.nama.split(' ')[0];
   const g=document.getElementById('waGreet').value;
-  WA_TEXT=`${g}, ${CUR.parent_name||'Bapak/Ibu'} 😊
-
-Berikut laporan kelas ${nm} untuk bulan ${monthName} di Little Star Course.
-
-📅 Total pertemuan bulan ini: ${monthCls.length} kali
-⏱️ Total durasi: ${x.actMin} menit
-➕ Tambahan meeting: ${Math.round(x.extraMin/x.perMin*10)/10} sesi (${x.extraMin} menit)
-🧾 Tambahan fee: ${fmtRp(extraFee)}
-💰 Total fee bulan ini: ${fmtRp(monthFee)}
-
-Untuk deposit bulan depan, mohon pembayaran paket:
-• ${nextMeets} kali meeting (${nextMeets}×${x.perMin} menit)
-• Tarif per meeting: ${fmtRp(CUR.fee_per_meeting)}
-• Total deposit bulan depan: ${fmtRp(nextDeposit)}
-
-Terima kasih atas kepercayaannya kepada Little Star Course 🙏
-Semoga ${nm} terus semangat belajarnya!
-
-Salam hangat,
-Little Star Course ⭐`;
+  const nextMeets=x.pay?(Number(x.pay.next_meetings)||0):0;
+  const lines=[];
+  lines.push(`${g}, ${CUR.parent_name||'Bapak/Ibu'} 😊`,'',`Berikut laporan kelas ${nm} untuk bulan ${x.periodName} di Little Star Course.`,'');
+  lines.push(`📅 Total pertemuan bulan ini: ${cls.length} kali`);
+  lines.push(`⏱️ Total durasi: ${x.used} menit`);
+  if(x.base) lines.push(`💳 Deposit bulan ini: ${x.meets}× meeting = ${fmtRp(x.base)}`);
+  lines.push('');
+  if(x.addFee1) lines.push(`➕ Additional fee 1 (sesi tambahan): ${fmtRp(x.addFee1)}`);
+  if(x.addFee2) lines.push(`➕ Additional fee 2${x.addFee2Note?` (${x.addFee2Note})`:''}: ${fmtRp(x.addFee2)}`);
+  if(x.nextDep) lines.push(`📅 Deposit bulan depan: ${nextMeets}× meeting = ${fmtRp(x.nextDep)}`);
+  lines.push('',`🧾 *Total yang harus dibayar: ${fmtRp(x.grandBill)}*`,'');
+  lines.push('Terima kasih atas kepercayaannya kepada Little Star Course 🙏',`Semoga ${nm} terus semangat belajarnya!`,'','Salam hangat,','Little Star Course ⭐');
+  WA_TEXT=lines.join('\n');
   WA_NUM=(CUR.wa_ortu||'').replace(/[^0-9]/g,'').replace(/^0/,'62');
   document.getElementById('waMsg').textContent=WA_TEXT;
-  document.getElementById('waTotal').textContent=fmtRp(grand);
+  document.getElementById('waTotal').textContent=fmtRp(x.grandBill);
 }
 document.getElementById('waGreet').onchange=()=>{if(CUR)openReport(CUR.id);};
 function sendWa(){window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(WA_TEXT)}`,'_blank');}

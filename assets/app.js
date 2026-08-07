@@ -142,6 +142,10 @@ const API = {
   saveAttendance: (d)    => API._post({action:'saveAttendance',...d}),
 
   getDeposit  : (sid)  => API._post({action:'getDeposit',student_id:sid}),
+
+  getPayments : (o={}) => API._post({action:'getPayments',...o}),
+  savePayment : (d)    => API._post({action:'savePayment',...d}),
+  deletePayment:(id)   => API._post({action:'deletePayment',id}),
 };
 
 /* ============================================================
@@ -186,6 +190,10 @@ const DEMO = {
     s2:{paid_meetings:8, minutes_total:720, minutes_used:360,fee_per_meeting:150000,last_paid:'2026-07-05'},
     s3:{paid_meetings:12,minutes_total:1080,minutes_used:540,fee_per_meeting:140000,last_paid:'2026-07-10'},
   },
+  payments:[
+    {id:'pay1',student_id:'s1',month:'2026-06',pay_date:'2026-06-01',meetings:8,price_per_meet:150000,duration:90,
+     deposit_total:1200000,extra_minutes:0,add_fee1:0,add_fee2:0,add_fee2_note:'',next_meetings:8,next_deposit:1200000,grand_total:1200000,status:'LUNAS'},
+  ],
   handle(p){
     return new Promise((res,rej)=>{
       setTimeout(()=>{ try{ res(this._route(p)); }catch(e){ rej(e); } },120); // tiny delay to feel real
@@ -218,6 +226,9 @@ const DEMO = {
         this.classes=this.classes.filter(x=>x.id!==p.id); return {deleted:p.id};
       }
       case 'getDeposit': return clone(this.deposits[p.student_id]||null);
+      case 'getPayments':{ let r=clone(this.payments); if(p.student_id) r=r.filter(x=>x.student_id===p.student_id); if(p.month) r=r.filter(x=>x.month===p.month); return r.sort((a,b)=>String(b.month).localeCompare(String(a.month))); }
+      case 'savePayment':{ if(p.id){const e=this.payments.find(x=>x.id===p.id); if(e){Object.assign(e,p); return {updated:p.id};}} const id='pay'+Date.now(); this.payments.push({id,...p}); return {id}; }
+      case 'deletePayment':{ this.payments=this.payments.filter(x=>x.id!==p.id); return {deleted:p.id}; }
       case 'addStudent': { const id='s'+Date.now(); this.students.push({id,active:'aktif',...p}); return {id}; }
       case 'addTutor':   { const id='t'+Date.now(); const pin=p.pin||genPin(); this.tutors.push({id,pin,...p}); return {id,pin}; }
       case 'updateTutor':{ const t=this.tutors.find(x=>x.id===p.id); if(t) Object.assign(t,p); return {updated:p.id}; }
