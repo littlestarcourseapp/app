@@ -6,6 +6,23 @@
 <title>Tentor — Little Star Course</title>
 <link rel="icon" href="assets/logo.jpeg">
 <link rel="stylesheet" href="assets/style.css">
+<style>
+  .print-only{display:none}
+  .print-head{border-bottom:2.5px solid var(--navy);padding-bottom:10px;margin-bottom:16px}
+  .print-head .pt{font-size:19px;font-weight:800;color:var(--navy)}
+  .print-head .pl{font-size:13px;color:#333;margin-top:3px}
+  .print-head img{height:44px;border-radius:8px}
+  @media print{
+    @page{margin:12mm}
+    body{background:#fff}
+    .sidebar,.backdrop,.topbar,.foot-note,.no-print{display:none!important}
+    .main{display:block}.content{padding:0!important}
+    .page-head{display:none!important}
+    .print-only{display:block!important}
+    .card{box-shadow:none!important;border:1px solid #ddd}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
 </head>
 <body>
 
@@ -48,7 +65,6 @@
     <div class="topbar">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
       <div class="spacer"></div>
-      <div class="bell">🔔<span class="dot">1</span></div>
       <div class="me"><div class="who" id="twho2">Tentor<small>Teacher</small></div><div class="avatar" id="tavatar2">Y</div></div>
     </div>
 
@@ -88,7 +104,20 @@
       <!-- FEE -->
       <section class="view hide" id="view-fee">
         <div class="page-head"><div><h1>Rekap Bulan Ini</h1><div class="sub" id="feeLabel">—</div></div>
-          <input type="month" id="feeMonthPick" class="btn btn-outline" style="font-weight:600"></div>
+          <div style="display:flex;gap:10px;align-items:center" class="no-print">
+            <input type="month" id="feeMonthPick" class="btn btn-outline" style="font-weight:600">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Generate PDF</button>
+          </div></div>
+        <div class="print-only print-head">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img src="assets/logo.jpeg" alt="Little Star">
+            <div>
+              <div class="pt">Rekap Fee Tentor — Little Star Course</div>
+              <div class="pl">Tentor: <b id="phTName">—</b></div>
+              <div class="pl">Periode: <b id="phTPeriod">—</b></div>
+            </div>
+          </div>
+        </div>
         <div class="grid grid-4" style="margin-bottom:20px">
           <div class="stat tint-green"><div class="lbl">Total Fee</div><div class="val" id="feeTotal">Rp 0</div></div>
           <div class="stat tint-blue"><div class="lbl">Total Sesi</div><div class="val" id="feeSessions">0</div></div>
@@ -114,9 +143,9 @@
       <input type="hidden" id="fId">
       <div class="field"><label>Topic / Material <span class="req">*</span> <span class="help" style="display:inline">(bisa Enter untuk baris baru)</span></label><textarea id="fTopic" placeholder="cth: *Math WS#1 hal 33-36&#10;*Science (Senses)"></textarea></div>
       <div class="field"><label>Catatan untuk Orang Tua</label><textarea id="fNote" placeholder="cth: Anton cukup aktif dan memahami materi dengan baik."></textarea></div>
-      <div class="field"><label>Materi Belajar (PDF — bisa diunduh orang tua)</label>
-        <label class="dropzone" for="fPdf"><span class="zi">📄</span><div><b>Choose PDF</b> atau drag &amp; drop<br><span class="help">PDF up to 10MB</span></div></label>
-        <input type="file" id="fPdf" accept="application/pdf" class="hide"><div class="help" id="fPdfName"></div></div>
+      <div class="field"><label>Materi Belajar (PDF / JPG — bisa diunduh orang tua)</label>
+        <label class="dropzone" for="fPdf"><span class="zi">📎</span><div><b>Pilih file</b> atau drag &amp; drop<br><span class="help">PDF &amp; JPG · bisa pilih beberapa file sekaligus</span></div></label>
+        <input type="file" id="fPdf" accept="application/pdf,image/jpeg,image/jpg,image/png" multiple class="hide"><div class="help" id="fPdfName"></div></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('mFill')">Cancel</button>
@@ -151,7 +180,7 @@ function setMe(t){
   ME=t;
   ['tavatar','tavatar2'].forEach(i=>document.getElementById(i).textContent=(t.nama||'T')[0]);
   ['twho','twho2'].forEach(i=>document.getElementById(i).innerHTML=`${t.nama}<small>${t.subject||'Teacher'}</small>`);
-  document.getElementById('hi').textContent=`Halo, ${t.nama.split(' ')[0]} 👋`;
+  document.getElementById('hi').textContent=`Hello, ${t.nama} 👋`;
   renderToday(); renderStats();
 }
 
@@ -180,7 +209,7 @@ async function renderToday(){
     <td>${c.duration||'-'} min</td>
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
     <td>${c.topic?`<b style="white-space:pre-line">${esc(c.topic)}</b><br><span class="muted" style="white-space:pre-line">${esc(c.note||'')}</span>`:'<span class="muted">Belum diisi</span>'}</td>
-    <td>${c.material_url?'📄 <span class="text-green">Ada</span>':'<span class="muted">-</span>'}</td>
+    <td>${c.material_url?`📄 <span class="text-green">${String(c.material_url).split('|').filter(Boolean).length} file</span>`:'<span class="muted">-</span>'}</td>
     <td><button class="btn btn-primary btn-sm" onclick="openFill('${c.id}')">Isi</button></td></tr>`).join('')
     || '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Tidak ada jadwal hari ini.</td></tr>';
   document.getElementById('cToday').textContent=list.length;
@@ -206,7 +235,10 @@ async function renderSchedule(){
 }
 async function renderFee(){
   const m=document.getElementById('feeMonthPick').value||todayStr().slice(0,7);
-  document.getElementById('feeLabel').textContent=new Date(m+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  const periodName=new Date(m+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  document.getElementById('feeLabel').textContent=periodName;
+  document.getElementById('phTName').textContent=ME?ME.nama:'-';
+  document.getElementById('phTPeriod').textContent=periodName;
   const cls=await API.getClasses({month:m,tutor_id:ME.id});
   let fee=0,mins=0,on=0,onl=0;
   const body=cls.map(c=>{
@@ -228,14 +260,23 @@ async function openFill(id){
   const c=(await API.getClasses({})).find(x=>x.id===id); if(!c)return;
   document.getElementById('fId').value=id;
   document.getElementById('fTopic').value=c.topic||''; document.getElementById('fNote').value=c.note||'';
-  document.getElementById('fPdfName').textContent=c.material_url?('📎 '+c.material_url.split('/').pop()):'';
+  document.getElementById('fPdfName').textContent=c.material_url?('📎 '+String(c.material_url).split('|').map(u=>u.split('/').pop()).join(', ')):'';
   openModal('mFill');
 }
-document.getElementById('fPdf').onchange=e=>document.getElementById('fPdfName').textContent=e.target.files[0]?('📎 '+e.target.files[0].name):'';
+document.getElementById('fPdf').onchange=e=>{const fs=[...e.target.files];document.getElementById('fPdfName').textContent=fs.length?('📎 '+fs.map(f=>f.name).join(', ')):'';};
 async function saveFill(){
   const p={id:document.getElementById('fId').value,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value};
-  if(document.getElementById('fPdf').files[0]) p.material_url='materi/'+document.getElementById('fPdf').files[0].name;
-  await API.updateClass(p); closeModal('mFill'); toast('Laporan tersimpan','ok'); renderToday();
+  const files=[...document.getElementById('fPdf').files];
+  if(files.length){
+    toast('Mengupload '+files.length+' materi…');
+    try{
+      const urls=[];
+      for(const f of files){ const b64=await fileToBase64(f); const r=await API.uploadFile(b64,f.name); urls.push((r&&(r.view||r.url))||('materi/'+f.name)); }
+      p.material_url=urls.join('|');
+    }catch(e){ toast('Upload materi gagal: '+(e.message||e),'err'); }
+  }
+  try{ await API.updateClass(p); closeModal('mFill'); toast('Laporan tersimpan','ok'); renderToday(); }
+  catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
 }
 boot();
 </script>

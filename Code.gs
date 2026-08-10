@@ -41,6 +41,7 @@ const HEADER_ALIASES = {
     deposit_meetings:['deposit_meetings','deposit (meetings)','deposit','deposit meeting'],
     add_fee:['add_fee','additional fee','biaya tambahan','fee tambahan'],
     add_fee_note:['add_fee_note','additional fee note','note additional fee','catatan tambahan','ket tambahan'],
+    pin:['pin','pin login','pin ortu','pin orang tua'],
     active:['active','status','aktif'],
     link_id:['link_id','link id']
   },
@@ -133,6 +134,7 @@ function doPost(e){
       // Students
       case 'getStudents':     return ok(getStudents(p));
       case 'getStudentByLink':return ok(getStudentByLink(p.link_id));
+      case 'studentLogin':    return ok(studentLogin(p));
       case 'addStudent':      return ok(addStudent(p));
       case 'updateStudent':   return ok(updateStudent(p));
       case 'deleteStudent':   return ok(del('Students',p.id));
@@ -168,12 +170,12 @@ function doPost(e){
 // Canonical column layout for every sheet (single source of truth)
 const SCHEMAS = {
   Students:['id','nama','school','address','dob','grade','parent_name','wa_ortu','tutor_id','schedule',
-            'fee_per_meeting','fee_tentor','meeting_minutes','deposit_meetings','add_fee','add_fee_note','active','link_id'],
+            'fee_per_meeting','fee_tentor','meeting_minutes','deposit_meetings','add_fee','add_fee_note','pin','active','link_id'],
   Tutors:  ['id','nama','subject','level','address','dob','wa','pin'],
   Classes: ['id','date','student_id','tutor_id','start_time','end_time','duration','type',
             'topic','note','material_url','doc_url','stu_in','stu_out','tut_in','tut_out'],
   Deposit: ['student_id','paid_meetings','minutes_total','minutes_used','fee_per_meeting','last_paid','status'],
-  Payments:['id','student_id','month','pay_date','meetings','price_per_meet','duration','deposit_total',
+  Payments:['id','student_id','month','pay_date','meetings','price_per_meet','duration','deposit_total','carry_in',
             'extra_minutes','add_fee1','add_fee2','add_fee2_note','next_meetings','next_deposit','grand_total','status'],
 };
 
@@ -252,6 +254,14 @@ function getStudentByLink(link){
   if(!s) throw new Error('Student tidak ditemukan: '+link);
   return s;
 }
+function studentLogin(p){
+  const list=rows('Students');
+  const key=String(p.login||'').toLowerCase().trim();
+  const s=list.find(x=>x.id===p.login || String(x.nama||'').toLowerCase().trim()===key);
+  if(!s) throw new Error('Murid tidak ditemukan');
+  if(String(s.pin)!==String(p.pin)) throw new Error('PIN salah');
+  return s;
+}
 function addStudent(p){
   const sh=getSheet('Students'); ensureHeaders(sh,'Students',SCHEMAS.Students);
   const id=uid();
@@ -266,11 +276,13 @@ function addStudent(p){
   set('meeting_minutes',Number(p.meeting_minutes)||90);
   set('deposit_meetings',Number(p.deposit_meetings)||0);
   set('add_fee',Number(p.add_fee)||0); set('add_fee_note',p.add_fee_note||'');
+  const pin=p.pin||genPin(); set('pin',pin);
   set('active',p.active||'aktif');
   set('link_id',link);
   sh.appendRow(row);
   const c=idxOf(head,'Students','wa_ortu'); if(c>=0) sh.getRange(sh.getLastRow(),c+1).setNumberFormat('@');
-  return {id,link_id:link};
+  const pc=idxOf(head,'Students','pin'); if(pc>=0) sh.getRange(sh.getLastRow(),pc+1).setNumberFormat('@');
+  return {id,link_id:link,pin};
 }
 function updateStudent(p){
   const sh=getSheet('Students'); ensureHeaders(sh,'Students',SCHEMAS.Students);
@@ -278,7 +290,7 @@ function updateStudent(p){
   setFields(ctx,{nama:p.nama,school:p.school,address:p.address,dob:p.dob,grade:p.grade,parent_name:p.parent_name,
     wa_ortu:p.wa_ortu,tutor_id:p.tutor_id,schedule:p.schedule,fee_per_meeting:Number(p.fee_per_meeting),
     fee_tentor:Number(p.fee_tentor),meeting_minutes:Number(p.meeting_minutes),
-    deposit_meetings:Number(p.deposit_meetings),add_fee:Number(p.add_fee)||0,add_fee_note:p.add_fee_note||'',active:p.active});
+    deposit_meetings:Number(p.deposit_meetings),add_fee:Number(p.add_fee)||0,add_fee_note:p.add_fee_note||'',pin:p.pin,active:p.active});
   return {updated:p.id};
 }
 
@@ -380,7 +392,7 @@ function payFields(p){
   return {
     student_id:p.student_id||'', month:p.month||'', pay_date:p.pay_date||'',
     meetings:Number(p.meetings)||0, price_per_meet:Number(p.price_per_meet)||0, duration:Number(p.duration)||0,
-    deposit_total:Number(p.deposit_total)||0, extra_minutes:Number(p.extra_minutes)||0,
+    deposit_total:Number(p.deposit_total)||0, carry_in:Number(p.carry_in)||0, extra_minutes:Number(p.extra_minutes)||0,
     add_fee1:Number(p.add_fee1)||0, add_fee2:Number(p.add_fee2)||0, add_fee2_note:p.add_fee2_note||'',
     next_meetings:Number(p.next_meetings)||0, next_deposit:Number(p.next_deposit)||0,
     grand_total:Number(p.grand_total)||0, status:p.status||'LUNAS'

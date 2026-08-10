@@ -83,7 +83,6 @@
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
       <div class="search"><span class="mag">🔎</span><input id="globalSearch" placeholder="Cari murid atau tentor…"></div>
       <div class="spacer"></div>
-      <div class="bell">🔔<span class="dot">5</span></div>
       <div class="me"><div class="who">Master Admin<small>Super Administrator</small></div><div class="avatar">M</div></div>
     </div>
 
@@ -167,7 +166,7 @@
         <div class="page-head"><div><h1>Murid</h1><div class="sub">Kelola data murid — Edit atau buka laporan</div></div>
           <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
-          <thead><tr><th>Nama</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>Action</th></tr></thead>
+          <thead><tr><th>Nama</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>PIN Ortu</th><th>Action</th></tr></thead>
           <tbody id="msBody"></tbody>
         </table></div></div>
       </section>
@@ -212,7 +211,8 @@
 
         <div class="card card-pad no-print" style="margin-bottom:16px">
           <label style="font-weight:700;font-size:12.5px">Search Student</label>
-          <select id="paySel" onchange="renderPayment(this.value)" style="width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:11px;margin-top:6px;font-family:inherit;font-size:14px"></select>
+          <input id="paySearchInput" list="payStudentList" placeholder="Ketik nama murid… atau pilih dari daftar" onchange="paySearchPick()" oninput="paySearchPick()" style="width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:11px;margin-top:6px;font-family:inherit;font-size:14px">
+          <datalist id="payStudentList"></datalist>
         </div>
 
         <div class="pill-tabs no-print" id="payTabs" style="display:none">
@@ -273,13 +273,13 @@
         <div class="field"><label>Fee Tentor / Meeting</label><input type="number" id="sFeeTutor" value="90000"><div class="help">Untuk hitung fee di portal tentor</div></div>
       </div>
       <input type="hidden" id="sMin" value="90"><input type="hidden" id="sDep" value="0">
-      <div style="border-top:1px dashed var(--line);margin:6px 0 14px;padding-top:12px">
-        <div class="field-row">
-          <div class="field"><label>Additional Fee <span class="help" style="display:inline">(opsional)</span></label><input type="number" id="sAddFee" placeholder="0"></div>
-          <div class="field"><label>Note Additional Fee <span class="help" style="display:inline">(opsional)</span></label><input id="sAddNote" placeholder="cth: biaya les olimpiade"></div>
+      <input type="hidden" id="sAddFee" value="0"><input type="hidden" id="sAddNote" value="">
+      <div class="field"><label>PIN Login Orang Tua (4 digit)</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input id="sPin" maxlength="4" readonly style="max-width:120px;font-weight:800;letter-spacing:5px;text-align:center;font-size:18px">
+          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('sPin').value=genPin()">🔄 Generate</button>
         </div>
-        <div class="help">Biaya tambahan di luar paket (mis. olimpiade). Muncul di Total Deposit Payment. Kosongkan jika tidak ada.</div>
-      </div>
+        <div class="help">Orang tua login ke Portal Orang Tua pakai nama anak + PIN ini.</div></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('mStudent')">Cancel</button>
@@ -329,7 +329,7 @@
 <script src="assets/app.js"></script>
 <script>
 document.getElementById('logo').innerHTML=logoBlock('Little Star','Master Admin');
-let TUTORS=[],STUDENTS=[],CUR=null,REP_MONTH=todayStr().slice(0,7),PAY_SID=null,PAY_LIST=[];
+let TUTORS=[],STUDENTS=[],CUR=null,REP_MONTH=todayStr().slice(0,7),PAY_SID=null,PAY_LIST=[],PAY_CLASSES=[];
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 function showView(v){
@@ -351,9 +351,14 @@ function renderM(v){
 
 /* ================= PAYMENT MODULE ================= */
 function initPayment(){
-  const sel=document.getElementById('paySel');
-  sel.innerHTML='<option value="">— Pilih murid —</option>'+STUDENTS.map(s=>`<option value="${s.id}" ${s.id===PAY_SID?'selected':''}>${s.nama}</option>`).join('');
-  if(PAY_SID) renderPayment(PAY_SID);
+  document.getElementById('payStudentList').innerHTML=STUDENTS.map(s=>`<option value="${(s.nama||'').trim()}">`).join('');
+  if(PAY_SID){ const st=STUDENTS.find(s=>s.id===PAY_SID); document.getElementById('paySearchInput').value=st?st.nama.trim():''; renderPayment(PAY_SID); }
+}
+function paySearchPick(){
+  const v=document.getElementById('paySearchInput').value.trim().toLowerCase();
+  if(!v){ renderPayment(''); return; }
+  const st=STUDENTS.find(s=>(s.nama||'').trim().toLowerCase()===v);
+  if(st && st.id!==PAY_SID) renderPayment(st.id);
 }
 async function renderPayment(sid){
   PAY_SID=sid||null;
@@ -363,6 +368,7 @@ async function renderPayment(sid){
   document.getElementById('payCrumb').textContent=st.nama;
   document.getElementById('payPhName').textContent=st.nama;
   PAY_LIST=await API.getPayments({student_id:sid});
+  PAY_CLASSES=await API.getClasses({student_id:sid});
   renderDepositPane(st,PAY_LIST);
   renderBillingPane(st,PAY_LIST);
   showPayTab('deposit');
@@ -381,14 +387,16 @@ function renderDepositPane(st,list){
     <div class="card card-pad no-print" style="margin-bottom:16px">
       <div class="card-title" style="color:var(--green2)">🧾 DEPOSIT PAYMENT</div>
       <div class="grid grid-3">
-        <div class="field"><label>Jumlah Meeting (Deposit)</label><input type="number" id="pdMeet" value="8" oninput="calcDeposit()"></div>
-        <div class="field"><label>Periode (Bulan)</label><input type="month" id="pdMonth" value="${todayStr().slice(0,7)}"></div>
+        <div class="field"><label>Jumlah Meeting (Deposit)</label><input type="number" id="pdMeet" value="8" oninput="calcDeposit();updateDepositCarry()"></div>
+        <div class="field"><label>Periode (Bulan)</label><input type="month" id="pdMonth" value="${todayStr().slice(0,7)}" onchange="updateDepositCarry()"></div>
         <div class="field"><label>Tanggal Bayar</label><input type="date" id="pdDate" value="${todayStr()}"></div>
         <div class="field"><label>Harga per Meet</label><input type="number" id="pdPrice" value="${st.fee_per_meeting||150000}" oninput="calcDeposit()"></div>
-        <div class="field"><label>Durasi per Meet (menit)</label><input type="number" id="pdDur" value="${st.meeting_minutes||90}"></div>
+        <div class="field"><label>Durasi per Meet (menit)</label><input type="number" id="pdDur" value="${st.meeting_minutes||90}" oninput="updateDepositCarry()"></div>
         <div class="field"><label>Total Payment</label><div id="pdTotal" style="font-size:22px;font-weight:800;color:var(--green2);padding-top:4px">Rp 0</div></div>
       </div>
-      <div style="text-align:right"><button class="btn btn-green" onclick="saveDeposit()">＋ Simpan Deposit</button></div>
+      <input type="hidden" id="pdCarry" value="0">
+      <div class="note-band" style="margin-top:12px" id="pdCarryBand">—</div>
+      <div style="text-align:right;margin-top:10px"><button class="btn btn-green" onclick="saveDeposit()">＋ Simpan Deposit</button></div>
     </div>
     <div class="card">
       <div class="card-pad" style="padding-bottom:0"><div class="card-title">Rincian Payment</div></div>
@@ -402,20 +410,42 @@ function renderDepositPane(st,list){
           || '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">Belum ada pembayaran.</td></tr>'}</tbody>
       </table></div>
     </div>`;
-  calcDeposit();
+  calcDeposit(); updateDepositCarry();
 }
 function calcDeposit(){
   const m=Number((document.getElementById('pdMeet')||{}).value)||0, pr=Number((document.getElementById('pdPrice')||{}).value)||0;
   const el=document.getElementById('pdTotal'); if(el) el.textContent=fmtRp(m*pr);
 }
+// leftover minutes from the previous month's payment (deposit habis vs terpakai)
+function prevLeftover(month){
+  if(!month) return 0;
+  const [y,m]=month.split('-').map(Number);
+  const pd=new Date(y,m-2,1);
+  const pm=`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}`;
+  const pp=PAY_LIST.find(x=>x.month===pm);
+  if(!pp) return 0;
+  const avail=(Number(pp.meetings)||0)*(Number(pp.duration)||90)+(Number(pp.carry_in)||0);
+  const used=PAY_CLASSES.filter(c=>String(c.date).startsWith(pm)).reduce((a,c)=>a+(Number(c.duration)||0),0);
+  return Math.max(0,avail-used);
+}
+function updateDepositCarry(){
+  const band=document.getElementById('pdCarryBand'); if(!band) return;
+  const month=document.getElementById('pdMonth').value;
+  const carry=prevLeftover(month);
+  document.getElementById('pdCarry').value=carry;
+  const m=Number(document.getElementById('pdMeet').value)||0, dur=Number(document.getElementById('pdDur').value)||90;
+  const bulanIni=m*dur, avail=bulanIni+carry;
+  band.innerHTML=`Sisa deposit bulan sebelumnya: <b>${carry} menit</b> · Total menit tersedia: <b>${fmtNum(bulanIni)} + ${carry} = ${fmtNum(avail)} menit</b>`;
+}
 async function saveDeposit(){
   const m=Number(document.getElementById('pdMeet').value)||0, pr=Number(document.getElementById('pdPrice').value)||0;
   const month=document.getElementById('pdMonth').value;
   if(!month){toast('Isi periode dulu','err');return;}
+  const carry=Number(document.getElementById('pdCarry').value)||0;
   const p={student_id:PAY_SID,month,pay_date:document.getElementById('pdDate').value,meetings:m,price_per_meet:pr,
-    duration:Number(document.getElementById('pdDur').value)||90,deposit_total:m*pr,
+    duration:Number(document.getElementById('pdDur').value)||90,deposit_total:m*pr,carry_in:carry,
     next_meetings:m,next_deposit:m*pr,grand_total:m*pr,status:'LUNAS'};
-  try{ await API.savePayment(p); toast('Deposit tersimpan','ok'); renderPayment(PAY_SID); }
+  try{ await API.savePayment(p); toast('Deposit tersimpan'+(carry?` (+${carry} mnt carry-over)`:''),'ok'); renderPayment(PAY_SID); }
   catch(e){ toast('Gagal: '+(e.message||e),'err'); }
 }
 async function delPayment(id){
@@ -437,18 +467,27 @@ function curPay(){ return PAY_LIST.find(x=>x.id===(document.getElementById('blSe
 function loadBilling(){
   const st=STUDENTS.find(s=>s.id===PAY_SID), p=curPay(); if(!p)return;
   const dur=Number(p.duration)||90, price=Number(p.price_per_meet)||0;
+  // auto extra minutes: pemakaian melebihi deposit (deposit + carry-over bulan lalu)
+  const carryIn=Number(p.carry_in)||0;
+  const monthMin=PAY_CLASSES.filter(c=>String(c.date).startsWith(p.month)).reduce((a,c)=>a+(Number(c.duration)||0),0);
+  const depositMin=(Number(p.meetings)||0)*dur + carryIn;
+  const autoExtra=Math.max(0,monthMin-depositMin);
+  const extraVal=(Number(p.extra_minutes)>0)?Number(p.extra_minutes):autoExtra;
   document.getElementById('blContent').innerHTML=`
     <div class="card card-pad" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap">
       <div><div class="lbl muted">Murid</div><b>${st.nama}</b></div>
       <div><div class="lbl muted">Orang Tua</div><b>${st.parent_name||'-'}</b></div>
       <div><div class="lbl muted">Durasi Normal</div><b>${dur} menit</b></div>
       <div><div class="lbl muted">Harga per Meet</div><b>${fmtRp(price)}</b></div>
+      <div><div class="lbl muted">Carry-over bulan lalu</div><b>${carryIn} menit</b></div>
+      <div><div class="lbl muted">Terpakai bulan ini</div><b>${monthMin} / ${depositMin} menit</b></div>
     </div>
     <div class="grid grid-4" style="margin-bottom:16px">
       <div class="stat tint-green"><div class="lbl">TOTAL PAYMENT BULAN INI</div><div class="val">${fmtRp(p.deposit_total)}</div><div class="hint">meeting yang sudah dijalankan</div></div>
       <div class="stat tint-blue"><div class="lbl">TAMBAHAN SESI (LEBIH DURASI)</div>
-        <input type="number" id="blExtra" value="${p.extra_minutes||0}" oninput="calcBilling()" placeholder="menit tambahan" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
-        <div class="hint">Additional Fee 1 (otomatis)</div><div style="font-weight:800;color:var(--blue);font-size:16px" id="blFee1">Rp 0</div>
+        <input type="number" id="blExtra" value="${extraVal}" oninput="calcBilling()" placeholder="menit tambahan" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
+        <div class="hint">🔄 Otomatis: <b>${autoExtra} mnt</b> lebih dari deposit${carryIn?` + carry ${carryIn}`:''} (bisa diedit)</div>
+        <div class="hint">Additional Fee 1</div><div style="font-weight:800;color:var(--blue);font-size:16px" id="blFee1">Rp 0</div>
         <div class="hint" id="blFee1Calc"></div></div>
       <div class="stat tint-amber"><div class="lbl">ADDITIONAL FEE 2 (MANUAL)</div>
         <input type="number" id="blFee2" value="${p.add_fee2||0}" oninput="calcBilling()" placeholder="nominal" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
@@ -512,10 +551,12 @@ function renderStudentsM(){
     <td><b>${s.nama}</b></td><td>${s.school||'<span class="muted">-</span>'}</td><td>${s.grade||'-'}</td>
     <td>${s.parent_name||'-'}</td><td>${s.schedule||'-'}</td>
     <td>${fmtRp(s.fee_per_meeting)}</td><td>${fmtRp(s.fee_tentor)}</td>
+    <td><span style="font-weight:800;letter-spacing:3px;color:var(--navy)">${s.pin||'----'}</span>
+        <button class="btn btn-ghost btn-sm" title="Buat PIN baru" onclick="regenStudentPin('${s.id}')">🔄</button></td>
     <td style="white-space:nowrap">
       <button class="btn btn-warn btn-sm" onclick="openStudent('${s.id}')">Edit</button>
       <button class="btn btn-outline btn-sm" onclick="openReport('${s.id}')">Laporan →</button></td></tr>`).join('')
-    ||'<tr><td colspan="8" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
+    ||'<tr><td colspan="9" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
 }
 function renderTutorsM(){
   document.getElementById('mtBody').innerHTML=TUTORS.map(t=>`<tr>
@@ -556,6 +597,7 @@ function openStudent(id){
   V('sFee',s.fee_per_meeting||150000); V('sFeeTutor',s.fee_tentor||90000);
   V('sMin',s.meeting_minutes||90); V('sDep',s.deposit_meetings||8);
   V('sAddFee',s.add_fee||''); V('sAddNote',s.add_fee_note||'');
+  V('sPin', s.pin||genPin());
   openModal('mStudent');
 }
 async function saveStudent(){
@@ -563,12 +605,18 @@ async function saveStudent(){
   const p={id:g('sId')||undefined,nama:g('sNama'),school:g('sSchool'),address:g('sAddress'),dob:g('sDob'),
     grade:g('sGrade'),schedule:g('sSchedule'),parent_name:g('sParent'),wa_ortu:g('sWa'),
     fee_per_meeting:g('sFee'),fee_tentor:g('sFeeTutor'),meeting_minutes:g('sMin'),deposit_meetings:g('sDep'),
-    add_fee:g('sAddFee'),add_fee_note:g('sAddNote')};
+    add_fee:g('sAddFee'),add_fee_note:g('sAddNote'),pin:g('sPin')||genPin()};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
   try{
     if(p.id) await API.updateStudent(p); else await API.addStudent(p);
-    STUDENTS=await API.getStudents(); closeModal('mStudent'); toast('Murid disimpan','ok'); renderStudentsM();
+    STUDENTS=await API.getStudents(); closeModal('mStudent'); toast('Murid disimpan · PIN '+p.pin,'ok'); renderStudentsM();
   }catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
+}
+async function regenStudentPin(id){
+  const s=STUDENTS.find(x=>x.id===id); if(!s) return;
+  const pin=genPin();
+  try{ await API.updateStudent({...s,pin}); STUDENTS=await API.getStudents(); renderStudentsM(); toast('PIN baru '+s.nama+': '+pin,'ok'); }
+  catch(e){ toast('Gagal: '+(e.message||e),'err'); }
 }
 
 /* ---- Tutor CRUD ---- */
@@ -679,7 +727,8 @@ async function openReport(id, month){
   const meets=pay?Number(pay.meetings)||0:(CUR.deposit_meetings||0);
   const perMeet=pay?Number(pay.price_per_meet)||0:(CUR.fee_per_meeting||0);
   const base=pay?Number(pay.deposit_total)||perMeet*meets:perMeet*meets;
-  const total=meets*perMin, used=cls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
+  const carryIn=pay?Number(pay.carry_in)||0:0;
+  const total=meets*perMin+carryIn, used=cls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
   const addFee1=pay?Number(pay.add_fee1)||0:0, addFee2=pay?Number(pay.add_fee2)||0:0;
   const addFee2Note=pay?pay.add_fee2_note||'':'';
   const nextDep=pay?Number(pay.next_deposit)||0:0;
@@ -693,8 +742,8 @@ async function openReport(id, month){
         <div class="hint">Grade ${CUR.grade||'-'} · School: ${CUR.school||'-'}</div>
         <div class="hint">Date of Birth: ${CUR.dob?prettyDate(CUR.dob):'-'}</div>
         <div class="hint">Address: ${CUR.address||'-'}</div>
-        <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'}) 🟢</div></div></div>
-    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">${hasPay?`LUNAS ${meets}× MEETING`:'BELUM ADA'}</div><div class="hint">${hasPay?`Per meet: ${fmtRp(perMeet)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b> · ${prettyDate(pay.pay_date)}`:'Input di tab Payment dulu'}</div></div>
+        <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'})</div></div></div>
+    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">${hasPay?`LUNAS ${meets}× MEETING`:'BELUM ADA'}</div><div class="hint">${hasPay?`Per meet: ${fmtRp(perMeet)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b><br>${prettyDate(pay.pay_date)}`:'Input di tab Payment dulu'}</div></div>
     <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${fmtNum(used)} <span style="font-size:13px">menit</span></div><div class="hint">${Math.round(used/perMin)} meetings</div></div>
     <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${fmtNum(left)} <span style="font-size:13px">menit</span></div><div class="hint">Setara ${Math.floor(left/perMin)} sesi</div></div>`;
   // history

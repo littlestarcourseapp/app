@@ -122,6 +122,7 @@ const API = {
     const j=await r.json(); if(j.status==='error') throw new Error(j.message); return j.data;
   },
   getStudents : (o={}) => API._post({action:'getStudents',...o}),
+  studentLogin: (login,pin) => API._post({action:'studentLogin',login,pin}),
   getStudent  : (id)   => API._post({action:'getStudents',id}),
   addStudent  : (d)    => API._post({action:'addStudent',...d}),
   updateStudent:(d)    => API._post({action:'updateStudent',...d}),
@@ -146,7 +147,23 @@ const API = {
   getPayments : (o={}) => API._post({action:'getPayments',...o}),
   savePayment : (d)    => API._post({action:'savePayment',...d}),
   deletePayment:(id)   => API._post({action:'deletePayment',id}),
+
+  uploadFile  : (base64,filename) => API._post({action:'uploadFile',base64,filename}),
 };
+
+// Read a File as a base64 data-URL
+function fileToBase64(file){ return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file);}); }
+// Render one or more material links (stored joined by '|')
+function matLinks(u){
+  if(!u) return '<span class="muted">-</span>';
+  return String(u).split('|').filter(Boolean).map((x,i)=>{
+    const name=(x.split('/').pop()||('File '+(i+1))).slice(0,26);
+    const real = x.startsWith('http')||x.startsWith('data:');
+    if(!real) return `<span class="muted" title="File lama belum ter-upload — minta tentor upload ulang">📄 ${name}</span>`;
+    const isImg=/\.(jpe?g|png)(\?|$)/i.test(x)||x.startsWith('data:image');
+    return `<a class="btn btn-outline btn-sm" href="${x}" target="_blank" style="margin:2px" ${isImg?'':'download'}>${isImg?'🖼️':'📄'} ${name}</a>`;
+  }).join(' ');
+}
 
 /* ============================================================
    DEMO DATA  (mirrors the mockups; used until SCRIPT_URL is set)
@@ -160,13 +177,13 @@ const DEMO = {
   students:[
     {id:'s1',nama:'Anton Wijaya',school:'SMP Petra 1',address:'Jl. Kertajaya 12, Surabaya',dob:'2013-05-14',grade:'7',parent_name:'Ibu Rina Wijaya',wa_ortu:'081234567890',
      tutor_id:'t1',schedule:'Sen & Kam · 19.00',fee_per_meeting:150000,fee_tentor:90000,meeting_minutes:90,
-     deposit_meetings:16,add_fee:300000,add_fee_note:'Biaya les olimpiade (Agustus)',active:'aktif',link_id:'anton-s1'},
+     deposit_meetings:16,add_fee:300000,add_fee_note:'Biaya les olimpiade (Agustus)',pin:'1111',active:'aktif',link_id:'anton-s1'},
     {id:'s2',nama:'Budi Santoso',school:'SMP Cita Hati',address:'Jl. Diponegoro 45, Surabaya',dob:'2012-09-03',grade:'8',parent_name:'Bpk. Hadi',wa_ortu:'081234500011',
      tutor_id:'t2',schedule:'Sel · 16.00',fee_per_meeting:150000,fee_tentor:90000,meeting_minutes:90,
-     deposit_meetings:8,active:'aktif',link_id:'budi-s2'},
+     deposit_meetings:8,pin:'2222',active:'aktif',link_id:'budi-s2'},
     {id:'s3',nama:'Clara Halim',school:'SD Gloria',address:'Jl. Mayjend Sungkono 8, Surabaya',dob:'2014-01-22',grade:'6',parent_name:'Ibu Mega',wa_ortu:'081234500022',
      tutor_id:'t3',schedule:'Rab & Jum · 15.30',fee_per_meeting:140000,fee_tentor:85000,meeting_minutes:90,
-     deposit_meetings:12,active:'aktif',link_id:'clara-s3'},
+     deposit_meetings:12,pin:'3333',active:'aktif',link_id:'clara-s3'},
   ],
   classes:[
     {id:'c101',date:todayStr(),student_id:'s1',tutor_id:'t1',start_time:'19:00',end_time:'',duration:90,type:'onsite',topic:'',note:'',material_url:'',doc_url:'',
@@ -192,7 +209,7 @@ const DEMO = {
   },
   payments:[
     {id:'pay1',student_id:'s1',month:'2026-06',pay_date:'2026-06-01',meetings:8,price_per_meet:150000,duration:90,
-     deposit_total:1200000,extra_minutes:0,add_fee1:0,add_fee2:0,add_fee2_note:'',next_meetings:8,next_deposit:1200000,grand_total:1200000,status:'LUNAS'},
+     deposit_total:1200000,carry_in:0,extra_minutes:0,add_fee1:0,add_fee2:0,add_fee2_note:'',next_meetings:8,next_deposit:1200000,grand_total:1200000,status:'LUNAS'},
   ],
   handle(p){
     return new Promise((res,rej)=>{
@@ -229,7 +246,9 @@ const DEMO = {
       case 'getPayments':{ let r=clone(this.payments); if(p.student_id) r=r.filter(x=>x.student_id===p.student_id); if(p.month) r=r.filter(x=>x.month===p.month); return r.sort((a,b)=>String(b.month).localeCompare(String(a.month))); }
       case 'savePayment':{ if(p.id){const e=this.payments.find(x=>x.id===p.id); if(e){Object.assign(e,p); return {updated:p.id};}} const id='pay'+Date.now(); this.payments.push({id,...p}); return {id}; }
       case 'deletePayment':{ this.payments=this.payments.filter(x=>x.id!==p.id); return {deleted:p.id}; }
-      case 'addStudent': { const id='s'+Date.now(); this.students.push({id,active:'aktif',...p}); return {id}; }
+      case 'uploadFile':{ return {url:p.base64,view:p.base64}; }
+      case 'addStudent': { const id='s'+Date.now(); const pin=p.pin||genPin(); this.students.push({id,active:'aktif',pin,...p}); return {id,pin}; }
+      case 'studentLogin':{ const key=String(p.login||'').toLowerCase().trim(); const s=this.students.find(x=>x.id===p.login||x.nama.toLowerCase().trim()===key); if(!s)throw new Error('Murid tidak ditemukan'); if(String(s.pin)!==String(p.pin))throw new Error('PIN salah'); return clone(s); }
       case 'addTutor':   { const id='t'+Date.now(); const pin=p.pin||genPin(); this.tutors.push({id,pin,...p}); return {id,pin}; }
       case 'updateTutor':{ const t=this.tutors.find(x=>x.id===p.id); if(t) Object.assign(t,p); return {updated:p.id}; }
       case 'tutorLogin':{

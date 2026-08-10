@@ -8,6 +8,23 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+
+<!-- LOGIN GATE -->
+<div id="loginGate" style="position:fixed;inset:0;z-index:500;background:linear-gradient(180deg,#eaf6fc,#f4f6fb);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div class="card card-pad" style="max-width:380px;width:100%;text-align:center">
+    <img src="assets/logo.jpeg" style="width:84px;height:84px;border-radius:18px;padding:6px;background:#fff;box-shadow:var(--shadow);margin:0 auto 14px">
+    <h2 style="color:var(--navy);font-size:20px;margin-bottom:4px">Login Orang Tua</h2>
+    <p class="text-muted" style="font-size:13px;margin-bottom:18px">Masuk dengan nama anak & PIN 4 digit dari admin</p>
+    <div class="field" style="text-align:left"><label>Nama Anak</label><select id="lgName"></select></div>
+    <div class="field" style="text-align:left"><label>PIN (4 digit)</label>
+      <input id="lgPin" maxlength="4" inputmode="numeric" placeholder="••••" style="letter-spacing:8px;text-align:center;font-size:20px;font-weight:800"
+             onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Masuk →</button>
+    <div class="help" id="lgErr" style="color:var(--red);margin-top:10px;font-weight:600"></div>
+    <div class="help" style="margin-top:14px"><a href="index.html" style="color:var(--muted)">← Kembali ke pemilihan portal</a></div>
+  </div>
+</div>
+
 <div class="app">
   <aside class="sidebar">
     <div class="sidebar-head" id="logo"></div>
@@ -15,8 +32,6 @@
     <nav class="nav">
       <a data-view="dashboard" class="active"><span class="ic">🏠</span> Beranda</a>
       <a data-view="class"><span class="ic">📅</span> Kelas Anak</a>
-      <a data-view="deposit"><span class="ic">💳</span> Deposit &amp; Pembayaran</a>
-      <a data-view="material"><span class="ic">📄</span> Materi Belajar</a>
       <div class="divider"></div>
       <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
       <a href="index.html"><span class="ic">🚪</span> Keluar</a>
@@ -31,9 +46,7 @@
   <div class="main">
     <div class="topbar">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
-      <div class="search"><span class="mag">👨‍👩‍👧</span><input id="stuPick" placeholder="Pilih anak… (demo)"></div>
       <div class="spacer"></div>
-      <div class="bell">🔔<span class="dot">1</span></div>
       <div class="me"><div class="who" id="pwho2">Orang Tua<small>Parent</small></div><div class="avatar" id="pav2">A</div></div>
     </div>
 
@@ -42,7 +55,7 @@
       <section class="view" id="view-dashboard">
         <div class="page-head">
           <div><h1 id="hi">Hello! 👋</h1><div class="sub" id="subHi">Ringkasan aktivitas kelas & deposit anak Anda.</div></div>
-          <div class="btn btn-outline" style="cursor:default">📅 <span id="today">—</span></div>
+          <input type="month" id="pMonth" class="btn btn-outline" style="font-weight:600" title="Pilih bulan" onchange="renderDash()">
         </div>
 
         <!-- deposit band -->
@@ -125,7 +138,7 @@
 <script src="assets/app.js"></script>
 <script>
 document.getElementById('logo').innerHTML=logoBlock('Little Star','Portal Orang Tua');
-document.getElementById('today').textContent=longToday();
+document.getElementById('pMonth').value=todayStr().slice(0,7);
 const monLbl=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
 document.getElementById('cMonthLbl').textContent=monLbl;
 
@@ -144,14 +157,23 @@ document.querySelectorAll('.nav a[data-view]').forEach(a=>a.onclick=()=>{
 
 async function boot(){
   TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
-  // read ?student= or ?id= link
+  const sel=document.getElementById('lgName');
+  sel.innerHTML='<option value="">Pilih nama anak…</option>'+STUDENTS.map(s=>`<option value="${s.id}">${s.nama}</option>`).join('');
+  // prefill from ?student=/?id= link
   const q=new URLSearchParams(location.search);
-  let s=STUDENTS.find(x=>x.id===q.get('student')||x.link_id===q.get('id'));
-  setMe(s||STUDENTS[0]);
-  const inp=document.getElementById('stuPick');
-  inp.setAttribute('list','slist');
-  inp.insertAdjacentHTML('afterend',`<datalist id="slist">${STUDENTS.map(s=>`<option value="${s.nama}">`).join('')}</datalist>`);
-  inp.onchange=()=>{const st=STUDENTS.find(x=>x.nama===inp.value);if(st)setMe(st);};
+  const s=STUDENTS.find(x=>x.id===q.get('student')||x.link_id===q.get('id'));
+  if(s) sel.value=s.id;
+}
+async function doLogin(){
+  const id=document.getElementById('lgName').value, pin=document.getElementById('lgPin').value;
+  const err=document.getElementById('lgErr');
+  if(!id){err.textContent='Pilih nama anak dulu';return;}
+  if(!/^\d{4}$/.test(pin)){err.textContent='PIN harus 4 digit angka';return;}
+  try{
+    const s=await API.studentLogin(id,pin);
+    document.getElementById('loginGate').style.display='none';
+    setMe(s);
+  }catch(e){ err.textContent=e.message||'Login gagal'; }
 }
 function setMe(s){
   ME=s;
@@ -165,9 +187,13 @@ function setMe(s){
 }
 
 async function renderDash(){
-  const cls=await API.getClasses({student_id:ME.id});
+  const P_MONTH=(document.getElementById('pMonth').value)||todayStr().slice(0,7);
+  const periodName=new Date(P_MONTH+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  document.getElementById('subHi').textContent=`Aktivitas kelas & deposit ${ME.nama.split(' ')[0]} · ${periodName}.`;
+  const allCls=await API.getClasses({student_id:ME.id});
+  const cls=allCls.filter(c=>String(c.date).startsWith(P_MONTH));
   const pays=await API.getPayments({student_id:ME.id});
-  const pay=pays[0]||null; // latest payment/billing
+  const pay=pays.find(x=>x.month===P_MONTH)||pays[0]||null; // payment for selected month
   const perMin=pay?Number(pay.duration)||90:(ME.meeting_minutes||90);
   const meets=pay?Number(pay.meetings)||0:(ME.deposit_meetings||0);
   const perMeet=pay?Number(pay.price_per_meet)||0:(ME.fee_per_meeting||0);
@@ -181,13 +207,12 @@ async function renderDash(){
   document.getElementById('depDetail').innerHTML = pay
     ? `Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(meets*perMin)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b> · Bayar: ${prettyDate(pay.pay_date)}`
     : 'Hubungi admin untuk info pembayaran.';
-  // history (latest 5)
+  // history (bulan terpilih)
   const tb=document.getElementById('histBody');
-  tb.innerHTML=cls.slice(0,5).map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);
-  // summary cards
-  const total=meets*perMin;
-  const monthCls=cls.filter(c=>c.date.startsWith(todayStr().slice(0,7)));
-  const used=monthCls.reduce((a,c)=>a+(Number(c.duration)||0),0);
+  tb.innerHTML=cls.map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);
+  // summary cards (bulan terpilih)
+  const total=meets*perMin+(pay?Number(pay.carry_in)||0:0);
+  const used=cls.reduce((a,c)=>a+(Number(c.duration)||0),0);
   const left=Math.max(0,total-used);
   document.getElementById('cSisa').textContent=fmtNum(left)+' menit';
   document.getElementById('cSisaHint').textContent=`Setara ${Math.floor(left/(perMin||90))} sesi × ${perMin} menit`;
@@ -217,7 +242,7 @@ async function renderFullClass(){
     <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
     <td>${multiline(c.topic)}</td><td>${multiline(c.note)}</td>
-    <td>${c.material_url?`<a class="btn btn-outline btn-sm" href="${c.material_url}" download>📄 Unduh</a>`:'<span class="muted">-</span>'}</td></tr>`).join('')||emptyRow(8);
+    <td>${matLinks(c.material_url)}</td></tr>`).join('')||emptyRow(8);
 }
 async function renderDeposit(){
   const dep=await API.getDeposit(ME.id)||{};
@@ -240,7 +265,7 @@ async function renderMaterial(){
   const cls=(await API.getClasses({student_id:ME.id})).filter(c=>c.material_url);
   document.getElementById('matBody').innerHTML=cls.map(c=>`<tr>
     <td>${prettyDate(c.date)}</td><td><b>${c.topic||'-'}</b></td><td>${tName(c.tutor_id)}</td>
-    <td><a class="btn btn-green btn-sm" href="${c.material_url}" download>📄 Unduh PDF</a></td></tr>`).join('')
+    <td>${matLinks(c.material_url)}</td></tr>`).join('')
     ||'<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">Belum ada materi yang diunggah.</td></tr>';
 }
 boot();
