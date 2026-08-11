@@ -719,7 +719,8 @@ async function openReport(id, month){
   document.getElementById('phName').textContent=CUR.nama;
   document.getElementById('phPeriod').textContent=periodName;
   const allCls=await API.getClasses({student_id:id});
-  const cls=allCls.filter(c=>String(c.date).startsWith(REP_MONTH));
+  const cls=allCls.filter(c=>String(c.date).startsWith(REP_MONTH))
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.start_time||'').localeCompare(String(b.start_time||'')));
   // deposit & billing now come from the Payment tab
   const pays=await API.getPayments({student_id:id});
   const pay=pays.find(x=>x.month===REP_MONTH)||pays[0]||null;
