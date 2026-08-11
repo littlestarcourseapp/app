@@ -8,6 +8,20 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+
+<!-- PIN GATE (Admin) -->
+<div id="adGate" style="position:fixed;inset:0;z-index:600;background:linear-gradient(180deg,#eaf6fc,#f4f6fb);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div class="card card-pad" style="max-width:360px;width:100%;text-align:center">
+    <img src="assets/logo.jpeg" style="width:80px;height:80px;border-radius:16px;padding:6px;background:#fff;box-shadow:var(--shadow);margin:0 auto 14px">
+    <h2 style="color:var(--navy);font-size:20px;margin-bottom:4px">Portal Admin</h2>
+    <p class="text-muted" style="font-size:13px;margin-bottom:18px">Masukkan PIN untuk masuk</p>
+    <input id="adPin" type="password" maxlength="12" inputmode="numeric" placeholder="••••" style="letter-spacing:8px;text-align:center;font-size:20px;font-weight:800;width:100%;padding:11px;border:1.5px solid var(--line);border-radius:11px" onkeydown="if(event.key==='Enter')adLogin()">
+    <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="adLogin()">Masuk →</button>
+    <div class="help" id="adErr" style="color:var(--red);margin-top:10px;font-weight:600"></div>
+    <div class="help" style="margin-top:14px"><a href="portal.html" style="color:var(--muted)">← Kembali ke pemilihan portal</a></div>
+  </div>
+</div>
+
 <div class="app">
   <aside class="sidebar">
     <div class="sidebar-head" id="logo"></div>
@@ -16,7 +30,7 @@
       <a data-view="dashboard" class="active"><span class="ic">🏠</span> Kelas Hari Ini</a>
       <a data-view="calendar"><span class="ic">🗓️</span> Kalender Mingguan</a>
       <div class="divider"></div>
-      <a href="index.html"><span class="ic">↩️</span> Ganti Portal</a>
+      <a href="portal.html"><span class="ic">↩️</span> Ganti Portal</a>
       <a href="index.html"><span class="ic">🚪</span> Keluar</a>
     </nav>
     <div class="sidebar-foot">
@@ -125,6 +139,14 @@
 <script src="assets/app.js"></script>
 <script>
 document.getElementById('logo').innerHTML = logoBlock('Little Star','Portal Admin');
+/* ---- PIN gate ---- */
+const ADMIN_PIN='17081945';
+try{ if(sessionStorage.getItem('ad_ok')==='1') document.getElementById('adGate').style.display='none'; else document.getElementById('adPin').focus(); }catch(e){}
+function adLogin(){
+  const v=document.getElementById('adPin').value.trim();
+  if(v===ADMIN_PIN){ try{sessionStorage.setItem('ad_ok','1');}catch(e){} document.getElementById('adGate').style.display='none'; }
+  else { document.getElementById('adErr').textContent='PIN salah'; document.getElementById('adPin').value=''; }
+}
 document.getElementById('todayDate').textContent = '📅 ' + longToday();
 
 let TUTORS=[], STUDENTS=[], CLASSES=[];
@@ -154,9 +176,15 @@ async function renderToday(){
   CLASSES=await API.getClasses({date:todayStr()});
   CLASSES.sort(byStart);
   const tb=document.getElementById('todayBody'); tb.innerHTML='';
+  const toMin=t=>{if(!t)return null;const[h,m]=String(t).split(':').map(Number);return h*60+(m||0);};
+  const nowD=new Date(), nowMin=nowD.getHours()*60+nowD.getMinutes();
   let done=0,ongoing=0;
   CLASSES.forEach((c,i)=>{
-    if(c.end_time) done++; else ongoing++;
+    const sm=toMin(c.start_time);
+    let em=toMin(c.end_time); if(em==null && sm!=null) em=sm+(Number(c.duration)||0);
+    if(em!=null && nowMin>=em) done++;               // sudah selesai (jam berakhir lewat)
+    else if(sm!=null && nowMin>=sm) ongoing++;        // sedang berlangsung
+    // selain itu: belum mulai
     const type=c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>';
     tb.innerHTML+=`<tr>
       <td>${i+1}</td><td><b>${sName(c.student_id)}</b></td><td>${tName(c.tutor_id)}</td>
