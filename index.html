@@ -80,7 +80,18 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .st-t .star-chip,.st-t .star-pop{border-color:var(--green)} .st-t .L,.st-t .star-pop b{color:var(--green)}
 .st-a .star-chip,.st-a .star-pop{border-color:var(--orange)} .st-a .L,.st-a .star-pop b{color:var(--orange)}
 .st-r .star-chip,.st-r .star-pop{border-color:#7cc6ea} .st-r .L,.st-r .star-pop b{color:#4fb0e0}
-@media(max-width:640px){.star-row{flex-direction:column;align-items:center}.star-pop{position:static;transform:none!important;opacity:1;visibility:visible;width:230px;margin:8px auto 0}}
+@media(max-width:640px){
+  .star-row{flex-direction:column;align-items:stretch;gap:12px;max-width:440px;margin:16px auto 0}
+  .star-item{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid var(--gold);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow)}
+  .star-chip{width:52px;height:52px;flex:0 0 52px;border:none;border-radius:12px;box-shadow:none;background:transparent}
+  .star-chip .L{font-size:38px}
+  .star-item:hover .star-chip{transform:none;box-shadow:none}
+  .star-pop{position:static;opacity:1;visibility:visible;transform:none!important;width:auto;margin:0;border:none;box-shadow:none;padding:0;background:transparent;text-align:left;flex:1}
+  .star-pop b{font-size:14.5px;margin-bottom:2px}
+  .star-pop span{font-size:12px;line-height:1.5}
+  .st-s.star-item{border-color:var(--gold)} .st-t.star-item{border-color:var(--green)}
+  .st-a.star-item{border-color:var(--orange)} .st-r.star-item{border-color:#7cc6ea}
+}
 
 /* exam list */
 .examlist{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
@@ -137,6 +148,25 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .btn-orange:hover{filter:brightness(1.03);transform:translateY(-2px)}
 
 footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-size:13px;border-top:1px solid var(--line)}
+
+/* ===== Mobile tidy-up ===== */
+@media(max-width:900px){
+  .grid[style]{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:640px){
+  .grid[style]{grid-template-columns:1fr!important}
+  .sec{padding:48px 0}
+  .wrap{padding:0 18px}
+  h2.title{font-size:26px}
+  .subtitle{margin-bottom:28px;font-size:14px}
+  .card{padding:20px}
+  .cta-band{padding:26px 18px;margin-top:26px}
+  .cta-band p{font-size:16px}
+  .final-band{padding:56px 0}
+  .hero-badge{margin-bottom:14px}
+  .hero .cta .btn{width:100%;justify-content:center}
+  .carousel{gap:4px}
+}
 </style>
 </head>
 <body>
