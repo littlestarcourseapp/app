@@ -176,6 +176,12 @@ document.querySelectorAll('.nav a[data-view]').forEach(a=>a.onclick=()=>{
 
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 function sFee(id){return Number((STUDENTS.find(s=>s.id===id)||{}).fee_tentor)||0;}
+// Fee tentor proporsional durasi: (fee per durasi normal) / normal × durasi kelas
+function sTutorFee(c){
+  const s=STUDENTS.find(x=>x.id===c.student_id)||{};
+  const norm=Number(s.meeting_minutes)||90, feePer=Number(s.fee_tentor)||0, dur=Number(c.duration)||norm;
+  return Math.round(feePer/norm*dur);
+}
 function setMe(t){
   ME=t;
   ['tavatar','tavatar2'].forEach(i=>document.getElementById(i).textContent=(t.nama||'T')[0]);
@@ -220,7 +226,7 @@ async function renderStats(){
   document.getElementById('cMonth').textContent=cls.length;
   const myStu=new Set((await API.getClasses({tutor_id:ME.id})).map(c=>c.student_id));
   document.getElementById('myStudents').textContent=myStu.size;
-  const fee=cls.reduce((a,c)=>a+sFee(c.student_id),0);
+  const fee=cls.reduce((a,c)=>a+sTutorFee(c),0);
   document.getElementById('feeMonth').textContent=fmtRp(fee);
 }
 async function renderSchedule(){
@@ -242,7 +248,7 @@ async function renderFee(){
   const cls=await API.getClasses({month:m,tutor_id:ME.id});
   let fee=0,mins=0,on=0,onl=0;
   const body=cls.map(c=>{
-    const f=sFee(c.student_id); fee+=f; mins+=Number(c.duration)||0; if(c.type==='online')onl++;else on++;
+    const f=sTutorFee(c); fee+=f; mins+=Number(c.duration)||0; if(c.type==='online')onl++;else on++;
     return `<tr><td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${c.duration||'-'} min</td>
       <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
       <td><b>${fmtRp(f)}</b></td></tr>`;
