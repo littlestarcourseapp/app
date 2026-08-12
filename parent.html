@@ -71,7 +71,7 @@
             </div>
             <div class="stat tint-green" style="text-align:center;min-width:150px">
               <div class="lbl" style="justify-content:center">STATUS</div>
-              <div class="val" id="depStatus">✅ LUNAS</div>
+              <div class="val" id="depStatus">—</div>
             </div>
           </div>
         </div>
@@ -204,6 +204,9 @@ async function renderDash(){
   const grandBill=pay?Number(pay.grand_total)||(addFee1+addFee2+nextDep):(addFee1+addFee2+nextDep);
   // deposit band
   document.getElementById('depTitle').textContent = pay?`LUNAS ${meets}× MEETING`:'BELUM ADA DEPOSIT';
+  const dS=document.getElementById('depStatus');
+  if(pay){dS.textContent='✅ LUNAS';dS.style.color='';}
+  else{dS.textContent='⏳ Belum Lunas';dS.style.color='#d9822b';}
   document.getElementById('depDetail').innerHTML = pay
     ? `Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(meets*perMin)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b> · Bayar: ${prettyDate(pay.pay_date)}`
     : 'Hubungi admin untuk info pembayaran.';
@@ -259,7 +262,7 @@ async function renderDeposit(){
     <tr><td>Sisa</td><td style="text-align:right"><b class="text-green">${fmtNum(left)} menit</b></td></tr>
     <tr><td>Tarif per meeting</td><td style="text-align:right">${fmtRp(ME.fee_per_meeting)}</td></tr>
     <tr><td>Pembayaran terakhir</td><td style="text-align:right">${prettyDate(dep.last_paid)}</td></tr>
-    <tr><td>Status</td><td style="text-align:right"><span class="badge badge-paid">LUNAS</span></td></tr>`;
+    <tr><td>Status</td><td style="text-align:right">${meets>0?'<span class="badge badge-paid">LUNAS</span>':'<span class="badge" style="background:#fdecd2;color:#b26a00">Belum Lunas</span>'}</td></tr>`;
 }
 async function renderMaterial(){
   const cls=(await API.getClasses({student_id:ME.id})).filter(c=>c.material_url);
