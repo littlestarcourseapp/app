@@ -140,6 +140,15 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .fmt .card li{padding:6px 0;font-size:13.5px;color:#374151;display:flex;gap:8px;align-items:center}
 .fmt .addr{color:var(--muted);font-size:13px;margin-bottom:4px}
 
+/* gallery (real photos) */
+.ggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.gcard{position:relative;margin:0;border-radius:18px;overflow:hidden;box-shadow:var(--shadow);aspect-ratio:4/3;background:var(--sky-soft)}
+.gcard img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.gcard:hover img{transform:scale(1.06)}
+.gcard figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 16px 13px;color:#fff;font-weight:700;font-size:13.5px;background:linear-gradient(transparent,rgba(0,0,0,.74))}
+@media(max-width:900px){.ggrid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.ggrid{grid-template-columns:1fr}}
+
 /* final cta (sky-blue band) */
 .final-band{background:linear-gradient(180deg,#8ed3ef 0%,#79c9e8 100%);padding:82px 0;text-align:center}
 .final-band h2{color:#fff;font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-.5px}
@@ -394,22 +403,23 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
     <div class="eyebrow">Our Classroom Gallery</div>
     <h2 class="title">Our Classroom Gallery</h2>
     <p class="subtitle">Take a peek into our vibrant learning environments.</p>
-    <div class="grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="card"><div class="ic" style="background:var(--sky-soft)">🧑‍🤝‍🧑</div><h3>Interactive Learning Sessions</h3><p>Team-based learning that builds communication and social skills.</p></div>
-      <div class="card"><div class="ic" style="background:#fff7e6">🔬</div><h3>Hands-On Experiments</h3><p>Practical learning experiences that bring concepts to life.</p></div>
-      <div class="card"><div class="ic" style="background:#eefbf3">🎯</div><h3>Personalized Attention</h3><p>Small class sizes ensuring every child gets the support they need.</p></div>
+    <div class="ggrid">
+      <figure class="gcard"><img src="assets/g1.jpg" alt="Interactive learning session" loading="lazy"><figcaption>Interactive Learning Sessions</figcaption></figure>
+      <figure class="gcard"><img src="assets/g2.jpg" alt="Hands-on classroom activity" loading="lazy"><figcaption>Hands-On Experiments</figcaption></figure>
+      <figure class="gcard"><img src="assets/g3.jpg" alt="Personalized attention" loading="lazy"><figcaption>Personalized Attention</figcaption></figure>
+      <figure class="gcard"><img src="assets/g4.jpg" alt="Learning by doing" loading="lazy"><figcaption>Learning by Doing</figcaption></figure>
+      <figure class="gcard"><img src="assets/g5.jpg" alt="Small group session" loading="lazy"><figcaption>Small Group Sessions</figcaption></figure>
+      <figure class="gcard"><img src="assets/g6.jpg" alt="Focused classroom environment" loading="lazy"><figcaption>Focused Classroom Environment</figcaption></figure>
     </div>
   </div>
 </section>
 
 <!-- FINAL CTA -->
-<section class="sec" id="contact">
+<section class="final-band" id="contact">
   <div class="wrap">
-    <div class="final">
-      <h2>Ready to Help Your Child Shine Brightly?</h2>
-      <p>Join hundreds of parents who have chosen Little Star Course for their child's Cambridge education journey.</p>
-      <a href="https://wa.me/6287855888747" target="_blank" rel="noopener" class="btn btn-gold">GET STARTED TODAY</a>
-    </div>
+    <h2>Ready to Help Your Child Shine Brightly?</h2>
+    <p>Join hundreds of parents who have chosen Little Star Course for their child's Cambridge education journey.</p>
+    <a href="https://wa.me/6287855888747" target="_blank" rel="noopener" class="btn btn-orange">GET STARTED TODAY</a>
   </div>
 </section>
 
