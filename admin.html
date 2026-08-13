@@ -67,7 +67,7 @@
             <table class="tbl">
               <thead><tr>
                 <th>No.</th><th>Student's Name</th><th>Tentor's Name</th><th>Start</th><th>End</th>
-                <th>Duration</th><th>Type</th><th>Topic/Material</th><th>Note</th><th>Doc</th><th>Action</th>
+                <th>Duration</th><th>Type</th><th>Status</th><th>Topic/Material</th><th>Note</th><th>Doc</th><th>Action</th>
               </tr></thead>
               <tbody id="todayBody"></tbody>
             </table>
@@ -174,6 +174,12 @@ async function boot(){
   try{ TUTORS=await API.getTutors(); }catch(e){ TUTORS=[]; toast('Gagal memuat tentor','err'); }
   try{ STUDENTS=await API.getStudents(); }catch(e){ STUDENTS=[]; toast('Gagal memuat murid','err'); }
   renderToday();
+  // auto-refresh status tiap 60 detik (jeda saat modal terbuka / tab tidak aktif)
+  setInterval(()=>{
+    if(document.visibilityState!=='visible') return;
+    if(document.getElementById('mClass').classList.contains('open')) return;
+    renderToday();
+  }, 60000);
 }
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
@@ -190,14 +196,18 @@ async function renderToday(){
   CLASSES.forEach((c,i)=>{
     const sm=toMin(c.start_time);
     let em=toMin(c.end_time); if(em==null && sm!=null) em=sm+(Number(c.duration)||0);
-    if(em!=null && nowMin>=em) done++;               // sudah selesai (jam berakhir lewat)
-    else if(sm!=null && nowMin>=sm) ongoing++;        // sedang berlangsung
-    // selain itu: belum mulai
+    let stBadge;
+    if(em!=null && nowMin>=em){ done++;               // sudah selesai (jam berakhir lewat)
+      stBadge='<span class="badge" style="background:#e7f6ec;color:#1e7e34">✅ DONE</span>'; }
+    else if(sm!=null && nowMin>=sm){ ongoing++;        // sedang berlangsung
+      stBadge='<span class="badge" style="background:#fff4d6;color:#b26a00">⏳ ON PROGRESS</span>'; }
+    else{                                              // belum mulai
+      stBadge='<span class="badge" style="background:#eef2fb;color:#4a5aa8">🕒 UPCOMING</span>'; }
     const type=c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>';
     tb.innerHTML+=`<tr>
       <td>${i+1}</td><td><b>${sName(c.student_id)}</b></td><td>${tName(c.tutor_id)}</td>
       <td>${c.start_time||'-'}</td><td>${c.end_time||'<span class="muted">-</span>'}</td>
-      <td>${c.duration||'-'} min</td><td>${type}</td>
+      <td>${c.duration||'-'} min</td><td>${type}</td><td style="white-space:nowrap">${stBadge}</td>
       <td>${multiline(c.topic)}</td><td>${multiline(c.note)}</td>
       <td>${docCell(c.doc_url)}</td>
       <td style="white-space:nowrap">
@@ -205,7 +215,7 @@ async function renderToday(){
         <button class="btn btn-danger btn-sm" onclick="delClass('${c.id}')">Delete</button>
       </td></tr>`;
   });
-  if(!CLASSES.length) tb.innerHTML='<tr><td colspan="11" class="muted" style="text-align:center;padding:26px">Belum ada kelas hari ini. Klik “＋ Add Class”.</td></tr>';
+  if(!CLASSES.length) tb.innerHTML='<tr><td colspan="12" class="muted" style="text-align:center;padding:26px">Belum ada kelas hari ini. Klik “＋ Add Class”.</td></tr>';
   document.getElementById('kToday').textContent=CLASSES.length;
   document.getElementById('kDone').textContent=done;
   document.getElementById('kOngoing').textContent=ongoing;

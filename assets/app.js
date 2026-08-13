@@ -157,11 +157,18 @@ function fileToBase64(file){ return new Promise((res,rej)=>{const r=new FileRead
 function matLinks(u){
   if(!u) return '<span class="muted">-</span>';
   return String(u).split('|').filter(Boolean).map((x,i)=>{
-    const name=(x.split('/').pop()||('File '+(i+1))).slice(0,26);
+    const name=(x.split('/').pop().split('?')[0]||('File '+(i+1))).slice(0,26);
     const real = x.startsWith('http')||x.startsWith('data:');
     if(!real) return `<span class="muted" title="File lama belum ter-upload — minta tentor upload ulang">📄 ${name}</span>`;
     const isImg=/\.(jpe?g|png)(\?|$)/i.test(x)||x.startsWith('data:image');
-    return `<a class="btn btn-outline btn-sm" href="${x}" target="_blank" style="margin:2px" ${isImg?'':'download'}>${isImg?'🖼️':'📄'} ${name}</a>`;
+    const isPdf=/\.pdf(\?|$)/i.test(x);
+    const isYT=/youtu\.?be/i.test(x), isDrive=/drive\.google/i.test(x);
+    let icon='🔗',label='Link',dl='';
+    if(isImg){icon='🖼️';label=name;}
+    else if(isPdf){icon='📄';label=name;dl='download';}
+    else if(isYT){icon='▶️';label='YouTube';}
+    else if(isDrive){icon='📁';label='Google Drive';}
+    return `<a class="btn btn-outline btn-sm" href="${x}" target="_blank" style="margin:2px" ${dl}>${icon} ${label}</a>`;
   }).join(' ');
 }
 

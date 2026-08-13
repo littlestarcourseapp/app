@@ -88,7 +88,7 @@
             <thead><tr><th>Murid</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik & Catatan</th><th>Materi PDF</th><th>Action</th></tr></thead>
             <tbody id="todayBody"></tbody>
           </table></div>
-          <div class="note-band mt-16">📝 Tentor mengisi <b>Topik/Materi</b>, <b>Catatan</b>, dan meng-upload <b>materi PDF</b> yang bisa diunduh orang tua. Waktu & dokumentasi diisi admin.</div>
+          <div class="note-band mt-16">📝 Tentor mengisi <b>Topik/Materi</b>, <b>Catatan</b>, dan melampirkan <b>materi</b> — bisa upload <b>PDF/JPG</b> atau tempel <b>link</b> (YouTube / Google Drive). Semua bisa diakses orang tua. Waktu & dokumentasi diisi admin.</div>
         </div>
       </section>
 
@@ -146,6 +146,11 @@
       <div class="field"><label>Materi Belajar (PDF / JPG — bisa diunduh orang tua)</label>
         <label class="dropzone" for="fPdf"><span class="zi">📎</span><div><b>Pilih file</b> atau drag &amp; drop<br><span class="help">PDF &amp; JPG · bisa pilih beberapa file sekaligus</span></div></label>
         <input type="file" id="fPdf" accept="application/pdf,image/jpeg,image/jpg,image/png" multiple class="hide"><div class="help" id="fPdfName"></div></div>
+      <div class="field"><label>Materi via Link <span class="help" style="display:inline">(YouTube / Google Drive / dll · satu link per baris)</span></label>
+        <textarea id="fLinks" placeholder="https://youtu.be/xxxxxxxx&#10;https://drive.google.com/file/d/..."></textarea></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:2px">
+        <input type="checkbox" id="fReplace"> Ganti semua materi lama (kalau tidak dicentang, materi baru <b>ditambahkan</b>)</label>
+      <div class="help" id="fCurMat" style="margin-top:6px"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('mFill')">Cancel</button>
@@ -262,25 +267,34 @@ async function renderFee(){
 document.getElementById('feeMonthPick').onchange=renderFee;
 
 /* fill modal */
+let CUR_MAT='';
 async function openFill(id){
   const c=(await API.getClasses({})).find(x=>x.id===id); if(!c)return;
   document.getElementById('fId').value=id;
   document.getElementById('fTopic').value=c.topic||''; document.getElementById('fNote').value=c.note||'';
-  document.getElementById('fPdfName').textContent=c.material_url?('📎 '+String(c.material_url).split('|').map(u=>u.split('/').pop()).join(', ')):'';
+  CUR_MAT=c.material_url||'';
+  const arr=CUR_MAT.split('|').filter(Boolean);
+  document.getElementById('fCurMat').textContent=arr.length?('📎 '+arr.length+' materi tersimpan (file + link)'):'Belum ada materi.';
+  document.getElementById('fLinks').value='';
+  document.getElementById('fReplace').checked=false;
+  document.getElementById('fPdf').value=''; document.getElementById('fPdfName').textContent='';
   openModal('mFill');
 }
 document.getElementById('fPdf').onchange=e=>{const fs=[...e.target.files];document.getElementById('fPdfName').textContent=fs.length?('📎 '+fs.map(f=>f.name).join(', ')):'';};
 async function saveFill(){
   const p={id:document.getElementById('fId').value,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value};
   const files=[...document.getElementById('fPdf').files];
+  const links=document.getElementById('fLinks').value.split(/[\s,]+/).map(s=>s.trim()).filter(s=>/^https?:\/\//i.test(s));
+  const base=document.getElementById('fReplace').checked?[]:CUR_MAT.split('|').filter(Boolean);
+  const newFileUrls=[];
   if(files.length){
-    toast('Mengupload '+files.length+' materi…');
+    toast('Mengupload '+files.length+' file materi…');
     try{
-      const urls=[];
-      for(const f of files){ const b64=await fileToBase64(f); const r=await API.uploadFile(b64,f.name); urls.push((r&&(r.view||r.url))||('materi/'+f.name)); }
-      p.material_url=urls.join('|');
-    }catch(e){ toast('Upload materi gagal: '+(e.message||e),'err'); }
+      for(const f of files){ const b64=await fileToBase64(f); const r=await API.uploadFile(b64,f.name); newFileUrls.push((r&&(r.view||r.url))||('materi/'+f.name)); }
+    }catch(e){ toast('Upload materi gagal: '+(e.message||e),'err'); return; }
   }
+  const seen=new Set();
+  p.material_url=[...base,...newFileUrls,...links].filter(u=>u&&!seen.has(u)&&seen.add(u)).join('|');
   try{ await API.updateClass(p); closeModal('mFill'); toast('Laporan tersimpan','ok'); renderToday(); }
   catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
 }
