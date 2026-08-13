@@ -105,7 +105,15 @@
   <div class="modal">
     <div class="modal-head"><h3 id="mClassTitle">Add Class</h3><button class="x" onclick="closeModal('mClass')">×</button></div>
     <div class="modal-body">
-      <input type="hidden" id="cId"><input type="hidden" id="cDate">
+      <input type="hidden" id="cId">
+      <div class="field">
+        <label>Tanggal Kelas <span class="req">*</span></label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="date" id="cDate" style="flex:1;min-width:170px">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="setDateToday()">📅 Hari ini</button>
+        </div>
+        <div class="help">Default hari ini · pilih tanggal lain untuk mengisi kelas yang terlewat.</div>
+      </div>
       <div class="field-row">
         <div class="field"><label>Student's Name <span class="req">*</span></label><select id="cStudent"></select></div>
         <div class="field"><label>Tentor's Name <span class="req">*</span></label><select id="cTutor"></select></div>
@@ -263,6 +271,7 @@ async function renderCalendar(){
 
 /* ---- ADD/EDIT CLASS ---- */
 function fillSelect(el,arr,val){el.innerHTML='<option value="">Pilih…</option>'+arr.map(a=>`<option value="${a.id}" ${a.id===val?'selected':''}>${a.nama}</option>`).join('');}
+function setDateToday(){ document.getElementById('cDate').value=todayStr(); }
 function openAddClass(){
   document.getElementById('mClassTitle').textContent='Add Class';
   document.getElementById('cId').value=''; document.getElementById('cDate').value=todayStr();
