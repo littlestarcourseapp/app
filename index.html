@@ -61,10 +61,17 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .hero p{color:#2b3450;font-size:15.5px;max-width:520px}
 .hero .cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #cfe8f6;color:var(--blue);font-weight:700;font-size:12.5px;padding:7px 16px;border-radius:999px;margin-bottom:18px}
-.hero-photo{background:#fff;border-radius:26px;padding:16px;box-shadow:var(--shadow-lg);transform:rotate(1.5deg)}
-.hero-photo .frame{border-radius:16px;background:linear-gradient(135deg,#dff1fb,#eef7fd);height:320px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--navy)}
-.hero-photo .frame .star{font-size:70px;filter:drop-shadow(0 6px 14px rgba(255,165,0,.4))}
-@media(max-width:820px){.hero-inner{grid-template-columns:1fr;text-align:center;padding:50px 0 60px}.hero p{margin:0 auto}.hero .cta{justify-content:center}.hero-photo{display:none}}
+.hero-photo{background:#fff;border-radius:26px;padding:12px;box-shadow:var(--shadow-lg);position:relative}
+.hslide-vp{overflow:hidden;border-radius:16px}
+.hslide-track{display:flex;transition:transform .6s ease}
+.hslide-track img{flex:0 0 100%;width:100%;height:350px;object-fit:cover;display:block}
+.hnav{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.9);color:var(--navy);font-size:24px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:3;transition:.15s}
+.hnav:hover{background:#fff;transform:translateY(-50%) scale(1.08)}
+.hnav.prev{left:20px} .hnav.next{right:20px}
+.hdots{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:3}
+.hdots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.65);cursor:pointer;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.hdots i.on{background:var(--gold);width:22px;border-radius:6px}
+@media(max-width:820px){.hero-inner{grid-template-columns:1fr;text-align:center;padding:50px 0 60px}.hero p{margin:0 auto}.hero .cta{justify-content:center}.hslide-track img{height:250px}.hnav{width:36px;height:36px;font-size:20px}.hnav.prev{left:12px}.hnav.next{right:12px}}
 
 /* STAR values (hover to reveal) */
 .star-row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:14px}
@@ -148,6 +155,20 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .gcard figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 16px 13px;color:#fff;font-weight:700;font-size:13.5px;background:linear-gradient(transparent,rgba(0,0,0,.74))}
 @media(max-width:900px){.ggrid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.ggrid{grid-template-columns:1fr}}
+.gcard.split{display:flex;gap:2px}
+.gcard.split img{width:50%;height:100%;object-fit:cover}
+
+/* reusable photo carousel (format cards) */
+.pcaro{position:relative;border-radius:14px;overflow:hidden;margin:4px 0 16px;box-shadow:var(--shadow)}
+.pcaro-vp{overflow:hidden}
+.pcaro-track{display:flex;transition:transform .55s ease}
+.pcaro-track img{flex:0 0 100%;width:100%;height:210px;object-fit:cover;display:block}
+.pcaro-nav{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.9);color:var(--navy);font-size:20px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:3;transition:.15s}
+.pcaro-nav:hover{background:#fff}
+.pcaro-nav.prev{left:10px} .pcaro-nav.next{right:10px}
+.pcaro-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3}
+.pcaro-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.7);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+.pcaro-dots i.on{background:var(--gold);width:18px;border-radius:5px}
 
 /* final cta (sky-blue band) */
 .final-band{background:linear-gradient(180deg,#8ed3ef 0%,#79c9e8 100%);padding:82px 0;text-align:center}
@@ -204,10 +225,18 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
       </div>
     </div>
     <div class="hero-photo">
-      <div class="frame">
-        <div class="star">⭐</div>
-        <b style="font-size:20px">Little Star Course</b>
+      <div class="hslide-vp">
+        <div class="hslide-track" id="hTrack">
+          <img src="assets/slide1.jpg" alt="Little Star Course class" loading="eager">
+          <img src="assets/slide2.jpg" alt="Little Star Course class" loading="lazy">
+          <img src="assets/slide3.jpg" alt="Little Star Course class" loading="lazy">
+          <img src="assets/slide4.jpg" alt="Little Star Course class" loading="lazy">
+          <img src="assets/slide5.jpg" alt="Little Star Course class" loading="lazy">
+        </div>
       </div>
+      <button class="hnav prev" onclick="hMove(-1)" aria-label="Sebelumnya">‹</button>
+      <button class="hnav next" onclick="hMove(1)" aria-label="Berikutnya">›</button>
+      <div class="hdots" id="hDots"></div>
     </div>
   </div>
 </section>
@@ -343,6 +372,18 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
     <div class="fmt">
       <div class="card"><div class="ic" style="background:var(--sky-soft)">🏫</div><h3>At Our Surabaya Center</h3>
         <div class="addr">Lebak Permai, Kenjeran, East Surabaya</div>
+        <div class="pcaro">
+          <div class="pcaro-vp"><div class="pcaro-track">
+            <img src="assets/surabaya1.jpg" alt="Surabaya center" loading="lazy">
+            <img src="assets/surabaya2.jpg" alt="Surabaya center" loading="lazy">
+            <img src="assets/surabaya3.jpg" alt="Surabaya center" loading="lazy">
+            <img src="assets/surabaya4.jpg" alt="Surabaya center" loading="lazy">
+            <img src="assets/surabaya5.jpg" alt="Surabaya center" loading="lazy">
+          </div></div>
+          <button class="pcaro-nav prev" aria-label="prev">‹</button>
+          <button class="pcaro-nav next" aria-label="next">›</button>
+          <div class="pcaro-dots"></div>
+        </div>
         <p>Experience face-to-face learning in our modern, air-conditioned facility designed for optimal focus and engagement.</p>
         <b style="color:var(--navy);display:block;margin-top:12px">Why Choose In-Center Learning?</b>
         <ul>
@@ -355,6 +396,18 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
         <a href="https://wa.me/6287855888747" target="_blank" rel="noopener" class="btn btn-outline" style="margin-top:14px">Visit Our Center</a></div>
       <div class="card"><div class="ic" style="background:#f5edfb">💻</div><h3>Live Online Private Sessions</h3>
         <div class="addr">Using Zoom Premium</div>
+        <div class="pcaro">
+          <div class="pcaro-vp"><div class="pcaro-track">
+            <img src="assets/online1.jpg" alt="Online session" loading="lazy">
+            <img src="assets/online2.jpg" alt="Online session" loading="lazy">
+            <img src="assets/online3.jpg" alt="Online session" loading="lazy">
+            <img src="assets/online4.jpg" alt="Online session" loading="lazy">
+            <img src="assets/online5.jpg" alt="Online session" loading="lazy">
+          </div></div>
+          <button class="pcaro-nav prev" aria-label="prev">‹</button>
+          <button class="pcaro-nav next" aria-label="next">›</button>
+          <div class="pcaro-dots"></div>
+        </div>
         <p>Enjoy personalized one-on-one tutoring from the comfort of your home with our state-of-the-art virtual classroom.</p>
         <b style="color:var(--navy);display:block;margin-top:12px">Why Choose Online Learning?</b>
         <ul>
@@ -404,12 +457,9 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
     <h2 class="title">Our Classroom Gallery</h2>
     <p class="subtitle">Take a peek into our vibrant learning environments.</p>
     <div class="ggrid">
-      <figure class="gcard"><img src="https://littlestarcourse.com/Assets/ADD1.jpg" alt="Interactive learning session" loading="lazy"><figcaption>Interactive Learning Sessions</figcaption></figure>
-      <figure class="gcard"><img src="https://littlestarcourse.com/Assets/ADD2.jpg" alt="Hands-on classroom activity" loading="lazy"><figcaption>Hands-On Experiments</figcaption></figure>
-      <figure class="gcard"><img src="https://littlestarcourse.com/Assets/ADD3.jpg" alt="Personalized attention" loading="lazy"><figcaption>Personalized Attention</figcaption></figure>
-      <figure class="gcard"><img src="https://littlestarcourse.com/Assets/hands-on1.jpeg" alt="Learning by doing" loading="lazy"><figcaption>Learning by Doing</figcaption></figure>
-      <figure class="gcard"><img src="https://littlestarcourse.com/Assets/hands-on2.jpeg" alt="Small group session" loading="lazy"><figcaption>Small Group Sessions</figcaption></figure>
-      <figure class="gcard"><img src="https://littlestarcourse.com/Assets/ADD7.jpg" alt="Focused classroom environment" loading="lazy"><figcaption>Focused Classroom Environment</figcaption></figure>
+      <figure class="gcard"><img src="assets/gal_interactive.jpg" alt="Interactive learning session" loading="lazy"><figcaption>Interactive Learning Sessions</figcaption></figure>
+      <figure class="gcard split"><img src="assets/gal_handson1.jpg" alt="Hands-on activity" loading="lazy"><img src="assets/gal_handson2.jpg" alt="Hands-on activity" loading="lazy"><figcaption>Hands-On Experiments</figcaption></figure>
+      <figure class="gcard"><img src="assets/gal_personalized.jpg" alt="Personalized attention" loading="lazy"><figcaption>Personalized Attention</figcaption></figure>
     </div>
   </div>
 </section>
@@ -455,6 +505,36 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
   window.addEventListener('resize',()=>{ if(i>maxIndex())i=maxIndex(); buildDots(); render(); });
   buildDots(); render(); restart();
 })();
+
+/* hero photo slider */
+(function(){
+  const track=document.getElementById('hTrack'); if(!track) return;
+  const n=track.children.length; let idx=0, timer=null;
+  const dots=document.getElementById('hDots');
+  for(let i=0;i<n;i++){const b=document.createElement('i');b.onclick=()=>{idx=i;paint();restart();};dots.appendChild(b);}
+  function paint(){track.style.transform=`translateX(-${idx*100}%)`;[...dots.children].forEach((d,i)=>d.classList.toggle('on',i===idx));}
+  window.hMove=function(dir){ idx=(idx+dir+n)%n; paint(); restart(); };
+  function restart(){ clearInterval(timer); timer=setInterval(()=>window.hMove(1),4000); }
+  const ph=document.querySelector('.hero-photo');
+  ph.addEventListener('mouseenter',()=>clearInterval(timer));
+  ph.addEventListener('mouseleave',restart);
+  paint(); restart();
+})();
+
+/* generic photo carousels (format cards) */
+document.querySelectorAll('.pcaro').forEach((car,ci)=>{
+  const track=car.querySelector('.pcaro-track'); const n=track.children.length;
+  const dots=car.querySelector('.pcaro-dots'); let idx=0, timer=null;
+  for(let i=0;i<n;i++){const b=document.createElement('i');b.onclick=()=>{idx=i;paint();restart();};dots.appendChild(b);}
+  function paint(){track.style.transform=`translateX(-${idx*100}%)`;[...dots.children].forEach((d,i)=>d.classList.toggle('on',i===idx));}
+  function move(d){idx=(idx+d+n)%n;paint();restart();}
+  car.querySelector('.pcaro-nav.prev').onclick=()=>move(-1);
+  car.querySelector('.pcaro-nav.next').onclick=()=>move(1);
+  function restart(){clearInterval(timer);timer=setInterval(()=>move(1),4500);}
+  car.addEventListener('mouseenter',()=>clearInterval(timer));
+  car.addEventListener('mouseleave',restart);
+  paint(); setTimeout(restart, ci*800);
+});
 </script>
 </body>
 </html>
