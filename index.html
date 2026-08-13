@@ -31,14 +31,14 @@ img{max-width:100%;display:block}
 .sec-alt{background:var(--bg)}
 .eyebrow{color:var(--green);font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:12.5px;text-align:center}
 h2.title{font-size:clamp(26px,4vw,38px);font-weight:800;color:var(--navy);text-align:center;margin:8px 0 10px;letter-spacing:-.5px}
-.subtitle{color:var(--muted);text-align:center;max-width:680px;margin:0 auto 40px;font-size:15px}
+.subtitle{color:var(--muted);text-align:center;max-width:720px;margin:0 auto 40px;font-size:16.5px}
 .grid{display:grid;gap:22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;box-shadow:var(--shadow);transition:.2s}
 .card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
 .card .ic{width:56px;height:56px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;transition:transform .38s cubic-bezier(.34,1.56,.64,1)}
 .card:hover .ic{transform:scale(1.14) rotate(-4deg)}
-.card h3{font-size:18px;color:var(--navy);font-weight:800;margin-bottom:8px}
-.card p{color:var(--muted);font-size:13.5px}
+.card h3{font-size:19px;color:var(--navy);font-weight:800;margin-bottom:8px}
+.card p{color:var(--muted);font-size:14.5px;line-height:1.7}
 .num{font-weight:800;color:var(--gold);font-size:14px}
 .mini{margin-top:12px;display:flex;flex-direction:column;gap:9px}
 .mini .row{display:flex;gap:9px;align-items:flex-start}
@@ -60,7 +60,8 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .hero-inner{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:70px 0 84px}
 .hero h1{font-size:clamp(32px,5vw,52px);font-weight:800;color:var(--navy);line-height:1.12;letter-spacing:-1px}
 .hero .tag{color:var(--green);font-weight:800;font-size:clamp(16px,2.4vw,22px);margin:14px 0}
-.hero p{color:#2b3450;font-size:15.5px;max-width:520px}
+.hero p{color:#2b3450;font-size:16.5px;max-width:520px}
+.hero p b{color:var(--navy)}
 .hero .cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #cfe8f6;color:var(--blue);font-weight:700;font-size:12.5px;padding:7px 16px;border-radius:999px;margin-bottom:18px}
 .hero-photo{background:#fff;border-radius:26px;padding:12px;box-shadow:var(--shadow-lg);position:relative}
@@ -115,7 +116,8 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .exam-crest{transition:transform .38s cubic-bezier(.34,1.56,.64,1)}
 .prog h3{margin-bottom:6px}
 .prog .grades{color:var(--green);font-weight:700;font-size:13px;margin-bottom:12px}
-.prog .subj{display:block;width:100%;background:var(--sky-soft);color:var(--navy);border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-top:8px}
+.prog .subj{display:block;width:100%;background:var(--sky-soft);color:var(--navy);border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:600;margin-top:8px}
+.prog .subj small{display:block;font-size:11.5px;font-weight:600;color:var(--blue);margin-top:2px}
 .exam-crest{width:56px;height:auto;margin:0 auto 10px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.12))}
 .cta-band{text-align:center;margin-top:38px;background:linear-gradient(120deg,#fffbe8,#eef7fd);border:1.5px solid #ffe6a3;border-radius:22px;padding:36px 24px;box-shadow:var(--shadow)}
 .cta-band p{color:var(--navy);font-weight:700;font-size:18px;margin-bottom:16px}
@@ -145,6 +147,9 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 /* format */
 .fmt{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 @media(max-width:820px){.fmt{grid-template-columns:1fr}}
+.fmt .card .ic{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;font-size:30px}
+.fmt .card h3{text-align:center}
+.fmt .card .addr{text-align:center;margin-bottom:2px}
 .fmt .card ul{list-style:none;margin-top:12px}
 .fmt .card li{padding:6px 0;font-size:13.5px;color:#374151;display:flex;gap:8px;align-items:center}
 .fmt .addr{color:var(--muted);font-size:13px;margin-bottom:4px}
@@ -171,6 +176,15 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdr
 .pcaro-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3}
 .pcaro-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.7);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
 .pcaro-dots i.on{background:var(--gold);width:18px;border-radius:5px}
+
+/* vision box + mission cards */
+.vision-box{max-width:840px;margin:6px auto 0;background:linear-gradient(120deg,#fffbe8,#eef7fd);border:1.5px solid #ffe6a3;border-radius:22px;padding:30px 32px;box-shadow:var(--shadow);text-align:center}
+.vision-box p{color:var(--navy);font-weight:600;font-size:16.5px;line-height:1.75}
+.mcard{background:#fff;border:1px solid var(--line);border-top:4px solid var(--accent,#87ceeb);border-radius:18px;padding:26px;box-shadow:var(--shadow);transition:.2s}
+.mcard:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.mcard .num{font-size:30px;font-weight:800;color:var(--accent,#4fb0e0);line-height:1}
+.mcard h3{font-size:19px;color:var(--navy);font-weight:800;margin:8px 0 8px}
+.mcard p{color:var(--muted);font-size:14.5px;line-height:1.7}
 
 /* final cta (sky-blue band) */
 .final-band{background:linear-gradient(180deg,#8ed3ef 0%,#79c9e8 100%);padding:82px 0;text-align:center}
@@ -207,7 +221,7 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
   <div class="wrap nav">
     <a class="brand" href="index.html">
       <img src="assets/logo.jpeg" alt="Little Star Course">
-      <div><b>Little Star Course</b><small>Cambridge Excellence · Surabaya</small></div>
+      <div><b>Little Star Course</b><small>Cambridge Learning Center · Surabaya</small></div>
     </a>
     <a href="portal.html" class="btn btn-gold">🔐 Login</a>
   </div>
@@ -217,10 +231,9 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
 <section class="hero">
   <div class="wrap hero-inner">
     <div>
-      <span class="hero-badge">⭐ Little Star Course</span>
       <h1>Welcome to Little Star Course</h1>
       <div class="tag">Where young minds shine brighter every day.</div>
-      <p>At Little Star Course, we believe every child has unique potential. Our blended Singapore and Cambridge Curriculum approach to Mathematics, Science, and English emphasizes personalized learning, critical thinking, and strong academic foundations.</p>
+      <p>At Little Star Course, we believe every child has unique potential. Our blended <b>Singapore</b> and <b>Cambridge Curriculum</b> approach to Mathematics, Science, and English emphasizes personalized learning, critical thinking, and strong academic foundations.</p>
       <div class="cta">
         <a href="https://wa.me/6287855888747" target="_blank" rel="noopener" class="btn btn-gold">Book a Free Consultation</a>
         <a href="#programs" class="btn btn-outline">Explore Our Courses</a>
@@ -248,14 +261,14 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
   <div class="wrap">
     <div class="eyebrow">Our Vision</div>
     <h2 class="title">Our Vision</h2>
-    <p class="subtitle">To be a leading learning center that delivers excellence in international curriculum education while empowering students with strong academic foundations and lifelong learning skills.</p>
+    <div class="vision-box"><p>To be a leading learning center that delivers excellence in international curriculum education while empowering students with strong academic foundations and lifelong learning skills.</p></div>
 
-    <div class="eyebrow" style="margin-top:20px">Our Mission</div>
+    <div class="eyebrow" style="margin-top:46px">Our Mission</div>
     <h2 class="title">Our Mission</h2>
     <div class="grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="card"><div class="num">01</div><div class="ic" style="background:var(--sky-soft)">🌐</div><h3>Internationally Aligned Learning</h3><p>To provide internationally aligned, high-quality learning in Mathematics, Science, and English.</p></div>
-      <div class="card"><div class="num">02</div><div class="ic" style="background:#fff7e6">💪</div><h3>Empowering Students</h3><p>To empower students through supportive, engaging, and personalised learning experiences that build confidence, critical thinking, and a positive attitude towards learning.</p></div>
-      <div class="card"><div class="num">03</div><div class="ic" style="background:#eefbf3">🌱</div><h3>Nurturing Independent Learners</h3><p>To nurture independent learners by fostering curiosity, discipline, and essential learning skills that prepare students for academic success and future challenges.</p></div>
+      <div class="mcard" style="--accent:#4fb0e0"><div class="num">01</div><h3>Internationally Aligned Learning</h3><p>To provide internationally aligned, high-quality learning in Mathematics, Science, and English.</p></div>
+      <div class="mcard" style="--accent:#ffb400"><div class="num">02</div><h3>Empowering Students</h3><p>To empower students through supportive, engaging, and personalised learning experiences that build confidence, critical thinking, and a positive attitude towards learning.</p></div>
+      <div class="mcard" style="--accent:#87af4e"><div class="num">03</div><h3>Nurturing Independent Learners</h3><p>To nurture independent learners by fostering curiosity, discipline, and essential learning skills that prepare students for academic success and future challenges.</p></div>
     </div>
 
     <div style="text-align:center;margin-top:44px">
@@ -286,7 +299,7 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
       <div class="card prog"><img src="assets/cambridge.png" class="crest" alt="Cambridge"><h3>Cambridge Lower Secondary</h3><div class="grades">Grades 7–8</div><span class="subj">Mathematics</span><span class="subj">Physics</span><span class="subj">Chemistry</span></div>
       <div class="card prog"><img src="assets/cambridge.png" class="crest" alt="Cambridge"><h3>Cambridge Upper Secondary</h3><div class="grades">Grades 9–12</div><span class="subj">Mathematics</span><span class="subj">Physics</span><span class="subj">Chemistry</span></div>
       <div class="card prog"><img src="assets/cambridge.png" class="crest" alt="Cambridge"><h3>English Language Program</h3><div class="grades">Grades 1–12</div><span class="subj">Reading</span><span class="subj">Writing</span><span class="subj">Listening</span><span class="subj">Speaking</span></div>
-      <div class="card prog"><img src="assets/cambridge.png" class="crest" alt="Cambridge"><h3>Cambridge Examination Preparation</h3><div class="grades">Exam Prep</div><span class="subj">Cambridge Primary Progression Tests (Primary 5)</span><span class="subj">Cambridge Primary Checkpoint (Primary 6)</span><span class="subj">Cambridge Lower Secondary Progression Tests (Secondary 7)</span><span class="subj">Cambridge Lower Secondary Checkpoint (Secondary 8)</span><span class="subj">Cambridge IGCSE (Secondary 10)</span><span class="subj">Cambridge AS &amp; A Level (Secondary 12)</span></div>
+      <div class="card prog"><img src="assets/cambridge.png" class="crest" alt="Cambridge"><h3>Cambridge Examination Preparation</h3><div class="grades">Exam Prep</div><span class="subj">Cambridge Primary Progression Tests<small>Primary 5</small></span><span class="subj">Cambridge Primary Checkpoint<small>Primary 6</small></span><span class="subj">Cambridge Lower Secondary Progression Tests<small>Secondary 7</small></span><span class="subj">Cambridge Lower Secondary Checkpoint<small>Secondary 8</small></span><span class="subj">Cambridge IGCSE<small>Secondary 10</small></span><span class="subj">Cambridge AS &amp; A Level<small>Secondary 12</small></span></div>
     </div>
     <div class="cta-band"><p>Not sure which program is right for your child?</p><a href="https://wa.me/6287855888747" target="_blank" rel="noopener" class="btn btn-navy">Get Program Recommendations</a></div>
   </div>
@@ -476,10 +489,7 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
 </section>
 
 <footer>
-  <div class="wrap">
-    <b>Little Star Course</b> — Cambridge Excellence in Surabaya <span class="star">⭐</span><br>
-    Lebak Permai, Kenjeran, East Surabaya · &copy; 2026 Little Star Course. All rights reserved.
-  </div>
+  <div class="wrap">&copy; 2026 Little Star Course. All rights reserved.</div>
 </footer>
 
 <script>
