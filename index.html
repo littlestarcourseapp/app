@@ -45,6 +45,10 @@ h2.title{font-size:clamp(26px,4vw,38px);font-weight:800;color:var(--navy);text-a
 .mini .k{font-weight:700;color:var(--navy);font-size:13px;min-width:120px}
 .mini .v{color:var(--muted);font-size:12.5px}
 .note{color:#374151;font-size:13px;font-style:italic;margin-top:12px}
+.approach-pic{width:100%;height:auto;border-radius:12px;margin:12px 0 2px;border:1px solid var(--line);background:#fff;display:block}
+.wcard{position:relative}
+.wcard .wpic{width:100%;height:190px;object-fit:cover;border-radius:12px;display:block;margin-bottom:14px}
+.wcard .num{position:absolute;top:14px;left:14px;background:#fff;color:var(--gold);width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);font-size:14px}
 
 /* Header */
 header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
@@ -315,6 +319,7 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
       <div class="card"><div class="num">01</div><div class="ic" style="background:var(--sky-soft)">➗</div>
         <h3>CPA (Concrete–Pictorial–Abstract) for Primary Mathematics</h3>
         <p>We apply the CPA approach to Primary Mathematics, guiding students from hands-on learning with concrete materials, to visual representations, and finally to abstract problem-solving.</p>
+        <img class="approach-pic" src="assets/approach_cpa.jpg" alt="CPA approach example" loading="lazy">
         <div class="mini">
           <div class="row"><div class="k">Concrete</div><div class="v">Students explore concepts using hands-on materials and real-life examples.</div></div>
           <div class="row"><div class="k">Pictorial</div><div class="v">Ideas are reinforced through visual models, diagrams, and representations.</div></div>
@@ -324,6 +329,7 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
       <div class="card"><div class="num">02</div><div class="ic" style="background:#fff7e6">📝</div>
         <h3>Personalized Worksheet</h3>
         <p>Each student receives comprehensive worksheets tailored to their ability and learning pace, aligned with their school's topic.</p>
+        <img class="approach-pic" src="assets/approach_worksheet.jpg" alt="Personalized worksheet example" loading="lazy">
         <div class="mini">
           <div class="row"><div class="k">Tailored Content</div><div class="v">Worksheets customized to each student's ability level.</div></div>
           <div class="row"><div class="k">School Aligned</div><div class="v">Topics aligned with their school's curriculum.</div></div>
@@ -333,6 +339,7 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
       <div class="card"><div class="num">03</div><div class="ic" style="background:#f5edfb">📊</div>
         <h3>Bar Model Problem Solving</h3>
         <p>Word problems are taught using the bar model strategy, helping students visualize relationships and solve problems logically and systematically.</p>
+        <img class="approach-pic" src="assets/approach_barmodel.jpg" alt="Bar model problem solving example" loading="lazy">
         <div class="mini">
           <div class="row"><div class="k">Visual Learning</div><div class="v">Students visualize mathematical relationships.</div></div>
           <div class="row"><div class="k">Logical Thinking</div><div class="v">Develop systematic problem-solving skills.</div></div>
@@ -366,13 +373,13 @@ footer{background:#fff;color:var(--muted);padding:22px 0;text-align:center;font-
     <div class="eyebrow">Why Choose Little Star Course?</div>
     <h2 class="title">What makes us different</h2>
     <div class="grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="card"><div class="num">01</div><div class="ic" style="background:var(--sky-soft)">🏫</div><h3>Clean and Comfortable Classroom</h3><p>Our classrooms are clean, well-maintained, and fully air-conditioned, creating a comfortable and focused learning environment for every student.</p></div>
-      <div class="card"><div class="num">02</div><div class="ic" style="background:#fff7e6">💻</div><h3>Modern Digital Classroom</h3><p>Our learning environment is supported by modern digital tools that make lessons more engaging, interactive, and aligned with today's learning styles.</p></div>
-      <div class="card"><div class="num">03</div><div class="ic" style="background:#eefbf3">🌐</div><h3>Bilingual Classroom</h3><p>We offer bilingual instruction in English and Indonesian to ensure students fully understand the concepts.</p></div>
-      <div class="card"><div class="num">04</div><div class="ic" style="background:#f5edfb">👨‍🏫</div><h3>Professional and Experienced Teachers</h3><p>Students are guided by professional and experienced teachers who are dedicated to delivering clear explanations and supportive instruction.</p></div>
-      <div class="card"><div class="num">05</div><div class="ic" style="background:var(--sky-soft)">👥</div><h3>Semi-Private Classes for Better Learning Focus</h3><p>With a maximum of four students per group, our semi-private classes ensure more attention, interaction, and effective learning.</p></div>
-      <div class="card"><div class="num">06</div><div class="ic" style="background:#fff7e6">🎯</div><h3>1-on-1 Coaching to Monitor Each Child's Progress</h3><p>We provide individual coaching sessions to closely monitor each child's learning progress and address their specific strengths and challenges.</p></div>
-      <div class="card"><div class="num">07</div><div class="ic" style="background:#eefbf3">📋</div><h3>Personalized Lesson Plans</h3><p>Each student receives a personalized lesson plan and worksheets that can be aligned with their school curriculum, ensuring continuity and better academic results.</p></div>
+      <div class="card wcard"><img class="wpic" src="assets/diff_clean.jpg" alt="Clean and comfortable classroom" loading="lazy"><div class="num">01</div><h3>Clean and Comfortable Classroom</h3><p>Our classrooms are clean, well-maintained, and fully air-conditioned, creating a comfortable and focused learning environment for every student.</p></div>
+      <div class="card wcard"><img class="wpic" src="assets/diff_digital.jpg" alt="Modern digital classroom" loading="lazy"><div class="num">02</div><h3>Modern Digital Classroom</h3><p>Our learning environment is supported by modern digital tools that make lessons more engaging, interactive, and aligned with today's learning styles.</p></div>
+      <div class="card wcard"><img class="wpic" src="assets/diff_bilingual.jpg" alt="Bilingual classroom" loading="lazy"><div class="num">03</div><h3>Bilingual Classroom</h3><p>We offer bilingual instruction in English and Indonesian to ensure students fully understand the concepts.</p></div>
+      <div class="card wcard"><img class="wpic" src="assets/diff_teacher.jpg" alt="Professional and experienced teachers" loading="lazy"><div class="num">04</div><h3>Professional and Experienced Teachers</h3><p>Students are guided by professional and experienced teachers who are dedicated to delivering clear explanations and supportive instruction.</p></div>
+      <div class="card wcard"><img class="wpic" src="assets/diff_semiprivate.jpg" alt="Semi-private classes" loading="lazy"><div class="num">05</div><h3>Semi-Private Classes for Better Learning Focus</h3><p>With a maximum of four students per group, our semi-private classes ensure more attention, interaction, and effective learning.</p></div>
+      <div class="card wcard"><img class="wpic" src="assets/diff_coaching.jpg" alt="1-on-1 coaching" loading="lazy"><div class="num">06</div><h3>1-on-1 Coaching to Monitor Each Child's Progress</h3><p>We provide individual coaching sessions to closely monitor each child's learning progress and address their specific strengths and challenges.</p></div>
+      <div class="card wcard"><img class="wpic" src="assets/diff_lessonplan.jpg" alt="Personalized lesson plans" loading="lazy"><div class="num">07</div><h3>Personalized Lesson Plans</h3><p>Each student receives a personalized lesson plan and worksheets that can be aligned with their school curriculum, ensuring continuity and better academic results.</p></div>
     </div>
     <div class="cta-band"><p>Experience the Little Star difference today?</p><a href="https://wa.me/6287855888747" target="_blank" rel="noopener" class="btn btn-navy">Book a Free Consultation</a></div>
   </div>

@@ -191,7 +191,7 @@ async function renderDash(){
   const periodName=new Date(P_MONTH+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
   document.getElementById('subHi').textContent=`Aktivitas kelas & deposit ${ME.nama.split(' ')[0]} · ${periodName}.`;
   const allCls=await API.getClasses({student_id:ME.id});
-  const cls=allCls.filter(c=>String(c.date).startsWith(P_MONTH));
+  const cls=allCls.filter(c=>String(c.date).startsWith(P_MONTH)).sort((a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||'')));
   const pays=await API.getPayments({student_id:ME.id});
   const pay=pays.find(x=>x.month===P_MONTH)||pays[0]||null; // payment for selected month
   const perMin=pay?Number(pay.duration)||90:(ME.meeting_minutes||90);
@@ -265,7 +265,7 @@ async function renderDeposit(){
     <tr><td>Status</td><td style="text-align:right">${meets>0?'<span class="badge badge-paid">LUNAS</span>':'<span class="badge" style="background:#fdecd2;color:#b26a00">Belum Lunas</span>'}</td></tr>`;
 }
 async function renderMaterial(){
-  const cls=(await API.getClasses({student_id:ME.id})).filter(c=>c.material_url);
+  const cls=(await API.getClasses({student_id:ME.id})).filter(c=>c.material_url).sort((a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||'')));
   document.getElementById('matBody').innerHTML=cls.map(c=>`<tr>
     <td>${prettyDate(c.date)}</td><td><b>${c.topic||'-'}</b></td><td>${tName(c.tutor_id)}</td>
     <td>${matLinks(c.material_url)}</td></tr>`).join('')

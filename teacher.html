@@ -234,8 +234,9 @@ async function renderStats(){
   const fee=cls.reduce((a,c)=>a+sTutorFee(c),0);
   document.getElementById('feeMonth').textContent=fmtRp(fee);
 }
+const byDate=(a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||''));
 async function renderSchedule(){
-  const cls=await API.getClasses({tutor_id:ME.id});
+  const cls=(await API.getClasses({tutor_id:ME.id})).sort(byDate);
   document.getElementById('schedBody').innerHTML=cls.map(c=>`<tr>
     <td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${timeRange(c.start_time,c.end_time)}</td>
     <td>${c.duration||'-'} min</td>
@@ -250,7 +251,7 @@ async function renderFee(){
   document.getElementById('feeLabel').textContent=periodName;
   document.getElementById('phTName').textContent=ME?ME.nama:'-';
   document.getElementById('phTPeriod').textContent=periodName;
-  const cls=await API.getClasses({month:m,tutor_id:ME.id});
+  const cls=(await API.getClasses({month:m,tutor_id:ME.id})).sort(byDate);
   let fee=0,mins=0,on=0,onl=0;
   const body=cls.map(c=>{
     const f=sTutorFee(c); fee+=f; mins+=Number(c.duration)||0; if(c.type==='online')onl++;else on++;
