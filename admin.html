@@ -55,6 +55,8 @@
           <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button>
         </div>
 
+        <div id="bdayBanner" style="display:none;background:linear-gradient(120deg,#fff0f6,#eef7fd);border:1.5px solid #ffc9e0;border-radius:14px;padding:14px 18px;margin-bottom:18px;color:var(--navy);font-size:14px"></div>
+
         <div class="grid grid-4" style="margin-bottom:22px">
           <div class="stat tint-blue"><div class="lbl"><span class="icon">📅</span> Kelas Hari Ini</div><div class="val" id="kToday">0</div></div>
           <div class="stat tint-green"><div class="lbl"><span class="icon">✅</span> Selesai</div><div class="val" id="kDone">0</div></div>
@@ -173,13 +175,22 @@ document.querySelectorAll('.nav a[data-view]').forEach(a=>{
 async function boot(){
   try{ TUTORS=await API.getTutors(); }catch(e){ TUTORS=[]; toast('Gagal memuat tentor','err'); }
   try{ STUDENTS=await API.getStudents(); }catch(e){ STUDENTS=[]; toast('Gagal memuat murid','err'); }
-  renderToday();
+  renderToday(); renderBirthday();
   // auto-refresh status tiap 60 detik (jeda saat modal terbuka / tab tidak aktif)
   setInterval(()=>{
     if(document.visibilityState!=='visible') return;
     if(document.getElementById('mClass').classList.contains('open')) return;
     renderToday();
   }, 60000);
+}
+function renderBirthday(){
+  const el=document.getElementById('bdayBanner'); if(!el) return;
+  const now=new Date(), M=now.getMonth()+1, D=now.getDate();
+  const isToday=p=>{ if(!p.dob) return false; const [,m,d]=String(p.dob).split('-').map(Number); return m===M&&d===D; };
+  const names=[...STUDENTS.filter(isToday).map(s=>`${s.nama} <span class="muted">(Murid)</span>`),
+               ...TUTORS.filter(isToday).map(t=>`${t.nama} <span class="muted">(Tentor)</span>`)];
+  if(names.length){ el.innerHTML='🎂 <b>Ulang tahun hari ini:</b> '+names.join(' · '); el.style.display='block'; }
+  else el.style.display='none';
 }
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}

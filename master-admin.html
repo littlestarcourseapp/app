@@ -104,6 +104,7 @@
       <!-- DASHBOARD -->
       <section class="view" id="view-dashboard">
         <div class="page-head"><div><h1>Beranda</h1><div class="sub">Ringkasan seluruh operasional Little Star Course</div></div></div>
+        <div id="bdayBanner" style="display:none;background:linear-gradient(120deg,#fff0f6,#eef7fd);border:1.5px solid #ffc9e0;border-radius:14px;padding:14px 18px;margin-bottom:18px;color:var(--navy);font-size:14px"></div>
         <div class="grid grid-4" style="margin-bottom:22px">
           <div class="stat tint-purple"><div class="lbl"><span class="icon">🧑‍🎓</span> Total Murid</div><div class="val" id="mStudents">0</div></div>
           <div class="stat tint-blue"><div class="lbl"><span class="icon">👩‍🏫</span> Total Tentor</div><div class="val" id="mTutors">0</div></div>
@@ -284,9 +285,10 @@
       </div>
       <div class="field-row">
         <div class="field"><label>Fee / Meeting (Orang Tua)</label><input type="number" id="sFee" value="150000"></div>
-        <div class="field"><label>Fee Tentor / Meeting</label><input type="number" id="sFeeTutor" value="90000"><div class="help">Untuk hitung fee di portal tentor</div></div>
+        <div class="field"><label>Fee Tentor / Meeting</label><input type="number" id="sFeeTutor" value="90000"><div class="help">Fee tentor untuk 1 pertemuan (sesuai durasi normal di bawah)</div></div>
       </div>
-      <input type="hidden" id="sMin" value="90"><input type="hidden" id="sDep" value="0">
+      <div class="field"><label>Durasi per Meeting (menit) <span class="req">*</span></label><input type="number" id="sMin" value="90"><div class="help">Durasi normal murid ini — jadi patokan hitung fee tentor (mis. 60 / 90 / 120 menit). Kalau kelas lebih lama, fee tentor otomatis proporsional.</div></div>
+      <input type="hidden" id="sDep" value="0">
       <input type="hidden" id="sAddFee" value="0"><input type="hidden" id="sAddNote" value="">
       <div class="field"><label>PIN Login Orang Tua (4 digit)</label>
         <div style="display:flex;gap:10px;align-items:center">
@@ -313,13 +315,12 @@
         <div class="field"><label>Pelajaran</label><input id="tSubject" placeholder="cth: Math, Science"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Jenjang</label>
-          <select id="tLevel">
-            <option value="">Pilih jenjang…</option>
-            <option value="Primary (SD)">Primary (SD)</option>
-            <option value="Lower Secondary (SMP)">Lower Secondary (SMP)</option>
-            <option value="Upper Secondary (SMA)">Upper Secondary (SMA)</option>
-          </select></div>
+        <div class="field"><label>Jenjang <span class="help" style="display:inline">(bisa pilih lebih dari satu)</span></label>
+          <div class="radio-row" style="flex-wrap:wrap;gap:8px 18px">
+            <label><input type="checkbox" class="tLvl" value="Primary (SD)"> Primary (SD)</label>
+            <label><input type="checkbox" class="tLvl" value="Lower Secondary (SMP)"> Lower Secondary (SMP)</label>
+            <label><input type="checkbox" class="tLvl" value="Upper Secondary (SMA)"> Upper Secondary (SMA)</label>
+          </div></div>
         <div class="field"><label>WhatsApp</label><input id="tWa" placeholder="08xxxx"></div>
       </div>
       <div class="field-row">
@@ -568,8 +569,19 @@ async function renderAllClasses(){
     <td>${c.topic||'<span class="muted">-</span>'}</td></tr>`).join('')
     ||'<tr><td colspan="7" class="muted" style="text-align:center;padding:22px">Belum ada kelas.</td></tr>';
 }
+function renderBirthday(){
+  const el=document.getElementById('bdayBanner'); if(!el) return;
+  const now=new Date(), M=now.getMonth()+1, D=now.getDate();
+  const isToday=p=>{ if(!p.dob) return false; const [,m,d]=String(p.dob).split('-').map(Number); return m===M&&d===D; };
+  const names=[...STUDENTS.filter(isToday).map(s=>`${s.nama} <span class="muted">(Murid)</span>`),
+               ...TUTORS.filter(isToday).map(t=>`${t.nama} <span class="muted">(Tentor)</span>`)];
+  if(names.length){ el.innerHTML='🎂 <b>Ulang tahun hari ini:</b> '+names.join(' · '); el.style.display='block'; }
+  else el.style.display='none';
+}
+const gradeKey=s=>{const m=String(s.grade||'').match(/\d+/);return m?parseInt(m[0]):999;};
 function renderStudentsM(){
-  document.getElementById('msBody').innerHTML=STUDENTS.map(s=>`<tr>
+  const list=[...STUDENTS].sort((a,b)=>gradeKey(a)-gradeKey(b)||String(a.nama||'').localeCompare(String(b.nama||'')));
+  document.getElementById('msBody').innerHTML=list.map(s=>`<tr>
     <td><b>${s.nama}</b></td><td>${s.school||'<span class="muted">-</span>'}</td><td>${s.grade||'-'}</td>
     <td>${s.parent_name||'-'}</td><td>${s.schedule||'-'}</td>
     <td>${fmtRp(s.fee_per_meeting)}</td><td>${fmtRp(s.fee_tentor)}</td>
@@ -577,6 +589,7 @@ function renderStudentsM(){
         <button class="btn btn-ghost btn-sm" title="Buat PIN baru" onclick="regenStudentPin('${s.id}')">🔄</button></td>
     <td style="white-space:nowrap">
       <button class="btn btn-warn btn-sm" onclick="openStudent('${s.id}')">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="delStudent('${s.id}')">Delete</button>
       <button class="btn btn-outline btn-sm" onclick="openReport('${s.id}')">Laporan →</button></td></tr>`).join('')
     ||'<tr><td colspan="9" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
 }
@@ -585,7 +598,8 @@ function renderTutorsM(){
     <td><b>${t.nama}</b></td><td>${t.subject||'-'}</td><td>${t.level||'<span class="muted">-</span>'}</td><td>${t.wa||'-'}</td>
     <td><span style="font-weight:800;letter-spacing:3px;color:var(--navy)">${t.pin||'----'}</span>
         <button class="btn btn-ghost btn-sm" title="Buat PIN baru" onclick="regenPin('${t.id}')">🔄</button></td>
-    <td><button class="btn btn-warn btn-sm" onclick="openTutor('${t.id}')">Edit</button></td></tr>`).join('')
+    <td style="white-space:nowrap"><button class="btn btn-warn btn-sm" onclick="openTutor('${t.id}')">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="delTutor('${t.id}')">Delete</button></td></tr>`).join('')
     ||'<tr><td colspan="6" class="muted" style="text-align:center;padding:22px">Belum ada tentor.</td></tr>';
 }
 async function renderLaporan(){
@@ -647,14 +661,17 @@ function openTutor(id){
   const t=id?TUTORS.find(x=>x.id===id):{};
   document.getElementById('tId').value=id||'';
   document.getElementById('tNama').value=t.nama||''; document.getElementById('tSubject').value=t.subject||'';
-  document.getElementById('tLevel').value=t.level||''; document.getElementById('tWa').value=t.wa||'';
+  const levels=String(t.level||'').split(',').map(x=>x.trim());
+  document.querySelectorAll('.tLvl').forEach(cb=>cb.checked=levels.includes(cb.value));
+  document.getElementById('tWa').value=t.wa||'';
   document.getElementById('tAddress').value=t.address||''; document.getElementById('tDob').value=t.dob||'';
   document.getElementById('tPin').value=t.pin||genPin();
   openModal('mTutor');
 }
 async function saveTutor(){
   const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
-  const p={id:g('tId')||undefined,nama:g('tNama'),subject:g('tSubject'),level:g('tLevel'),
+  const level=[...document.querySelectorAll('.tLvl:checked')].map(cb=>cb.value).join(', ');
+  const p={id:g('tId')||undefined,nama:g('tNama'),subject:g('tSubject'),level,
     address:g('tAddress'),dob:g('tDob'),wa:g('tWa'),pin:g('tPin')||genPin()};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
   try{
@@ -667,6 +684,18 @@ async function regenPin(id){
   const pin=genPin(); await API.updateTutor({...t,pin});
   TUTORS=await API.getTutors(); renderTutorsM(); toast('PIN baru '+t.nama+': '+pin,'ok');
 }
+async function delTutor(id){
+  const t=TUTORS.find(x=>x.id===id); if(!t) return;
+  if(!confirm('Hapus tentor "'+t.nama+'" ? Tindakan ini tidak bisa dibatalkan.')) return;
+  try{ await API.deleteTutor(id); TUTORS=await API.getTutors(); renderTutorsM(); toast('Tentor dihapus','ok'); }
+  catch(e){ toast('Gagal hapus: '+(e.message||e),'err'); }
+}
+async function delStudent(id){
+  const s=STUDENTS.find(x=>x.id===id); if(!s) return;
+  if(!confirm('Hapus murid "'+s.nama+'" ? Tindakan ini tidak bisa dibatalkan.')) return;
+  try{ await API.deleteStudent(id); STUDENTS=await API.getStudents(); renderStudentsM(); toast('Murid dihapus','ok'); }
+  catch(e){ toast('Gagal hapus: '+(e.message||e),'err'); }
+}
 
 async function boot(){
   TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
@@ -678,6 +707,7 @@ async function boot(){
   document.getElementById('mClasses').textContent=cls.length;
   let rev=0; STUDENTS.forEach(s=>{const n=cls.filter(c=>c.student_id===s.id).length;rev+=n*(s.fee_per_meeting||0);});
   document.getElementById('mRevenue').textContent=fmtRp(rev);
+  renderBirthday();
   wireSearch('dashSearch','dashHits');   // pencarian cepat murid di dashboard
   wireGlobalSearch();                    // kolom atas → gabungan murid + tentor
   renderHits('dashHits',STUDENTS);

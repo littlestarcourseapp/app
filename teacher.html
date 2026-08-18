@@ -213,7 +213,7 @@ async function doLogin(){
 }
 
 async function renderToday(){
-  const list=(await API.getClasses({date:todayStr(),tutor_id:ME.id}));
+  const list=(await API.getClasses({date:todayStr(),tutor_id:ME.id})).sort((a,b)=>String(a.start_time||'99:99').localeCompare(String(b.start_time||'99:99')));
   const tb=document.getElementById('todayBody');
   tb.innerHTML=list.map(c=>`<tr>
     <td><b>${sName(c.student_id)}</b></td><td>${timeRange(c.start_time,c.end_time)}</td>
