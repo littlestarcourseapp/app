@@ -319,6 +319,7 @@ async function editClass(id){
 }));
 document.getElementById('cDoc').onchange=e=>document.getElementById('cDocName').textContent=e.target.files[0]?('📎 '+e.target.files[0].name):'';
 async function saveClass(){
+  if(saveClass._busy) return;
   const p={
     id:document.getElementById('cId').value||undefined,
     date:document.getElementById('cDate').value,
@@ -335,10 +336,13 @@ async function saveClass(){
   if(!p.tutor_id){toast('Pilih tentor dulu','err');return;}
   const df=document.getElementById('cDoc').files[0];
   if(df){ try{ toast('Memproses foto…'); p.doc_url=await resizeImageToDataURL(df); }catch(e){ toast('Foto gagal diproses','err'); } }
+  const btn=document.querySelector('#mClass .btn-primary');
+  saveClass._busy=true; if(btn){btn.disabled=true; btn.dataset.t=btn.textContent; btn.textContent='Menyimpan…';}
   try{
     if(p.id) await API.updateClass(p); else await API.addClass(p);
     closeModal('mClass'); toast('Kelas disimpan','ok'); renderToday();
   }catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
+  finally{ saveClass._busy=false; if(btn){btn.disabled=false; btn.textContent=btn.dataset.t||'Simpan';} }
 }
 async function delClass(id){ if(!confirm('Hapus kelas ini?'))return; await API.deleteClass(id); toast('Terhapus','ok'); renderToday(); }
 

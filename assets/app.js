@@ -118,9 +118,19 @@ function toggleSidebar(){
 const API = {
   async _post(payload){
     if(DEMO_MODE) return DEMO.handle(payload);
-    const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
-    const j=await r.json(); if(j.status==='error') throw new Error(j.message); return j.data;
+    const isWrite=/^(add|update|delete|save)/.test(payload.action||'');
+    if(isWrite && API._busy) throw new Error('Masih menyimpan permintaan sebelumnya — tunggu sebentar, jangan klik dua kali.');
+    if(isWrite) API._busy=true;
+    try{
+      const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+      const text=await r.text();
+      let j; try{ j=JSON.parse(text); }
+      catch(_){ throw new Error('Server sesaat tidak merespons dengan benar. Data KEMUNGKINAN sudah tersimpan — tutup, refresh halaman, dan cek dulu sebelum menyimpan ulang.'); }
+      if(j.status==='error') throw new Error(j.message);
+      return j.data;
+    } finally { if(isWrite) API._busy=false; }
   },
+  _busy:false,
   getStudents : (o={}) => API._post({action:'getStudents',...o}),
   studentLogin: (login,pin) => API._post({action:'studentLogin',login,pin}),
   getStudent  : (id)   => API._post({action:'getStudents',id}),

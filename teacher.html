@@ -309,6 +309,7 @@ async function openFill(id){
 }
 document.getElementById('fPdf').onchange=e=>{const fs=[...e.target.files];document.getElementById('fPdfName').textContent=fs.length?('📎 '+fs.map(f=>f.name).join(', ')):'';};
 async function saveFill(){
+  if(saveFill._busy) return;
   const p={id:document.getElementById('fId').value,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value};
   const files=[...document.getElementById('fPdf').files];
   const links=document.getElementById('fLinks').value.split(/[\s,]+/).map(s=>s.trim()).filter(s=>/^https?:\/\//i.test(s));
@@ -322,8 +323,11 @@ async function saveFill(){
   }
   const seen=new Set();
   p.material_url=[...base,...newFileUrls,...links].filter(u=>u&&!seen.has(u)&&seen.add(u)).join('|');
+  const btn=document.querySelector('#mFill .btn-primary');
+  saveFill._busy=true; if(btn){btn.disabled=true; btn.dataset.t=btn.textContent; btn.textContent='Menyimpan…';}
   try{ await API.updateClass(p); closeModal('mFill'); toast('Laporan tersimpan','ok'); renderToday(); }
   catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
+  finally{ saveFill._busy=false; if(btn){btn.disabled=false; btn.textContent=btn.dataset.t||'Simpan Laporan';} }
 }
 boot();
 </script>
