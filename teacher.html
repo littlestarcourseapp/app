@@ -153,7 +153,7 @@
       <div class="field"><label>Topic / Material <span class="req">*</span> <span class="help" style="display:inline">(bisa Enter untuk baris baru)</span></label><textarea id="fTopic" placeholder="cth: *Math WS#1 hal 33-36&#10;*Science (Senses)"></textarea></div>
       <div class="field"><label>Catatan untuk Orang Tua</label><textarea id="fNote" placeholder="cth: Anton cukup aktif dan memahami materi dengan baik."></textarea></div>
       <div class="field"><label>Materi Belajar (PDF / JPG — bisa diunduh orang tua)</label>
-        <label class="dropzone" for="fPdf"><span class="zi">📎</span><div><b>Pilih file</b> atau drag &amp; drop<br><span class="help">PDF &amp; JPG · bisa pilih beberapa file sekaligus</span></div></label>
+        <div class="dropzone" onclick="document.getElementById('fPdf').click()"><span class="zi">📎</span><div><b>Pilih file</b> atau drag &amp; drop<br><span class="help">PDF &amp; JPG · bisa pilih beberapa file sekaligus</span></div></div>
         <input type="file" id="fPdf" accept="application/pdf,image/jpeg,image/jpg,image/png" multiple class="hide"><div class="help" id="fPdfName"></div></div>
       <div class="field"><label>Materi via Link <span class="help" style="display:inline">(YouTube / Google Drive / dll · satu link per baris)</span></label>
         <textarea id="fLinks" placeholder="https://youtu.be/xxxxxxxx&#10;https://drive.google.com/file/d/..."></textarea></div>
