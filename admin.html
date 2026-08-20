@@ -52,7 +52,10 @@
       <section class="view" id="view-dashboard">
         <div class="page-head">
           <div><h1>Kelas Hari Ini</h1><div class="sub" id="todayDate">—</div></div>
-          <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost btn-sm" id="clrDocsBtn" onclick="clearAllDocs()">🗑️ Hapus semua foto</button>
+            <button class="btn btn-primary" onclick="openAddClass()">＋ Add Class</button>
+          </div>
         </div>
 
         <div id="bdayBanner" style="display:none;background:linear-gradient(120deg,#fff0f6,#eef7fd);border:1.5px solid #ffc9e0;border-radius:14px;padding:14px 18px;margin-bottom:18px;color:var(--navy);font-size:14px"></div>
@@ -137,7 +140,8 @@
       <div class="field"><label>Note</label><textarea id="cNote" placeholder="Optional note"></textarea></div>
       <div class="field"><label>Documentation (Upload Photo)</label>
         <div class="dropzone" onclick="document.getElementById('cDoc').click()"><span class="zi">🖼️</span><div><b>Choose file</b> atau drag &amp; drop<br><span class="help">JPG, PNG up to 5MB</span></div></div>
-        <input type="file" id="cDoc" accept="image/*" class="hide"><div class="help" id="cDocName"></div></div>
+        <input type="file" id="cDoc" accept="image/*" class="hide"><div class="help" id="cDocName"></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:8px"><input type="checkbox" id="cDocClear"> 🗑️ Hapus foto dokumentasi yang tersimpan</label></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('mClass')">Cancel</button>
@@ -297,7 +301,8 @@ function openAddClass(){
   document.getElementById('mClassTitle').textContent='Add Class';
   document.getElementById('cId').value=''; document.getElementById('cDate').value=todayStr();
   fillSelect(document.getElementById('cStudent'),STUDENTS); fillSelect(document.getElementById('cTutor'),TUTORS);
-  ['cStart','cEnd','cTopic','cNote','cDocName'].forEach(i=>document.getElementById(i).value='');
+  ['cStart','cEnd','cTopic','cNote'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('cDoc').value=''; document.getElementById('cDocName').textContent=''; document.getElementById('cDocClear').checked=false;
   document.getElementById('cDur').value=90; document.querySelector('input[name=cType][value=onsite]').checked=true;
   openModal('mClass');
 }
@@ -310,6 +315,7 @@ async function editClass(id){
   document.getElementById('cStart').value=c.start_time||''; document.getElementById('cEnd').value=c.end_time||'';
   document.getElementById('cDur').value=c.duration||90; document.getElementById('cTopic').value=c.topic||'';
   document.getElementById('cNote').value=c.note||'';
+  document.getElementById('cDoc').value=''; document.getElementById('cDocName').textContent=''; document.getElementById('cDocClear').checked=false;
   document.querySelector(`input[name=cType][value=${c.type||'onsite'}]`).checked=true;
   openModal('mClass');
 }
@@ -336,6 +342,7 @@ async function saveClass(){
   if(!p.tutor_id){toast('Pilih tentor dulu','err');return;}
   const df=document.getElementById('cDoc').files[0];
   if(df){ try{ toast('Memproses foto…'); p.doc_url=await resizeImageToDataURL(df); }catch(e){ toast('Foto gagal diproses','err'); } }
+  else if(document.getElementById('cDocClear').checked){ p.doc_url=''; }
   const btn=document.querySelector('#mClass .btn-primary');
   saveClass._busy=true; if(btn){btn.disabled=true; btn.dataset.t=btn.textContent; btn.textContent='Menyimpan…';}
   try{
@@ -345,6 +352,19 @@ async function saveClass(){
   finally{ saveClass._busy=false; if(btn){btn.disabled=false; btn.textContent=btn.dataset.t||'Simpan';} }
 }
 async function delClass(id){ if(!confirm('Hapus kelas ini?'))return; await API.deleteClass(id); toast('Terhapus','ok'); renderToday(); }
+async function clearAllDocs(){
+  if(!confirm('Hapus SEMUA foto dokumentasi dari semua kelas?\n\nData lain (topik, jadwal, catatan) tetap aman. Tindakan ini tidak bisa dibatalkan.')) return;
+  if(!confirm('Sekali lagi — yakin hapus semua foto dokumentasi?')) return;
+  const btn=document.getElementById('clrDocsBtn'); if(btn){btn.disabled=true;}
+  try{
+    const withDoc=(await API.getClasses({})).filter(c=>c.doc_url);
+    if(!withDoc.length){ toast('Tidak ada foto untuk dihapus','ok'); if(btn){btn.disabled=false;btn.textContent='🗑️ Hapus semua foto';} return; }
+    let n=0;
+    for(const c of withDoc){ await API.updateClass({id:c.id,doc_url:''}); n++; if(btn) btn.textContent=`Menghapus ${n}/${withDoc.length}…`; }
+    toast(`Selesai — ${n} foto dikosongkan`,'ok'); renderToday();
+  }catch(e){ toast('Gagal: '+(e.message||e)+'. Coba lagi untuk melanjutkan sisa foto.','err'); }
+  finally{ if(btn){btn.disabled=false; btn.textContent='🗑️ Hapus semua foto';} }
+}
 
 boot();
 </script>
