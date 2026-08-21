@@ -38,10 +38,8 @@
     <img src="assets/logo.jpeg" style="width:84px;height:84px;border-radius:18px;padding:6px;background:#fff;box-shadow:var(--shadow);margin:0 auto 14px">
     <h2 style="color:var(--navy);font-size:20px;margin-bottom:4px">Login Tentor</h2>
     <p class="text-muted" style="font-size:13px;margin-bottom:18px">Masuk dengan nama & PIN 4 digit dari admin</p>
-    <div class="field" style="text-align:left;position:relative"><label>Nama Tentor</label>
-      <input id="lgName" autocomplete="off" placeholder="Ketik nama Anda…" oninput="lgSuggest()" onkeydown="if(event.key==='Enter')doLogin()">
-      <input type="hidden" id="lgId">
-      <div id="lgSug" class="sugbox"></div></div>
+    <div class="field" style="text-align:left"><label>Username</label>
+      <input id="lgName" autocomplete="off" placeholder="cth: nitalsc" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="field" style="text-align:left"><label>PIN (4 digit)</label>
       <input id="lgPin" maxlength="4" inputmode="numeric" placeholder="••••" style="letter-spacing:8px;text-align:center;font-size:20px;font-weight:800"
              onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -205,36 +203,20 @@ function setMe(t){
 }
 
 async function boot(){
-  TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
-}
-function lgSuggest(){
-  const q=document.getElementById('lgName').value.trim().toLowerCase();
-  const box=document.getElementById('lgSug');
-  document.getElementById('lgId').value='';
-  if(q.length<2){ box.className='sugbox'; box.innerHTML=''; return; }
-  const hits=TUTORS.filter(t=>String(t.nama||'').toLowerCase().includes(q)).slice(0,6);
-  if(!hits.length){ box.className='sugbox'; box.innerHTML=''; return; }
-  box.innerHTML=hits.map(t=>`<div class="sug-item" onclick="lgPick('${t.id}')">${esc(t.nama)}</div>`).join('');
-  box.className='sugbox show';
-}
-function lgPick(id){
-  const t=TUTORS.find(x=>x.id===id); if(!t) return;
-  document.getElementById('lgName').value=t.nama;
-  document.getElementById('lgId').value=id;
-  document.getElementById('lgSug').className='sugbox';
+  const q=new URLSearchParams(location.search);
+  if(q.get('user')) document.getElementById('lgName').value=q.get('user');
 }
 async function doLogin(){
-  let id=document.getElementById('lgId').value;
-  const typed=document.getElementById('lgName').value.trim();
+  const user=document.getElementById('lgName').value.trim();
   const pin=document.getElementById('lgPin').value;
   const err=document.getElementById('lgErr');
-  if(!id && typed){ const m=TUTORS.find(t=>String(t.nama||'').toLowerCase().trim()===typed.toLowerCase()); if(m) id=m.id; }
-  if(!id && !typed){err.textContent='Ketik nama Anda dulu';return;}
+  if(!user){err.textContent='Masukkan username dulu';return;}
   if(!/^\d{4}$/.test(pin)){err.textContent='PIN harus 4 digit angka';return;}
   try{
-    const t=await API.tutorLogin(id||typed,pin);
+    const t=await API.tutorLogin(user,pin);
+    STUDENTS=await API.getStudents();
     document.getElementById('loginGate').style.display='none';
-    setMe(t); STUDENTS=await API.getStudents();
+    setMe(t);
   }catch(e){ err.textContent=e.message||'Login gagal'; }
 }
 

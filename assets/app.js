@@ -26,6 +26,12 @@ function logoBlock(name, sub){
 
 /* ---- Formatting -------------------------------------------- */
 const genPin  = () => String(Math.floor(1000+Math.random()*9000));
+// username = first name (title stripped) + "lsc"  e.g. "Charlene Tannata"→"charlenelsc", "Ms. Nita"→"nitalsc"
+const genUsername = (name) => {
+  let n = String(name||'').trim().replace(/^(ms|mr|mrs|miss|mister)\.?\s+/i,'');
+  const first = (n.split(/\s+/)[0]||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  return first ? first+'lsc' : '';
+};
 const fmtRp   = n => 'Rp ' + (Number(n)||0).toLocaleString('id-ID');
 const fmtNum  = n => (Number(n)||0).toLocaleString('id-ID');
 const pad2    = n => String(n).padStart(2,'0');
@@ -265,7 +271,7 @@ const DEMO = {
       case 'deletePayment':{ this.payments=this.payments.filter(x=>x.id!==p.id); return {deleted:p.id}; }
       case 'uploadFile':{ return {url:p.base64,view:p.base64}; }
       case 'addStudent': { const id='s'+Date.now(); const pin=p.pin||genPin(); this.students.push({id,active:'aktif',pin,...p}); return {id,pin}; }
-      case 'studentLogin':{ const key=String(p.login||'').toLowerCase().trim(); const s=this.students.find(x=>x.id===p.login||x.nama.toLowerCase().trim()===key); if(!s)throw new Error('Murid tidak ditemukan'); if(String(s.pin)!==String(p.pin))throw new Error('PIN salah'); return clone(s); }
+      case 'studentLogin':{ const key=String(p.login||'').toLowerCase().trim(); const s=this.students.find(x=>x.id===p.login||(x.username||'').toLowerCase().trim()===key||genUsername(x.nama)===key||x.nama.toLowerCase().trim()===key); if(!s)throw new Error('Murid tidak ditemukan'); if(String(s.pin)!==String(p.pin))throw new Error('PIN salah'); return clone(s); }
       case 'addTutor':   { const id='t'+Date.now(); const pin=p.pin||genPin(); this.tutors.push({id,pin,...p}); return {id,pin}; }
       case 'updateTutor':{ const t=this.tutors.find(x=>x.id===p.id); if(t) Object.assign(t,p); return {updated:p.id}; }
       case 'updateStudent':{ const s=this.students.find(x=>x.id===p.id); if(s) Object.assign(s,p); return {updated:p.id}; }
@@ -273,7 +279,7 @@ const DEMO = {
       case 'deleteStudent':{ this.students=this.students.filter(x=>x.id!==p.id); return {deleted:p.id}; }
       case 'tutorLogin':{
         const key=String(p.login||'').toLowerCase().trim();
-        const t=this.tutors.find(x=>x.id===p.login||x.nama.toLowerCase().trim()===key);
+        const t=this.tutors.find(x=>x.id===p.login||(x.username||'').toLowerCase().trim()===key||genUsername(x.nama)===key||x.nama.toLowerCase().trim()===key);
         if(!t) throw new Error('Tentor tidak ditemukan');
         if(String(t.pin)!==String(p.pin)) throw new Error('PIN salah');
         return clone(t);

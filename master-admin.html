@@ -181,7 +181,7 @@
         <div class="page-head"><div><h1>Murid</h1><div class="sub">Kelola data murid — Edit atau buka laporan</div></div>
           <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
-          <thead><tr><th>Nama</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>PIN Ortu</th><th>Action</th></tr></thead>
+          <thead><tr><th>Nama</th><th>Username</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>PIN Ortu</th><th>Action</th></tr></thead>
           <tbody id="msBody"></tbody>
         </table></div></div>
       </section>
@@ -191,7 +191,7 @@
         <div class="page-head"><div><h1>Tentor</h1><div class="sub">Kelola data tentor & PIN login</div></div>
           <button class="btn btn-primary" onclick="openTutor()">＋ Tambah Tentor</button></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
-          <thead><tr><th>Nama</th><th>Pelajaran</th><th>Jenjang</th><th>WA</th><th>PIN Login</th><th>Action</th></tr></thead>
+          <thead><tr><th>Nama</th><th>Username</th><th>Pelajaran</th><th>Jenjang</th><th>WA</th><th>PIN Login</th><th>Action</th></tr></thead>
           <tbody id="mtBody"></tbody>
         </table></div></div>
       </section>
@@ -273,6 +273,12 @@
         <div class="field"><label>Nama Murid <span class="req">*</span></label><input id="sNama"></div>
         <div class="field"><label>Grade</label><input id="sGrade" placeholder="7"></div>
       </div>
+      <div class="field"><label>Username Login <span class="req">*</span></label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input id="sUser" placeholder="cth: charlenelsc" style="flex:1">
+          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('sUser').value=genUsername(document.getElementById('sNama').value)">🔄 Generate</button>
+        </div>
+        <div class="help">Dari nama depan + "lsc". Orang tua login pakai username ini + PIN — nama asli murid tidak ditampilkan.</div></div>
       <div class="field"><label>School (Nama Sekolah)</label><input id="sSchool" placeholder="cth: SMP Petra 1"></div>
       <div class="field"><label>Address (Alamat)</label><input id="sAddress" placeholder="Alamat rumah"></div>
       <div class="field-row">
@@ -314,6 +320,12 @@
         <div class="field"><label>Nama <span class="req">*</span></label><input id="tNama"></div>
         <div class="field"><label>Pelajaran</label><input id="tSubject" placeholder="cth: Math, Science"></div>
       </div>
+      <div class="field"><label>Username Login <span class="req">*</span></label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input id="tUser" placeholder="cth: nitalsc" style="flex:1">
+          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('tUser').value=genUsername(document.getElementById('tNama').value)">🔄 Generate</button>
+        </div>
+        <div class="help">Dari nama depan + "lsc". Tentor login pakai username ini + PIN.</div></div>
       <div class="field-row">
         <div class="field"><label>WhatsApp</label><input id="tWa" placeholder="08xxxx"></div>
         <div class="field"><label>Date of Birth</label><input type="date" id="tDob"></div>
@@ -580,7 +592,7 @@ const gradeKey=s=>{const m=String(s.grade||'').match(/\d+/);return m?parseInt(m[
 function renderStudentsM(){
   const list=[...STUDENTS].sort((a,b)=>gradeKey(a)-gradeKey(b)||String(a.nama||'').localeCompare(String(b.nama||'')));
   document.getElementById('msBody').innerHTML=list.map(s=>`<tr>
-    <td><b>${s.nama}</b></td><td>${s.school||'<span class="muted">-</span>'}</td><td>${s.grade||'-'}</td>
+    <td><b>${s.nama}</b></td><td><b style="color:var(--navy)">${s.username||'<span class="muted">-</span>'}</b></td><td>${s.school||'<span class="muted">-</span>'}</td><td>${s.grade||'-'}</td>
     <td>${s.parent_name||'-'}</td><td>${s.schedule||'-'}</td>
     <td>${fmtRp(s.fee_per_meeting)}</td><td>${fmtRp(s.fee_tentor)}</td>
     <td><span style="font-weight:800;letter-spacing:3px;color:var(--navy)">${s.pin||'----'}</span>
@@ -589,16 +601,16 @@ function renderStudentsM(){
       <button class="btn btn-warn btn-sm" onclick="openStudent('${s.id}')">Edit</button>
       <button class="btn btn-danger btn-sm" onclick="delStudent('${s.id}')">Delete</button>
       <button class="btn btn-outline btn-sm" onclick="openReport('${s.id}')">Laporan →</button></td></tr>`).join('')
-    ||'<tr><td colspan="9" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
+    ||'<tr><td colspan="10" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
 }
 function renderTutorsM(){
   document.getElementById('mtBody').innerHTML=TUTORS.map(t=>`<tr>
-    <td><b>${t.nama}</b></td><td>${t.subject||'-'}</td><td>${t.level||'<span class="muted">-</span>'}</td><td>${t.wa||'-'}</td>
+    <td><b>${t.nama}</b></td><td><b style="color:var(--navy)">${t.username||'<span class="muted">-</span>'}</b></td><td>${t.subject||'-'}</td><td>${t.level||'<span class="muted">-</span>'}</td><td>${t.wa||'-'}</td>
     <td><span style="font-weight:800;letter-spacing:3px;color:var(--navy)">${t.pin||'----'}</span>
         <button class="btn btn-ghost btn-sm" title="Buat PIN baru" onclick="regenPin('${t.id}')">🔄</button></td>
     <td style="white-space:nowrap"><button class="btn btn-warn btn-sm" onclick="openTutor('${t.id}')">Edit</button>
       <button class="btn btn-danger btn-sm" onclick="delTutor('${t.id}')">Delete</button></td></tr>`).join('')
-    ||'<tr><td colspan="6" class="muted" style="text-align:center;padding:22px">Belum ada tentor.</td></tr>';
+    ||'<tr><td colspan="7" class="muted" style="text-align:center;padding:22px">Belum ada tentor.</td></tr>';
 }
 async function renderLaporan(){
   const m=document.getElementById('repMonth').value||todayStr().slice(0,7);
@@ -626,7 +638,7 @@ function openStudent(id){
   const s=id?STUDENTS.find(x=>x.id===id):{};
   const V=(k,v)=>document.getElementById(k).value=v;
   document.getElementById('sId').value=id||'';
-  V('sNama',s.nama||''); V('sGrade',s.grade||''); V('sSchool',s.school||''); V('sAddress',s.address||'');
+  V('sNama',s.nama||''); V('sGrade',s.grade||''); V('sUser',s.username||genUsername(s.nama||'')); V('sSchool',s.school||''); V('sAddress',s.address||'');
   V('sDob',s.dob||''); V('sSchedule',s.schedule||''); V('sParent',s.parent_name||''); V('sWa',s.wa_ortu||'');
   V('sFee',s.fee_per_meeting||150000); V('sFeeTutor',s.fee_tentor||90000);
   V('sMin',s.meeting_minutes||90); V('sDep',s.deposit_meetings||8);
@@ -636,7 +648,7 @@ function openStudent(id){
 }
 async function saveStudent(){
   const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
-  const p={id:g('sId')||undefined,nama:g('sNama'),school:g('sSchool'),address:g('sAddress'),dob:g('sDob'),
+  const p={id:g('sId')||undefined,nama:g('sNama'),username:(g('sUser')||genUsername(g('sNama'))).toLowerCase().trim(),school:g('sSchool'),address:g('sAddress'),dob:g('sDob'),
     grade:g('sGrade'),schedule:g('sSchedule'),parent_name:g('sParent'),wa_ortu:g('sWa'),
     fee_per_meeting:g('sFee'),fee_tentor:g('sFeeTutor'),meeting_minutes:g('sMin'),deposit_meetings:g('sDep'),
     add_fee:g('sAddFee'),add_fee_note:g('sAddNote'),pin:g('sPin')||genPin()};
@@ -659,6 +671,7 @@ function openTutor(id){
   const t=id?TUTORS.find(x=>x.id===id):{};
   document.getElementById('tId').value=id||'';
   document.getElementById('tNama').value=t.nama||''; document.getElementById('tSubject').value=t.subject||'';
+  document.getElementById('tUser').value=t.username||genUsername(t.nama||'');
   const levels=String(t.level||'').split(',').map(x=>x.trim());
   document.querySelectorAll('.tLvl').forEach(cb=>cb.checked=levels.includes(cb.value));
   document.getElementById('tWa').value=t.wa||'';
@@ -669,7 +682,7 @@ function openTutor(id){
 async function saveTutor(){
   const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
   const level=[...document.querySelectorAll('.tLvl:checked')].map(cb=>cb.value).join(', ');
-  const p={id:g('tId')||undefined,nama:g('tNama'),subject:g('tSubject'),level,
+  const p={id:g('tId')||undefined,nama:g('tNama'),username:(g('tUser')||genUsername(g('tNama'))).toLowerCase().trim(),subject:g('tSubject'),level,
     address:g('tAddress'),dob:g('tDob'),wa:g('tWa'),pin:g('tPin')||genPin()};
   if(!p.nama){toast('Nama wajib diisi','err');return;}
   try{
