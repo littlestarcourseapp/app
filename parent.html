@@ -265,7 +265,7 @@ function rowHist(n,c){
 function emptyRow(cols){return `<tr><td colspan="${cols}" class="muted" style="text-align:center;padding:24px">Belum ada riwayat kelas.</td></tr>`;}
 
 async function renderFullClass(){
-  const cls=await API.getClasses({student_id:ME.id});
+  const cls=(await API.getClasses({student_id:ME.id})).sort((a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||'')));
   document.getElementById('classBody').innerHTML=cls.map(c=>`<tr>
     <td>${prettyDate(c.date)} <span class="muted">(${dayName(c.date)})</span></td>
     <td>${tName(c.tutor_id)}</td><td>${timeRange(c.start_time,c.end_time)}</td><td>${c.duration||'-'} min</td>
