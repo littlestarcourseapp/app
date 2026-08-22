@@ -179,7 +179,9 @@
       <!-- STUDENTS -->
       <section class="view hide" id="view-students">
         <div class="page-head"><div><h1>Murid</h1><div class="sub">Kelola data murid — Edit atau buka laporan</div></div>
-          <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost btn-sm" id="genUserBtn" onclick="generateAllUsernames()">🪄 Generate semua username</button>
+            <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Nama</th><th>Username</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>PIN Ortu</th><th>Action</th></tr></thead>
           <tbody id="msBody"></tbody>
@@ -708,6 +710,29 @@ async function delStudent(id){
   catch(e){ toast('Gagal hapus: '+(e.message||e),'err'); }
 }
 
+async function generateAllUsernames(){
+  if(!confirm('Buat username otomatis untuk murid & tentor yang BELUM punya username?\n\nYang sudah punya username (termasuk yang diedit manual) TIDAK diubah.')) return;
+  const btn=document.getElementById('genUserBtn'); if(btn)btn.disabled=true;
+  try{
+    const used=new Set([...STUDENTS,...TUTORS].map(x=>String(x.username||'').toLowerCase().trim()).filter(Boolean));
+    const uniq=(base)=>{ if(!base) return ''; let u=base,i=2; while(used.has(u)){ u=base.replace(/lsc$/,'')+i+'lsc'; i++; } used.add(u); return u; };
+    let made=0, skipped=0;
+    for(const s of STUDENTS){
+      if(String(s.username||'').trim()){ skipped++; continue; }
+      const u=uniq(genUsername(s.nama)); if(!u){ skipped++; continue; }
+      await API.updateStudent({...s,username:u}); made++; if(btn) btn.textContent=`Membuat… ${made}`;
+    }
+    for(const t of TUTORS){
+      if(String(t.username||'').trim()){ skipped++; continue; }
+      const u=uniq(genUsername(t.nama)); if(!u){ skipped++; continue; }
+      await API.updateTutor({...t,username:u}); made++; if(btn) btn.textContent=`Membuat… ${made}`;
+    }
+    STUDENTS=await API.getStudents(); TUTORS=await API.getTutors();
+    renderStudentsM(); renderTutorsM();
+    toast(`Selesai — ${made} username dibuat, ${skipped} dilewati`,'ok');
+  }catch(e){ toast('Gagal: '+(e.message||e)+'. Klik lagi untuk melanjutkan sisanya.','err'); }
+  finally{ if(btn){btn.disabled=false; btn.textContent='🪄 Generate semua username';} }
+}
 async function boot(){
   TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
   document.getElementById('repMonth').value=todayStr().slice(0,7);

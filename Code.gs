@@ -27,6 +27,7 @@ const HEADER_ALIASES = {
   Students:{
     id:['id'],
     nama:['nama',"student's name",'student name','nama murid','name'],
+    username:['username','user','user name','login','user login'],
     school:['school','sekolah','nama sekolah'],
     address:['address','alamat'],
     dob:['dob','date of birth','tanggal lahir','tgl lahir'],
@@ -48,6 +49,7 @@ const HEADER_ALIASES = {
   Tutors:{
     id:['id'],
     nama:['nama',"tutor's name","tentor's name","student's name",'tentor','nama tentor','nama guru','guru','name'],
+    username:['username','user','user name','login','user login'],
     subject:['subject','pelajaran','mata pelajaran'],
     level:['level','jenjang'],
     address:['address','alamat'],
@@ -169,9 +171,9 @@ function doPost(e){
 /* ---------- Setup ---------- */
 // Canonical column layout for every sheet (single source of truth)
 const SCHEMAS = {
-  Students:['id','nama','school','address','dob','grade','parent_name','wa_ortu','tutor_id','schedule',
+  Students:['id','nama','username','school','address','dob','grade','parent_name','wa_ortu','tutor_id','schedule',
             'fee_per_meeting','fee_tentor','meeting_minutes','deposit_meetings','add_fee','add_fee_note','pin','active','link_id'],
-  Tutors:  ['id','nama','subject','level','address','dob','wa','pin'],
+  Tutors:  ['id','nama','username','subject','level','address','dob','wa','pin'],
   Classes: ['id','date','student_id','tutor_id','start_time','end_time','duration','type',
             'topic','note','material_url','doc_url','stu_in','stu_out','tut_in','tut_out'],
   Deposit: ['student_id','paid_meetings','minutes_total','minutes_used','fee_per_meeting','last_paid','status'],
@@ -257,7 +259,7 @@ function getStudentByLink(link){
 function studentLogin(p){
   const list=rows('Students');
   const key=String(p.login||'').toLowerCase().trim();
-  const s=list.find(x=>x.id===p.login || String(x.nama||'').toLowerCase().trim()===key);
+  const s=list.find(x=>x.id===p.login || String(x.username||'').toLowerCase().trim()===key || String(x.nama||'').toLowerCase().trim()===key);
   if(!s) throw new Error('Murid tidak ditemukan');
   if(String(s.pin)!==String(p.pin)) throw new Error('PIN salah');
   return s;
@@ -269,7 +271,7 @@ function addStudent(p){
   const head=sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
   const row=new Array(head.length).fill('');
   const set=(k,v)=>{const i=idxOf(head,'Students',k);if(i>=0)row[i]=v;};
-  set('id',id); set('nama',p.nama||''); set('school',p.school||''); set('address',p.address||''); set('dob',p.dob||'');
+  set('id',id); set('nama',p.nama||''); set('username',String(p.username||'').toLowerCase().trim()); set('school',p.school||''); set('address',p.address||''); set('dob',p.dob||'');
   set('grade',p.grade||''); set('parent_name',p.parent_name||'');
   set('wa_ortu',p.wa_ortu||''); set('tutor_id',p.tutor_id||''); set('schedule',p.schedule||'');
   set('fee_per_meeting',Number(p.fee_per_meeting)||0); set('fee_tentor',Number(p.fee_tentor)||0);
@@ -287,7 +289,7 @@ function addStudent(p){
 function updateStudent(p){
   const sh=getSheet('Students'); ensureHeaders(sh,'Students',SCHEMAS.Students);
   const ctx=findRow('Students',p.id); if(!ctx) throw new Error('Student tidak ditemukan');
-  setFields(ctx,{nama:p.nama,school:p.school,address:p.address,dob:p.dob,grade:p.grade,parent_name:p.parent_name,
+  setFields(ctx,{nama:p.nama,username:p.username!==undefined?String(p.username).toLowerCase().trim():undefined,school:p.school,address:p.address,dob:p.dob,grade:p.grade,parent_name:p.parent_name,
     wa_ortu:p.wa_ortu,tutor_id:p.tutor_id,schedule:p.schedule,fee_per_meeting:Number(p.fee_per_meeting),
     fee_tentor:Number(p.fee_tentor),meeting_minutes:Number(p.meeting_minutes),
     deposit_meetings:Number(p.deposit_meetings),add_fee:Number(p.add_fee)||0,add_fee_note:p.add_fee_note||'',pin:p.pin,active:p.active});
@@ -308,7 +310,7 @@ function addTutor(p){
   const row=new Array(head.length).fill('');
   const set=(k,v)=>{const i=idxOf(head,'Tutors',k);if(i>=0)row[i]=v;};
   const pin=p.pin||genPin();
-  set('id',id); set('nama',p.nama||''); set('subject',p.subject||''); set('level',p.level||'');
+  set('id',id); set('nama',p.nama||''); set('username',String(p.username||'').toLowerCase().trim()); set('subject',p.subject||''); set('level',p.level||'');
   set('address',p.address||''); set('dob',p.dob||''); set('wa',p.wa||''); set('pin',pin);
   sh.appendRow(row);
   const c=idxOf(head,'Tutors','wa');  if(c>=0)  sh.getRange(sh.getLastRow(),c+1).setNumberFormat('@');
@@ -319,6 +321,7 @@ function updateTutor(p){
   const sh=getSheet('Tutors'); ensureHeaders(sh,'Tutors',SCHEMAS.Tutors);
   const ctx=findRow('Tutors',p.id); if(!ctx) throw new Error('Tutor tidak ditemukan');
   const f={nama:p.nama,subject:p.subject,level:p.level,address:p.address,dob:p.dob,wa:p.wa};
+  if(p.username!==undefined) f.username=String(p.username).toLowerCase().trim();
   if(p.pin!==undefined) f.pin=p.pin;
   setFields(ctx,f);
   return {updated:p.id};
@@ -326,7 +329,7 @@ function updateTutor(p){
 function tutorLogin(p){
   const list=rows('Tutors');
   const key=String(p.login||'').toLowerCase().trim();
-  const t=list.find(x=>x.id===p.login || String(x.nama||'').toLowerCase().trim()===key);
+  const t=list.find(x=>x.id===p.login || String(x.username||'').toLowerCase().trim()===key || String(x.nama||'').toLowerCase().trim()===key);
   if(!t) throw new Error('Tentor tidak ditemukan');
   if(String(t.pin)!==String(p.pin)) throw new Error('PIN salah');
   return t;
