@@ -127,13 +127,27 @@ const API = {
     const isWrite=/^(add|update|delete|save)/.test(payload.action||'');
     if(isWrite && API._busy) throw new Error('Masih menyimpan permintaan sebelumnya — tunggu sebentar, jangan klik dua kali.');
     if(isWrite) API._busy=true;
+    const tries = isWrite ? 1 : 3;   // baca (get/login) di-retry kalau server ngadat sesaat
     try{
-      const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
-      const text=await r.text();
-      let j; try{ j=JSON.parse(text); }
-      catch(_){ throw new Error('Server sesaat tidak merespons dengan benar. Data KEMUNGKINAN sudah tersimpan — tutup, refresh halaman, dan cek dulu sebelum menyimpan ulang.'); }
-      if(j.status==='error') throw new Error(j.message);
-      return j.data;
+      for(let i=0;i<tries;i++){
+        let text;
+        try{
+          const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+          text=await r.text();
+        }catch(netErr){
+          if(i<tries-1){ await new Promise(res=>setTimeout(res,600*(i+1))); continue; }
+          throw new Error('Koneksi ke server gagal. Coba refresh halaman.');
+        }
+        let j=null; try{ j=JSON.parse(text); }catch(_){ j=null; }
+        if(j===null){   // dapat HTML/non-JSON (server ngadat sesaat)
+          if(i<tries-1){ await new Promise(res=>setTimeout(res,600*(i+1))); continue; }
+          throw new Error(isWrite
+            ? 'Server sesaat tidak merespons dengan benar. Data KEMUNGKINAN sudah tersimpan — refresh & cek dulu sebelum menyimpan ulang.'
+            : 'Server sedang sibuk, gagal memuat data. Silakan refresh halaman.');
+        }
+        if(j.status==='error') throw new Error(j.message);   // error asli dari server → jangan diulang
+        return j.data;
+      }
     } finally { if(isWrite) API._busy=false; }
   },
   _busy:false,

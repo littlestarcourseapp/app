@@ -101,6 +101,10 @@
     </div>
 
     <div class="content">
+      <div id="loadErr" style="display:none;background:#fdecec;border:1.5px solid #f5b5b5;color:#a12626;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:14px;display:none;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap">
+        <span>⚠️ Gagal memuat data dari server (koneksi sesaat terganggu). Data yang tampil mungkin belum terbaru.</span>
+        <button class="btn btn-primary btn-sm" onclick="boot()">🔄 Coba muat ulang</button>
+      </div>
       <!-- DASHBOARD -->
       <section class="view" id="view-dashboard">
         <div class="page-head"><div><h1>Beranda</h1><div class="sub">Ringkasan seluruh operasional Little Star Course</div></div></div>
@@ -734,10 +738,21 @@ async function generateAllUsernames(){
   finally{ if(btn){btn.disabled=false; btn.textContent='🪄 Generate semua username';} }
 }
 async function boot(){
-  TUTORS=await API.getTutors(); STUDENTS=await API.getStudents();
+  let tutors,students,cls;
+  try{
+    tutors=await API.getTutors();
+    students=await API.getStudents();
+    cls=await API.getClasses({month:todayStr().slice(0,7)});
+  }catch(e){
+    document.getElementById('loadErr').style.display='flex';
+    toast('Gagal memuat data — coba muat ulang','err');
+    renderStudentsM(); renderTutorsM();   // biarkan data lama yang masih tampil
+    return;
+  }
+  document.getElementById('loadErr').style.display='none';
+  TUTORS=tutors; STUDENTS=students;
   document.getElementById('repMonth').value=todayStr().slice(0,7);
   document.getElementById('acMonth').value=todayStr().slice(0,7);
-  const cls=await API.getClasses({month:todayStr().slice(0,7)});
   document.getElementById('mStudents').textContent=STUDENTS.length;
   document.getElementById('mTutors').textContent=TUTORS.length;
   document.getElementById('mClasses').textContent=cls.length;

@@ -226,10 +226,11 @@ async function renderDash(){
   document.getElementById('cSisaHint').textContent=`Setara ${Math.floor(left/(perMin||90))} sesi × ${perMin} menit`;
   document.getElementById('cBar').style.width=(total?Math.min(100,Math.round(used/total*100)):0)+'%';
   document.getElementById('cUsed').textContent=`Terpakai ${fmtNum(used)} dari ${fmtNum(total)} menit`;
-  const extraMin=pay?Number(pay.extra_minutes)||0:0;
+  const extraMin=Math.max(0, used-total);   // otomatis: kelebihan pemakaian di atas deposit
   document.getElementById('cExtra').textContent=(Math.round(extraMin/(perMin||90)*10)/10)+' sesi';
-  document.getElementById('cExtraHint').textContent=`= ${extraMin} menit tambahan`;
-  document.getElementById('cFeeExtra').textContent=fmtRp(addFee1);
+  document.getElementById('cExtraHint').textContent=`= ${fmtNum(extraMin)} menit tambahan`;
+  const extraFee=(perMin&&extraMin)?Math.round((perMeet/perMin)*extraMin):0;
+  document.getElementById('cFeeExtra').textContent=fmtRp(extraFee);
   document.getElementById('cFeeMonth').textContent=fmtRp(base);
 }
 function rowHist(n,c){
