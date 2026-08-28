@@ -832,11 +832,13 @@ async function openReport(id, month){
   const perMeet=pay?Number(pay.price_per_meet)||0:(CUR.fee_per_meeting||0);
   const base=pay?Number(pay.deposit_total)||perMeet*meets:perMeet*meets;
   const carryIn=pay?Number(pay.carry_in)||0:0;
-  const total=meets*perMin+carryIn, used=cls.reduce((a,c)=>a+(+c.duration||0),0), left=total-used;
-  const addFee1=pay?Number(pay.add_fee1)||0:0, addFee2=pay?Number(pay.add_fee2)||0:0;
+  const total=meets*perMin+carryIn, used=cls.reduce((a,c)=>a+(+c.duration||0),0), left=Math.max(0,total-used);
+  const extraMin=Math.max(0,used-total);                                   // otomatis, sinkron dengan portal ortu
+  const addFee1=(perMin&&extraMin)?Math.round((perMeet/perMin)*extraMin):0;
+  const addFee2=pay?Number(pay.add_fee2)||0:0;
   const addFee2Note=pay?pay.add_fee2_note||'':'';
   const nextDep=pay?Number(pay.next_deposit)||0:0;
-  const grandBill=pay?Number(pay.grand_total)||(addFee1+addFee2+nextDep):(addFee1+addFee2+nextDep);
+  const grandBill=addFee1+addFee2+nextDep;
   const hasPay=!!pay;
   // header cards
   document.getElementById('repHeader').innerHTML=`
@@ -860,7 +862,7 @@ async function openReport(id, month){
     ||`<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Belum ada kelas pada ${periodName}.</td></tr>`;
   // billing summary (from Payment tab)
   document.getElementById('rSummary').innerHTML=`
-    <div class="stat tint-blue"><div class="lbl">ADDITIONAL FEE 1 (Sesi Tambahan)</div><div class="val">${fmtRp(addFee1)}</div><div class="hint">${pay?(Number(pay.extra_minutes)||0):0} menit tambahan</div></div>
+    <div class="stat tint-blue"><div class="lbl">ADDITIONAL FEE 1 (Sesi Tambahan)</div><div class="val">${fmtRp(addFee1)}</div><div class="hint">${fmtNum(extraMin)} menit tambahan</div></div>
     <div class="stat tint-amber"><div class="lbl">ADDITIONAL FEE 2 (Manual)</div><div class="val">${fmtRp(addFee2)}</div><div class="hint">${addFee2Note?esc(addFee2Note):'-'}</div></div>
     <div class="stat tint-green"><div class="lbl">DEPOSIT BULAN DEPAN</div><div class="val">${fmtRp(nextDep)}</div><div class="hint">${pay?(Number(pay.next_meetings)||0):0}× meeting</div></div>
     <div class="stat tint-purple"><div class="lbl">TOTAL YANG HARUS DIBAYAR</div><div class="val">${fmtRp(grandBill)}</div><div class="hint">Fee1 + Fee2 + Deposit depan</div></div>`;

@@ -143,9 +143,12 @@
         <input type="file" id="cDoc" accept="image/*" class="hide"><div class="help" id="cDocName"></div>
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:8px"><input type="checkbox" id="cDocClear"> 🗑️ Hapus foto dokumentasi yang tersimpan</label></div>
     </div>
-    <div class="modal-foot">
+    <div class="modal-foot" style="justify-content:space-between">
+      <button class="btn btn-danger" id="delClassBtn" style="display:none" onclick="delClassFromModal()">🗑️ Hapus Kelas</button>
+      <div style="display:flex;gap:10px;margin-left:auto">
       <button class="btn btn-ghost" onclick="closeModal('mClass')">Cancel</button>
       <button class="btn btn-primary" onclick="saveClass()">Simpan</button>
+      </div>
     </div>
   </div>
 </div>
@@ -304,6 +307,7 @@ function openAddClass(){
   ['cStart','cEnd','cTopic','cNote'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('cDoc').value=''; document.getElementById('cDocName').textContent=''; document.getElementById('cDocClear').checked=false;
   document.getElementById('cDur').value=90; document.querySelector('input[name=cType][value=onsite]').checked=true;
+  document.getElementById('delClassBtn').style.display='none';
   openModal('mClass');
 }
 async function editClass(id){
@@ -317,6 +321,7 @@ async function editClass(id){
   document.getElementById('cNote').value=c.note||'';
   document.getElementById('cDoc').value=''; document.getElementById('cDocName').textContent=''; document.getElementById('cDocClear').checked=false;
   document.querySelector(`input[name=cType][value=${c.type||'onsite'}]`).checked=true;
+  document.getElementById('delClassBtn').style.display='inline-flex';
   openModal('mClass');
 }
 ['cStart','cEnd'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
@@ -351,7 +356,15 @@ async function saveClass(){
   }catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
   finally{ saveClass._busy=false; if(btn){btn.disabled=false; btn.textContent=btn.dataset.t||'Simpan';} }
 }
-async function delClass(id){ if(!confirm('Hapus kelas ini?'))return; await API.deleteClass(id); toast('Terhapus','ok'); renderToday(); }
+async function delClass(id){ if(!confirm('Hapus kelas ini?'))return; await API.deleteClass(id); toast('Terhapus','ok'); renderToday(); renderCalendar(); }
+async function delClassFromModal(){
+  const id=document.getElementById('cId').value; if(!id){ toast('Kelas belum tersimpan','err'); return; }
+  if(!confirm('Hapus kelas ini?\n\nData akan ikut terhapus di Portal Orang Tua & Master Admin, dan hitungan deposit otomatis menyesuaikan. Tindakan ini tidak bisa dibatalkan.')) return;
+  const btn=document.getElementById('delClassBtn'); if(btn){btn.disabled=true; btn.textContent='Menghapus…';}
+  try{ await API.deleteClass(id); closeModal('mClass'); toast('Kelas dihapus','ok'); renderToday(); renderCalendar(); }
+  catch(e){ toast('Gagal hapus: '+(e.message||e),'err'); }
+  finally{ if(btn){btn.disabled=false; btn.textContent='🗑️ Hapus Kelas';} }
+}
 async function clearAllDocs(){
   if(!confirm('Hapus SEMUA foto dokumentasi dari semua kelas?\n\nData lain (topik, jadwal, catatan) tetap aman. Tindakan ini tidak bisa dibatalkan.')) return;
   if(!confirm('Sekali lagi — yakin hapus semua foto dokumentasi?')) return;
