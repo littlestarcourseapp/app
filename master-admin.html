@@ -77,6 +77,7 @@
       <a data-view="tutors"><span class="ic">👩‍🏫</span> Tentor</a>
       <a data-view="laporan"><span class="ic">📊</span> Laporan</a>
       <a data-view="payment"><span class="ic">💳</span> Payment</a>
+      <a data-view="settings"><span class="ic">🔒</span> Ganti Password</a>
       <div class="divider"></div>
       <div class="sidebar-role" style="margin-top:0">Buka Portal Lain</div>
       <a href="admin.html"><span class="ic">🗂️</span> Portal Admin</a>
@@ -245,6 +246,44 @@
         <div id="payBilling" class="hide"></div>
       </section>
 
+      <!-- SETTINGS: GANTI PASSWORD -->
+      <section class="view hide" id="view-settings">
+        <div class="page-head"><div><h1>Ganti Password</h1><div class="sub">Ubah PIN login portal. Masukkan password lama untuk verifikasi.</div></div></div>
+        <div class="grid grid-2" style="gap:18px">
+          <div class="card card-pad">
+            <div class="card-title">🛡️ Password Master Admin</div>
+            <div class="field"><label>Password lama</label><input type="password" id="mpOld" inputmode="numeric" placeholder="PIN lama"></div>
+            <div class="field"><label>Password baru</label><input type="password" id="mpNew" inputmode="numeric" placeholder="4–10 digit angka"></div>
+            <div class="field"><label>Ulangi password baru</label><input type="password" id="mpNew2" inputmode="numeric" placeholder="ketik ulang"></div>
+            <div class="help" id="mpMsg" style="min-height:18px"></div>
+            <button class="btn btn-primary" onclick="changePortalPin('master')">💾 Simpan Password Master Admin</button>
+          </div>
+          <div class="card card-pad">
+            <div class="card-title">🗂️ Password Admin</div>
+            <div class="field"><label>Password Admin lama</label><input type="password" id="apOld" inputmode="numeric" placeholder="PIN Admin lama"></div>
+            <div class="field"><label>Password Admin baru</label><input type="password" id="apNew" inputmode="numeric" placeholder="4–10 digit angka"></div>
+            <div class="field"><label>Ulangi password baru</label><input type="password" id="apNew2" inputmode="numeric" placeholder="ketik ulang"></div>
+            <div class="help" id="apMsg" style="min-height:18px"></div>
+            <button class="btn btn-primary" onclick="changePortalPin('admin')">💾 Simpan Password Admin</button>
+          </div>
+        </div>
+        <div class="note-band mt-16">ℹ️ Password disimpan aman di server. Perubahan langsung berlaku untuk login berikutnya di semua perangkat. Tidak ada yang bisa melihat password — hanya bisa direset (lihat di bawah).</div>
+        <details style="margin-top:12px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 16px">
+          <summary style="cursor:pointer;font-weight:700;color:var(--navy)">❓ Lupa password? Cara reset</summary>
+          <div style="font-size:13px;color:#374151;line-height:1.7;margin-top:10px">
+            Kalau lupa PIN Master Admin / Admin, reset lewat Google Apps Script (butuh akun Google pemilik script):
+            <ol style="margin:8px 0 0 18px">
+              <li>Buka project <b>Apps Script</b> situs ini (script.google.com → project Little Star).</li>
+              <li>Klik ⚙️ <b>Project Settings</b>.</li>
+              <li>Scroll ke <b>Script Properties</b>.</li>
+              <li>Hapus baris <b>MASTER_PIN</b> dan/atau <b>ADMIN_PIN</b> (klik ikon hapus), lalu <b>Save</b>.</li>
+              <li>PIN otomatis kembali ke default: Master Admin <b>5758</b>, Admin <b>17081945</b>. Login pakai itu, lalu ganti lagi di halaman ini.</li>
+            </ol>
+            <div style="margin-top:8px;color:var(--muted)">Tidak perlu ubah kode atau redeploy. Kalau bingung, hubungi yang mengelola Apps Script.</div>
+          </div>
+        </details>
+      </section>
+
       <div class="foot-note">© 2026 Little Star Course. All rights reserved.</div>
     </div>
   </div>
@@ -360,15 +399,20 @@
 <script src="assets/app.js"></script>
 <script>
 document.getElementById('logo').innerHTML=logoBlock('Little Star','Master Admin');
-/* ---- PIN gate ---- */
-const MASTER_PIN='5758';
+/* ---- PIN gate (verifikasi ke server) ---- */
 try{ if(sessionStorage.getItem('ma_ok')==='1') document.getElementById('maGate').style.display='none'; else document.getElementById('maPin').focus(); }catch(e){}
-function maLogin(){
+async function maLogin(){
   const v=document.getElementById('maPin').value.trim();
-  if(v===MASTER_PIN){ try{sessionStorage.setItem('ma_ok','1');}catch(e){} document.getElementById('maGate').style.display='none'; }
-  else { document.getElementById('maErr').textContent='PIN salah'; document.getElementById('maPin').value=''; }
+  const err=document.getElementById('maErr'); err.textContent='Memeriksa…';
+  try{
+    const r=await API.verifyPin('master',v);
+    if(r&&r.ok){ try{sessionStorage.setItem('ma_ok','1');}catch(e){} document.getElementById('maGate').style.display='none'; err.textContent=''; }
+    else { err.textContent='PIN salah'; document.getElementById('maPin').value=''; }
+  }catch(e){ err.textContent='Gagal memeriksa PIN — coba lagi.'; }
 }
 let TUTORS=[],STUDENTS=[],CUR=null,REP_MONTH=todayStr().slice(0,7),PAY_SID=null,PAY_LIST=[],PAY_CLASSES=[];
+// normalisasi bulan → selalu "YYYY-MM" walau Sheets menyimpannya sebagai tanggal/serial
+function ym(v){ if(!v) return ''; const s=String(v); const m=s.match(/(\d{4})-(\d{2})/); if(m) return m[1]+'-'+m[2]; const d=new Date(s); return isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 function showView(v){
@@ -380,6 +424,25 @@ function showView(v){
 document.querySelectorAll('.nav a[data-view]').forEach(a=>a.onclick=()=>{
   showView(a.dataset.view); renderM(a.dataset.view); if(window.innerWidth<768)toggleSidebar();
 });
+async function changePortalPin(role){
+  const pre = role==='master' ? 'mp' : 'ap';
+  const oldV=document.getElementById(pre+'Old').value.trim();
+  const n1=document.getElementById(pre+'New').value.trim();
+  const n2=document.getElementById(pre+'New2').value.trim();
+  const msg=document.getElementById(pre+'Msg');
+  const fail=t=>{msg.style.color='var(--red)';msg.textContent=t;};
+  if(!oldV||!n1){ return fail('Isi password lama & baru.'); }
+  if(!/^\d{4,10}$/.test(n1)){ return fail('Password baru harus 4–10 digit angka.'); }
+  if(n1!==n2){ return fail('Ulangi password baru tidak cocok.'); }
+  msg.style.color='var(--muted)'; msg.textContent='Menyimpan…';
+  try{
+    const r=await API.changePin(role, oldV, n1);
+    if(r&&r.ok){
+      msg.style.color='var(--green2)'; msg.textContent='✅ Password berhasil diganti.';
+      [pre+'Old',pre+'New',pre+'New2'].forEach(id=>document.getElementById(id).value='');
+    } else { fail((r&&r.message)||'Gagal mengganti password.'); }
+  }catch(e){ fail('Gagal: '+(e.message||e)); }
+}
 function renderM(v){
   if(v==='all-classes') renderAllClasses();
   if(v==='students')    renderStudentsM();
@@ -461,7 +524,7 @@ function prevLeftover(month){
   const [y,m]=month.split('-').map(Number);
   const pd=new Date(y,m-2,1);
   const pm=`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}`;
-  const pp=PAY_LIST.find(x=>x.month===pm);
+  const pp=PAY_LIST.find(x=>ym(x.month)===pm);
   if(!pp) return 0;
   const avail=(Number(pp.meetings)||0)*(Number(pp.duration)||90)+(Number(pp.carry_in)||0);
   const used=PAY_CLASSES.filter(c=>String(c.date).startsWith(pm)).reduce((a,c)=>a+(Number(c.duration)||0),0);
@@ -492,7 +555,7 @@ async function delPayment(id){
   try{ await API.deletePayment(id); toast('Terhapus','ok'); renderPayment(PAY_SID); }catch(e){ toast('Gagal: '+(e.message||e),'err'); }
 }
 function renderBillingPane(st,list){
-  const opts=list.map(p=>`<option value="${p.id}">${new Date(p.month+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</option>`).join('');
+  const opts=list.map(p=>{const k=ym(p.month);const lbl=k?new Date(k+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'}):'(periode belum jelas)';return `<option value="${p.id}">${lbl}</option>`;}).join('');
   document.getElementById('payBilling').innerHTML=`
     <div class="card card-pad no-print" style="margin-bottom:16px">
       <label style="font-weight:700;font-size:12.5px">Pilih Periode Penagihan</label>
@@ -508,7 +571,8 @@ function loadBilling(){
   const dur=Number(p.duration)||90, price=Number(p.price_per_meet)||0;
   // auto extra minutes: pemakaian melebihi deposit (deposit + carry-over bulan lalu)
   const carryIn=Number(p.carry_in)||0;
-  const monthMin=PAY_CLASSES.filter(c=>String(c.date).startsWith(p.month)).reduce((a,c)=>a+(Number(c.duration)||0),0);
+  const pMon=ym(p.month);
+  const monthMin=PAY_CLASSES.filter(c=>String(c.date).startsWith(pMon)).reduce((a,c)=>a+(Number(c.duration)||0),0);
   const depositMin=(Number(p.meetings)||0)*dur + carryIn;
   const autoExtra=Math.max(0,monthMin-depositMin);
   const extraVal=(Number(p.extra_minutes)>0)?Number(p.extra_minutes):autoExtra;
