@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migrasi Data → Supabase</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  body{background:#f4f6fb;font-family:'Poppins',system-ui,sans-serif;padding:24px}
+  .box{max-width:720px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
+  h1{color:var(--navy);font-size:22px;margin-bottom:6px}
+  p{color:#555;font-size:14px;line-height:1.6}
+  #log{margin-top:16px;background:#0b1020;color:#c8e1ff;border-radius:12px;padding:14px;font-family:ui-monospace,monospace;font-size:12.5px;white-space:pre-wrap;max-height:340px;overflow:auto;line-height:1.55}
+  .ok{color:#7ee787} .err{color:#ff7b72} .warn{color:#ffd479}
+  button{margin-top:16px;background:linear-gradient(135deg,#000080,#1b2a8a);color:#fff;border:none;padding:14px 26px;border-radius:999px;font-weight:700;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.55;cursor:default}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>🚚 Migrasi Data → Supabase</h1>
+    <p>Menyalin <b>murid, tentor, kelas, dan payment</b> dari sistem lama (Google Apps Script) ke Supabase. ID asli dipertahankan, dan aman dijalankan berkali-kali (data yang sama tidak dobel).</p>
+    <p><b>Syarat:</b> skema SQL sudah dijalankan di Supabase (tabel sudah ada).</p>
+    <button id="go" onclick="run()">Mulai Migrasi</button>
+    <div id="log"></div>
+  </div>
+
+<script src="assets/app.js"></script>
+<script>
+const log=(m,c='')=>{const d=document.getElementById('log');d.innerHTML+=`<div class="${c}">${m}</div>`;d.scrollTop=d.scrollHeight;};
+async function upsertAll(table, rows){
+  if(!rows.length){ log(`• ${table}: tidak ada data`,'warn'); return 0; }
+  const clean=rows.map(r=>sbPick(r, SB_COLS[table]));
+  // batch supaya request tidak kebesaran (kelas bisa berisi foto base64)
+  const size = table==='classes' ? 15 : 100;
+  let done=0;
+  for(let i=0;i<clean.length;i+=size){
+    const chunk=clean.slice(i,i+size);
+    await SB.req(table,{method:'POST',body:chunk,prefer:'resolution=merge-duplicates,return=minimal',isWrite:true});
+    done+=chunk.length; log(`  … ${table}: ${done}/${clean.length}`);
+  }
+  log(`✔ ${table}: ${done} baris`,'ok');
+  return done;
+}
+async function run(){
+  const btn=document.getElementById('go'); btn.disabled=true;
+  document.getElementById('log').innerHTML='';
+  if(!USE_SUPABASE){ log('✗ SUPABASE_URL / KEY belum diisi di app.js','err'); btn.disabled=false; return; }
+  try{
+    log('Membaca data lama dari Apps Script…');
+    const [students,tutors,classes,payments]=await Promise.all([
+      SCRIPT_API.getStudents({}),
+      SCRIPT_API.getTutors(),
+      SCRIPT_API.getClasses({}),
+      SCRIPT_API.getPayments({}),
+    ]);
+    log(`Ditemukan: ${students.length} murid, ${tutors.length} tentor, ${classes.length} kelas, ${payments.length} payment`);
+    log('Menulis ke Supabase…');
+    await upsertAll('students',students);
+    await upsertAll('tutors',tutors);
+    await upsertAll('classes',classes);
+    await upsertAll('payments',payments);
+    log('','');
+    log('✅ MIGRASI SELESAI. Cek di Supabase → Table Editor.','ok');
+    log('Sekarang situs sudah membaca dari Supabase (app.js versi baru).','ok');
+  }catch(e){
+    log('✗ GAGAL: '+(e.message||e),'err');
+    log('Cek: (1) skema SQL sudah dijalankan? (2) URL & anon key benar? (3) koneksi internet.','warn');
+  }
+  btn.disabled=false;
+}
+</script>
+</body>
+</html>

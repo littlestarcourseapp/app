@@ -7,8 +7,19 @@
    While SCRIPT_URL is empty, the portals run in DEMO MODE using
    the sample data below so you can preview the design.
 ------------------------------------------------------------- */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxuH7x7w8tRuDH_U-tw7X8igt69Cr3BoyZzMiBicsMEv5xW7zQp6GHdM5TbAy3vjGBR/exec'; // Apps Script /exec URL
-const DEMO_MODE   = !SCRIPT_URL;
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxuH7x7w8tRuDH_U-tw7X8igt69Cr3BoyZzMiBicsMEv5xW7zQp6GHdM5TbAy3vjGBR/exec'; // Apps Script /exec URL (cadangan)
+
+/* ---- SUPABASE (backend utama) ------------------------------
+   Kalau URL & KEY terisi, seluruh portal otomatis pakai Supabase.
+   Kosongkan keduanya untuk kembali ke Apps Script.
+------------------------------------------------------------- */
+const SUPABASE_URL = 'https://nmokhtraxndkxpljyjhm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tb2todHJheG5ka3hwbGp5amhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NzI5MzQsImV4cCI6MjEwMzU0ODkzNH0.KufXHC3Y3RL_oNZAz8RotmVzeBiLh1jPrxvehvfumnU';
+const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
+
+const DEMO_MODE   = !USE_SUPABASE && !SCRIPT_URL;
+const uid = () => (self.crypto&&crypto.randomUUID) ? crypto.randomUUID().replace(/-/g,'').slice(0,14)
+                 : (Date.now().toString(36)+Math.random().toString(36).slice(2,8)).slice(0,14);
 
 /* ---- Star logo (inline SVG) -------------------------------- */
 const STAR_SVG = `
@@ -119,14 +130,14 @@ function toggleSidebar(){
 }
 
 /* ============================================================
-   API — talks to Apps Script; falls back to DEMO data
+   SCRIPT_API — Apps Script backend (cadangan) / DEMO
    ============================================================ */
-const API = {
+const SCRIPT_API = {
   async _post(payload){
     if(DEMO_MODE) return DEMO.handle(payload);
-    const isWrite=/^(add|update|delete|save)/.test(payload.action||'');
-    if(isWrite && API._busy) throw new Error('Masih menyimpan permintaan sebelumnya — tunggu sebentar, jangan klik dua kali.');
-    if(isWrite) API._busy=true;
+    const isWrite=/^(add|update|delete|save|change)/.test(payload.action||'');
+    if(isWrite && SCRIPT_API._busy) throw new Error('Masih menyimpan permintaan sebelumnya — tunggu sebentar, jangan klik dua kali.');
+    if(isWrite) SCRIPT_API._busy=true;
     const tries = isWrite ? 1 : 3;   // baca (get/login) di-retry kalau server ngadat sesaat
     try{
       for(let i=0;i<tries;i++){
@@ -148,38 +159,184 @@ const API = {
         if(j.status==='error') throw new Error(j.message);   // error asli dari server → jangan diulang
         return j.data;
       }
-    } finally { if(isWrite) API._busy=false; }
+    } finally { if(isWrite) SCRIPT_API._busy=false; }
   },
   _busy:false,
-  getStudents : (o={}) => API._post({action:'getStudents',...o}),
-  studentLogin: (login,pin) => API._post({action:'studentLogin',login,pin}),
-  getStudent  : (id)   => API._post({action:'getStudents',id}),
-  addStudent  : (d)    => API._post({action:'addStudent',...d}),
-  updateStudent:(d)    => API._post({action:'updateStudent',...d}),
-  deleteStudent:(id)   => API._post({action:'deleteStudent',id}),
+  verifyPin   : (role,pin)         => SCRIPT_API._post({action:'verifyPin',role,pin}),
+  changePin   : (role,oldPin,newPin)=> SCRIPT_API._post({action:'changePin',role,oldPin,newPin}),
+  getStudents : (o={}) => SCRIPT_API._post({action:'getStudents',...o}),
+  studentLogin: (login,pin) => SCRIPT_API._post({action:'studentLogin',login,pin}),
+  getStudent  : (id)   => SCRIPT_API._post({action:'getStudents',id}),
+  addStudent  : (d)    => SCRIPT_API._post({action:'addStudent',...d}),
+  updateStudent:(d)    => SCRIPT_API._post({action:'updateStudent',...d}),
+  deleteStudent:(id)   => SCRIPT_API._post({action:'deleteStudent',id}),
 
-  getTutors   : ()     => API._post({action:'getTutors'}),
-  addTutor    : (d)    => API._post({action:'addTutor',...d}),
-  updateTutor : (d)    => API._post({action:'updateTutor',...d}),
-  deleteTutor : (id)   => API._post({action:'deleteTutor',id}),
-  tutorLogin  : (login,pin) => API._post({action:'tutorLogin',login,pin}),
+  getTutors   : ()     => SCRIPT_API._post({action:'getTutors'}),
+  addTutor    : (d)    => SCRIPT_API._post({action:'addTutor',...d}),
+  updateTutor : (d)    => SCRIPT_API._post({action:'updateTutor',...d}),
+  deleteTutor : (id)   => SCRIPT_API._post({action:'deleteTutor',id}),
+  tutorLogin  : (login,pin) => SCRIPT_API._post({action:'tutorLogin',login,pin}),
 
-  getClasses  : (o={}) => API._post({action:'getClasses',...o}),
-  addClass    : (d)    => API._post({action:'addClass',...d}),
-  updateClass : (d)    => API._post({action:'updateClass',...d}),
-  deleteClass : (id)   => API._post({action:'deleteClass',id}),
+  getClasses  : (o={}) => SCRIPT_API._post({action:'getClasses',...o}),
+  addClass    : (d)    => SCRIPT_API._post({action:'addClass',...d}),
+  updateClass : (d)    => SCRIPT_API._post({action:'updateClass',...d}),
+  deleteClass : (id)   => SCRIPT_API._post({action:'deleteClass',id}),
 
-  getAttendance : (o={}) => API._post({action:'getAttendance',...o}),
-  saveAttendance: (d)    => API._post({action:'saveAttendance',...d}),
+  getAttendance : (o={}) => SCRIPT_API._post({action:'getAttendance',...o}),
+  saveAttendance: (d)    => SCRIPT_API._post({action:'saveAttendance',...d}),
 
-  getDeposit  : (sid)  => API._post({action:'getDeposit',student_id:sid}),
+  getDeposit  : (sid)  => SCRIPT_API._post({action:'getDeposit',student_id:sid}),
 
-  getPayments : (o={}) => API._post({action:'getPayments',...o}),
-  savePayment : (d)    => API._post({action:'savePayment',...d}),
-  deletePayment:(id)   => API._post({action:'deletePayment',id}),
+  getPayments : (o={}) => SCRIPT_API._post({action:'getPayments',...o}),
+  savePayment : (d)    => SCRIPT_API._post({action:'savePayment',...d}),
+  deletePayment:(id)   => SCRIPT_API._post({action:'deletePayment',id}),
 
-  uploadFile  : (base64,filename) => API._post({action:'uploadFile',base64,filename}),
+  uploadFile  : (base64,filename) => SCRIPT_API._post({action:'uploadFile',base64,filename}),
 };
+
+/* ============================================================
+   SB_API — Supabase (PostgREST) backend UTAMA
+   ============================================================ */
+const SB_COLS = {
+  students:['id','nama','username','school','address','dob','grade','parent_name','wa_ortu','tutor_id','schedule','fee_per_meeting','fee_tentor','meeting_minutes','deposit_meetings','add_fee','add_fee_note','pin','active','link_id'],
+  tutors:['id','nama','username','subject','level','address','dob','wa','pin'],
+  classes:['id','date','student_id','tutor_id','start_time','end_time','duration','type','topic','note','material_url','doc_url','stu_in','stu_out','tut_in','tut_out'],
+  deposit:['student_id','paid_meetings','minutes_total','minutes_used','fee_per_meeting','last_paid','status'],
+  payments:['id','student_id','month','pay_date','meetings','price_per_meet','duration','deposit_total','carry_in','extra_minutes','add_fee1','add_fee2','add_fee2_note','next_meetings','next_deposit','grand_total','status'],
+};
+const sbPick=(o,cols)=>{const r={};cols.forEach(k=>{ if(o[k]!==undefined && o[k]!==null) r[k]=o[k]; });return r;};
+const SB = {
+  base: (SUPABASE_URL||'').replace(/\/$/,'')+'/rest/v1/',
+  _busy:false,
+  async req(path,{method='GET',body=null,prefer=null,isWrite=false}={}){
+    if(isWrite && SB._busy) throw new Error('Masih menyimpan permintaan sebelumnya — tunggu sebentar, jangan klik dua kali.');
+    if(isWrite) SB._busy=true;
+    const headers={apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY};
+    if(body) headers['Content-Type']='application/json';
+    if(prefer) headers['Prefer']=prefer;
+    const tries=isWrite?1:3;
+    try{
+      for(let i=0;i<tries;i++){
+        let res,text;
+        try{
+          res=await fetch(SB.base+path,{method,headers,body:body?JSON.stringify(body):undefined});
+          text=await res.text();
+        }catch(netErr){
+          if(i<tries-1){ await new Promise(r=>setTimeout(r,500*(i+1))); continue; }
+          throw new Error('Koneksi ke server gagal. Coba refresh halaman.');
+        }
+        if(!res.ok){
+          if(!isWrite && res.status>=500 && i<tries-1){ await new Promise(r=>setTimeout(r,500*(i+1))); continue; }
+          let msg=text; try{ msg=JSON.parse(text).message||JSON.parse(text).hint||text; }catch(_){}
+          throw new Error('Database: '+(msg||('HTTP '+res.status)));
+        }
+        if(!text) return [];
+        try{ return JSON.parse(text); }catch(_){ return []; }
+      }
+    } finally { if(isWrite) SB._busy=false; }
+  },
+  enc:v=>encodeURIComponent(String(v==null?'':v)),
+};
+async function sbLogin(table,login,pin){
+  const v=SB.enc(String(login||'').trim());
+  const rows=await SB.req(`${table}?or=(username.ilike.${v},nama.ilike.${v},id.eq.${v})&select=*`);
+  if(!rows.length) throw new Error(table==='students'?'Murid tidak ditemukan':'Tentor tidak ditemukan');
+  const hit=rows.find(x=>String(x.pin)===String(pin));
+  if(!hit) throw new Error('PIN salah');
+  return hit;
+}
+function sbClassQuery(o){
+  const f=[];
+  if(o.id)         f.push('id=eq.'+SB.enc(o.id));
+  if(o.date)       f.push('date=eq.'+SB.enc(o.date));
+  if(o.month)      f.push('date=like.'+SB.enc(o.month)+'*');
+  if(o.student_id) f.push('student_id=eq.'+SB.enc(o.student_id));
+  if(o.tutor_id)   f.push('tutor_id=eq.'+SB.enc(o.tutor_id));
+  return 'classes?select=*&order=date.desc'+(f.length?'&'+f.join('&'):'');
+}
+const SB_API = {
+  _busy:false,
+  // ---- PIN portal ----
+  async verifyPin(role,pin){
+    const key=role==='master'?'MASTER_PIN':'ADMIN_PIN';
+    const rows=await SB.req(`app_settings?key=eq.${key}&select=value`);
+    const cur=rows[0]?rows[0].value:(role==='master'?'5758':'17081945');
+    return {ok:String(pin)===String(cur)};
+  },
+  async changePin(role,oldPin,newPin){
+    const key=role==='master'?'MASTER_PIN':'ADMIN_PIN';
+    const rows=await SB.req(`app_settings?key=eq.${key}&select=value`);
+    const cur=rows[0]?rows[0].value:(role==='master'?'5758':'17081945');
+    if(String(oldPin)!==String(cur)) return {ok:false,message:'Password lama salah.'};
+    if(!/^\d{4,10}$/.test(String(newPin||''))) return {ok:false,message:'Password baru harus 4–10 digit angka.'};
+    await SB.req('app_settings',{method:'POST',body:{key,value:String(newPin)},prefer:'resolution=merge-duplicates,return=minimal',isWrite:true});
+    return {ok:true};
+  },
+  // ---- Students ----
+  getStudents:(o={})=> SB.req('students?select=*'+(o.id?'&id=eq.'+SB.enc(o.id):'')+'&order=created_at.asc'),
+  getStudent :(id)=> SB.req('students?select=*&id=eq.'+SB.enc(id)),
+  studentLogin:(login,pin)=> sbLogin('students',login,pin),
+  async addStudent(d){
+    const id=uid(), pin=d.pin||genPin();
+    const link=(String(d.nama||'siswa')).toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')+'-'+id.slice(0,5);
+    const row=sbPick({...d,id,pin,username:(d.username||'').toLowerCase().trim(),active:d.active||'aktif',link_id:link},SB_COLS.students);
+    await SB.req('students',{method:'POST',body:row,prefer:'return=minimal',isWrite:true});
+    return {id,pin,link_id:link};
+  },
+  async updateStudent(d){
+    const row=sbPick(d,SB_COLS.students.filter(c=>c!=='id'));
+    await SB.req('students?id=eq.'+SB.enc(d.id),{method:'PATCH',body:row,prefer:'return=minimal',isWrite:true});
+    return {updated:d.id};
+  },
+  async deleteStudent(id){ await SB.req('students?id=eq.'+SB.enc(id),{method:'DELETE',prefer:'return=minimal',isWrite:true}); return {deleted:id}; },
+  // ---- Tutors ----
+  getTutors:()=> SB.req('tutors?select=*&order=created_at.asc'),
+  tutorLogin:(login,pin)=> sbLogin('tutors',login,pin),
+  async addTutor(d){
+    const id=uid(), pin=d.pin||genPin();
+    const row=sbPick({...d,id,pin,username:(d.username||'').toLowerCase().trim()},SB_COLS.tutors);
+    await SB.req('tutors',{method:'POST',body:row,prefer:'return=minimal',isWrite:true});
+    return {id,pin};
+  },
+  async updateTutor(d){
+    const row=sbPick(d,SB_COLS.tutors.filter(c=>c!=='id'));
+    await SB.req('tutors?id=eq.'+SB.enc(d.id),{method:'PATCH',body:row,prefer:'return=minimal',isWrite:true});
+    return {updated:d.id};
+  },
+  async deleteTutor(id){ await SB.req('tutors?id=eq.'+SB.enc(id),{method:'DELETE',prefer:'return=minimal',isWrite:true}); return {deleted:id}; },
+  // ---- Classes ----
+  getClasses:(o={})=> SB.req(sbClassQuery(o)),
+  async addClass(d){
+    const id=uid();
+    const row=sbPick({...d,id},SB_COLS.classes);
+    await SB.req('classes',{method:'POST',body:row,prefer:'return=minimal',isWrite:true});
+    return {id};
+  },
+  async updateClass(d){
+    const row=sbPick(d,SB_COLS.classes.filter(c=>c!=='id'));
+    await SB.req('classes?id=eq.'+SB.enc(d.id),{method:'PATCH',body:row,prefer:'return=minimal',isWrite:true});
+    return {updated:d.id};
+  },
+  async deleteClass(id){ await SB.req('classes?id=eq.'+SB.enc(id),{method:'DELETE',prefer:'return=minimal',isWrite:true}); return {deleted:id}; },
+  getAttendance:(o={})=> SB.req(sbClassQuery(o)),
+  saveAttendance(d){ return SB_API.updateClass(d); },
+  // ---- Deposit ----
+  async getDeposit(sid){ const r=await SB.req('deposit?select=*&student_id=eq.'+SB.enc(sid)); return r[0]||null; },
+  // ---- Payments ----
+  getPayments:(o={})=> SB.req('payments?select=*'+(o.student_id?'&student_id=eq.'+SB.enc(o.student_id):'')+(o.month?'&month=eq.'+SB.enc(o.month):'')+'&order=month.desc'),
+  async savePayment(d){
+    const id=d.id||uid();
+    const row=sbPick({...d,id},SB_COLS.payments);
+    await SB.req('payments',{method:'POST',body:row,prefer:'resolution=merge-duplicates,return=minimal',isWrite:true});
+    return {id};
+  },
+  async deletePayment(id){ await SB.req('payments?id=eq.'+SB.enc(id),{method:'DELETE',prefer:'return=minimal',isWrite:true}); return {deleted:id}; },
+  // ---- Uploads (materi/foto → data URL disimpan di kolom teks) ----
+  uploadFile:(base64,filename)=> Promise.resolve({url:base64,view:base64,name:filename}),
+};
+
+/* Pilih backend aktif */
+const API = USE_SUPABASE ? SB_API : SCRIPT_API;
 
 // Read a File as a base64 data-URL
 function fileToBase64(file){ return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file);}); }
@@ -291,6 +448,8 @@ const DEMO = {
       case 'updateStudent':{ const s=this.students.find(x=>x.id===p.id); if(s) Object.assign(s,p); return {updated:p.id}; }
       case 'deleteTutor':{ this.tutors=this.tutors.filter(x=>x.id!==p.id); return {deleted:p.id}; }
       case 'deleteStudent':{ this.students=this.students.filter(x=>x.id!==p.id); return {deleted:p.id}; }
+      case 'verifyPin':{ this._pins=this._pins||{master:'5758',admin:'17081945'}; return {ok:String(p.pin)===this._pins[p.role==='master'?'master':'admin']}; }
+      case 'changePin':{ this._pins=this._pins||{master:'5758',admin:'17081945'}; const role=p.role==='master'?'master':'admin'; if(String(p.oldPin)!==this._pins[role]) return {ok:false,message:'Password lama salah'}; if(!/^\d{4,10}$/.test(String(p.newPin||''))) return {ok:false,message:'Password baru 4–10 digit angka'}; this._pins[role]=String(p.newPin); return {ok:true}; }
       case 'tutorLogin':{
         const key=String(p.login||'').toLowerCase().trim();
         const t=this.tutors.find(x=>x.id===p.login||(x.username||'').toLowerCase().trim()===key||genUsername(x.nama)===key||x.nama.toLowerCase().trim()===key);
