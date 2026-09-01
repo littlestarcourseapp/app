@@ -977,7 +977,7 @@ async function openReport(id, month){
         <div class="hint">Date of Birth: ${CUR.dob?prettyDate(CUR.dob):'-'}</div>
         <div class="hint">Address: ${CUR.address||'-'}</div>
         <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'})</div></div></div>
-    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">${hasPay?`LUNAS ${meets}× MEETING`:'⏳ BELUM LUNAS'}</div><div class="hint">${hasPay?`Per meet: ${fmtRp(perMeet)} · ${meets}×${perMin} = ${fmtNum(total)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b><br>${prettyDate(pay.pay_date)}`:'Input di tab Payment dulu'}</div></div>
+    <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">${hasPay?`LUNAS ${meets}× MEETING`:'⏳ BELUM LUNAS'}</div><div class="hint">${hasPay?`Per meet: ${fmtRp(perMeet)} · ${meets}×${perMin}${carryIn?` + carry ${fmtNum(carryIn)}`:''} = ${fmtNum(total)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b><br>${prettyDate(pay.pay_date)}`:'Input di tab Payment dulu'}</div></div>
     <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${fmtNum(used)} <span style="font-size:13px">menit</span></div><div class="hint">${Math.round(used/perMin)} meetings</div></div>
     <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${fmtNum(left)} <span style="font-size:13px">menit</span></div><div class="hint">Setara ${Math.floor(left/perMin)} sesi</div></div>`;
   // history

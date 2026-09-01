@@ -219,13 +219,14 @@ async function renderDash(){
   const tb=document.getElementById('histBody');
   tb.innerHTML=cls.map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);
   // summary cards (bulan terpilih)
-  const total=meets*perMin+(pay?Number(pay.carry_in)||0:0);
+  const carryIn=pay?Number(pay.carry_in)||0:0;
+  const total=meets*perMin+carryIn;
   const used=cls.reduce((a,c)=>a+(Number(c.duration)||0),0);
   const left=Math.max(0,total-used);
   document.getElementById('cSisa').textContent=fmtNum(left)+' menit';
   document.getElementById('cSisaHint').textContent=`Setara ${Math.floor(left/(perMin||90))} sesi × ${perMin} menit`;
   document.getElementById('cBar').style.width=(total?Math.min(100,Math.round(used/total*100)):0)+'%';
-  document.getElementById('cUsed').textContent=`Terpakai ${fmtNum(used)} dari ${fmtNum(total)} menit`;
+  document.getElementById('cUsed').textContent=`Terpakai ${fmtNum(used)} dari ${fmtNum(total)} menit`+(carryIn?` (${meets}×${perMin} + carry ${fmtNum(carryIn)})`:'');
   const extraMin=Math.max(0, used-total);   // otomatis: kelebihan pemakaian di atas deposit
   document.getElementById('cExtra').textContent=(Math.round(extraMin/(perMin||90)*10)/10)+' sesi';
   document.getElementById('cExtraHint').textContent=`= ${fmtNum(extraMin)} menit tambahan`;
