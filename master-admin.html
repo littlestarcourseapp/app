@@ -396,6 +396,23 @@
   </div>
 </div>
 
+<!-- MODAL: RESET (murid / tentor) -->
+<div class="modal-overlay" id="mReset">
+  <div class="modal">
+    <div class="modal-head"><h3 id="rsTitle">Reset Data</h3><button class="x" onclick="closeModal('mReset')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="rsId"><input type="hidden" id="rsRole">
+      <p style="font-size:13.5px;color:#374151;line-height:1.6">Menghapus <b>semua kelas (log)</b> dan <b>payment</b> milik <b id="rsName">—</b> untuk bulan terpilih — kembali ke 0. Ikut hilang di semua portal (Orang Tua & Tentor) dan hitungan deposit menyesuaikan. <b style="color:#c0392b">Tidak bisa dibatalkan.</b></p>
+      <div class="field"><label>Bulan yang di-reset</label><input type="month" id="rsMonth"></div>
+      <div class="help" id="rsMsg" style="min-height:18px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('mReset')">Batal</button>
+      <button class="btn btn-danger" id="rsBtn" onclick="doReset()">🗑️ Hapus &amp; Reset</button>
+    </div>
+  </div>
+</div>
+
 <script src="assets/app.js"></script>
 <script>
 document.getElementById('logo').innerHTML=logoBlock('Little Star','Master Admin');
@@ -413,6 +430,7 @@ async function maLogin(){
 let TUTORS=[],STUDENTS=[],CUR=null,REP_MONTH=todayStr().slice(0,7),PAY_SID=null,PAY_LIST=[],PAY_CLASSES=[];
 // normalisasi bulan → selalu "YYYY-MM" walau Sheets menyimpannya sebagai tanggal/serial
 function ym(v){ if(!v) return ''; const s=String(v); const m=s.match(/(\d{4})-(\d{2})/); if(m) return m[1]+'-'+m[2]; const d=new Date(s); return isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+let BILL={monthMin:0,dur:90,meets:0};   // dipakai carry-over editable
 function tName(id){return (TUTORS.find(t=>t.id===id)||{}).nama||'-';}
 function sName(id){return (STUDENTS.find(s=>s.id===id)||{}).nama||'-';}
 function showView(v){
@@ -575,6 +593,7 @@ function loadBilling(){
   const monthMin=PAY_CLASSES.filter(c=>String(c.date).startsWith(pMon)).reduce((a,c)=>a+(Number(c.duration)||0),0);
   const depositMin=(Number(p.meetings)||0)*dur + carryIn;
   const autoExtra=Math.max(0,monthMin-depositMin);
+  BILL={monthMin,dur,meets:(Number(p.meetings)||0)};
   const extraVal=(Number(p.extra_minutes)>0)?Number(p.extra_minutes):autoExtra;
   document.getElementById('blContent').innerHTML=`
     <div class="card card-pad" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap">
@@ -582,14 +601,14 @@ function loadBilling(){
       <div><div class="lbl muted">Orang Tua</div><b>${st.parent_name||'-'}</b></div>
       <div><div class="lbl muted">Durasi Normal</div><b>${dur} menit</b></div>
       <div><div class="lbl muted">Harga per Meet</div><b>${fmtRp(price)}</b></div>
-      <div><div class="lbl muted">Carry-over bulan lalu</div><b>${carryIn} menit</b></div>
-      <div><div class="lbl muted">Terpakai bulan ini</div><b>${monthMin} / ${depositMin} menit</b></div>
+      <div><div class="lbl muted">Carry-over bulan lalu <span style="font-size:10px;color:var(--blue)">✏️ edit</span></div><input type="number" id="blCarry" value="${carryIn}" oninput="recalcCarry()" style="width:120px;padding:6px 8px;border:1.5px solid var(--line);border-radius:8px;font-weight:800;font-size:15px"> <span class="hint" style="font-size:11px">menit</span></div>
+      <div><div class="lbl muted">Terpakai bulan ini</div><b id="blUsed">${monthMin} / ${depositMin} menit</b></div>
     </div>
     <div class="grid grid-4" style="margin-bottom:16px">
       <div class="stat tint-green"><div class="lbl">TOTAL PAYMENT BULAN INI</div><div class="val">${fmtRp(p.deposit_total)}</div><div class="hint">meeting yang sudah dijalankan</div></div>
       <div class="stat tint-blue"><div class="lbl">TAMBAHAN SESI (LEBIH DURASI)</div>
         <input type="number" id="blExtra" value="${extraVal}" oninput="calcBilling()" placeholder="menit tambahan" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
-        <div class="hint">🔄 Otomatis: <b>${autoExtra} mnt</b> lebih dari deposit${carryIn?` + carry ${carryIn}`:''} (bisa diedit)</div>
+        <div class="hint" id="blExtraHint">🔄 Otomatis: <b>${autoExtra} mnt</b> lebih dari deposit${carryIn?` + carry ${carryIn}`:''} (bisa diedit)</div>
         <div class="hint">Additional Fee 1</div><div style="font-weight:800;color:var(--blue);font-size:16px" id="blFee1">Rp 0</div>
         <div class="hint" id="blFee1Calc"></div></div>
       <div class="stat tint-amber"><div class="lbl">ADDITIONAL FEE 2 (MANUAL)</div>
@@ -627,14 +646,24 @@ function calcBilling(){
   document.getElementById('sNext').textContent=fmtRp(nextDep);
   document.getElementById('blGrand').textContent=fmtRp(grand);
 }
+function recalcCarry(){
+  const carry=Number((document.getElementById('blCarry')||{}).value)||0;
+  const depMin=(BILL.meets*BILL.dur)+carry;
+  const autoExtra=Math.max(0,BILL.monthMin-depMin);
+  const u=document.getElementById('blUsed'); if(u) u.textContent=`${BILL.monthMin} / ${depMin} menit`;
+  const h=document.getElementById('blExtraHint'); if(h) h.innerHTML=`🔄 Otomatis: <b>${autoExtra} mnt</b> lebih dari deposit${carry?` + carry ${carry}`:''} (bisa diedit)`;
+  const ex=document.getElementById('blExtra'); if(ex) ex.value=autoExtra;
+  calcBilling();
+}
 async function saveBilling(id){
   const p=PAY_LIST.find(x=>x.id===id); if(!p)return;
   const dur=Number(p.duration)||90, price=Number(p.price_per_meet)||0;
+  const carry=Number((document.getElementById('blCarry')||{}).value)||0;
   const extra=Number(document.getElementById('blExtra').value)||0;
   const fee1=Math.round(price/dur*extra);
   const fee2=Number(document.getElementById('blFee2').value)||0, note=document.getElementById('blFee2Note').value;
   const nextMeet=Number(document.getElementById('blNext').value)||0, nextDep=nextMeet*price;
-  const upd={...p,extra_minutes:extra,add_fee1:fee1,add_fee2:fee2,add_fee2_note:note,next_meetings:nextMeet,next_deposit:nextDep,grand_total:fee1+fee2+nextDep};
+  const upd={...p,carry_in:carry,extra_minutes:extra,add_fee1:fee1,add_fee2:fee2,add_fee2_note:note,next_meetings:nextMeet,next_deposit:nextDep,grand_total:fee1+fee2+nextDep};
   try{ await API.savePayment(upd); toast('Penagihan tersimpan','ok'); PAY_LIST=await API.getPayments({student_id:PAY_SID}); loadBilling(); }
   catch(e){ toast('Gagal: '+(e.message||e),'err'); }
 }
@@ -669,6 +698,7 @@ function renderStudentsM(){
         <button class="btn btn-ghost btn-sm" title="Buat PIN baru" onclick="regenStudentPin('${s.id}')">🔄</button></td>
     <td style="white-space:nowrap">
       <button class="btn btn-warn btn-sm" onclick="openStudent('${s.id}')">Edit</button>
+      <button class="btn btn-sm" style="background:#fff3e0;color:#b26a00;border:1px solid #ffd9a3" onclick="openReset('${s.id}','student')">🔄 Reset</button>
       <button class="btn btn-danger btn-sm" onclick="delStudent('${s.id}')">Delete</button>
       <button class="btn btn-outline btn-sm" onclick="openReport('${s.id}')">Laporan →</button></td></tr>`).join('')
     ||'<tr><td colspan="10" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
@@ -679,6 +709,7 @@ function renderTutorsM(){
     <td><span style="font-weight:800;letter-spacing:3px;color:var(--navy)">${t.pin||'----'}</span>
         <button class="btn btn-ghost btn-sm" title="Buat PIN baru" onclick="regenPin('${t.id}')">🔄</button></td>
     <td style="white-space:nowrap"><button class="btn btn-warn btn-sm" onclick="openTutor('${t.id}')">Edit</button>
+      <button class="btn btn-sm" style="background:#fff3e0;color:#b26a00;border:1px solid #ffd9a3" onclick="openReset('${t.id}','tutor')">🔄 Reset</button>
       <button class="btn btn-danger btn-sm" onclick="delTutor('${t.id}')">Delete</button></td></tr>`).join('')
     ||'<tr><td colspan="7" class="muted" style="text-align:center;padding:22px">Belum ada tentor.</td></tr>';
 }
@@ -800,6 +831,39 @@ async function generateAllUsernames(){
     toast(`Selesai — ${made} username dibuat, ${skipped} dilewati`,'ok');
   }catch(e){ toast('Gagal: '+(e.message||e)+'. Klik lagi untuk melanjutkan sisanya.','err'); }
   finally{ if(btn){btn.disabled=false; btn.textContent='🪄 Generate semua username';} }
+}
+function openReset(id, role){
+  const arr = role==='tutor' ? TUTORS : STUDENTS;
+  const x = arr.find(a=>a.id===id); if(!x) return;
+  document.getElementById('rsId').value=id;
+  document.getElementById('rsRole').value=role;
+  document.getElementById('rsName').textContent=x.nama+(role==='tutor'?' (Tentor)':' (Murid)');
+  document.getElementById('rsTitle').textContent='Reset Data — '+x.nama;
+  document.getElementById('rsMonth').value=todayStr().slice(0,7);
+  document.getElementById('rsMsg').textContent='';
+  openModal('mReset');
+}
+async function doReset(){
+  const id=document.getElementById('rsId').value, role=document.getElementById('rsRole').value;
+  const mon=document.getElementById('rsMonth').value, msg=document.getElementById('rsMsg');
+  if(!mon){ msg.style.color='var(--red)'; msg.textContent='Pilih bulan dulu.'; return; }
+  if(!confirm(`Hapus SEMUA kelas & payment bulan ${mon} untuk ${role==='tutor'?'tentor':'murid'} ini?\n\nTidak bisa dibatalkan.`)) return;
+  const btn=document.getElementById('rsBtn'); btn.disabled=true;
+  msg.style.color='var(--muted)'; msg.textContent='Menghapus…';
+  try{
+    const filter = role==='tutor' ? {tutor_id:id, month:mon} : {student_id:id, month:mon};
+    const cls = await API.getClasses(filter);
+    let nc=0; for(const c of cls){ await API.deleteClass(c.id); nc++; msg.textContent=`Menghapus kelas… ${nc}/${cls.length}`; }
+    let np=0;
+    if(role!=='tutor'){
+      const pays=(await API.getPayments({student_id:id})).filter(p=>ym(p.month)===mon);
+      for(const p of pays){ await API.deletePayment(p.id); np++; }
+    }
+    msg.style.color='var(--green2)'; msg.textContent=`✅ ${nc} kelas${role!=='tutor'?` & ${np} payment`:''} bulan ${mon} dihapus.`;
+    if(PAY_SID===id) renderPayment(id);
+    setTimeout(()=>closeModal('mReset'),1500);
+  }catch(e){ msg.style.color='var(--red)'; msg.textContent='Gagal: '+(e.message||e); }
+  finally{ btn.disabled=false; }
 }
 async function boot(){
   let tutors,students,cls;
