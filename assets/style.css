@@ -148,7 +148,8 @@ img{max-width:100%;display:block}
 .badge-pending{background:var(--amber-soft);color:var(--orange)}
 
 /* ---------- Tables ---------- */
-.table-wrap{overflow-x:auto}
+.table-wrap{overflow:auto;max-height:74vh}
+.table-wrap table.tbl th{position:sticky;top:0;z-index:3;background:var(--bg)}
 table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 table.tbl th{background:var(--bg);color:var(--muted);font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.5px;text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.tbl td{padding:14px;border-bottom:1px solid var(--line);vertical-align:middle}

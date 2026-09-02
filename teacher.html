@@ -101,7 +101,11 @@
 
       <!-- SCHEDULE -->
       <section class="view hide" id="view-schedule">
-        <div class="page-head"><div><h1>Jadwal Saya</h1><div class="sub">Semua kelas Anda</div></div></div>
+        <div class="page-head"><div><h1>Jadwal Saya</h1><div class="sub">Pilih bulan untuk melihat jadwal</div></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="month" id="schedMonth" onchange="renderSchedule()" style="padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-weight:600">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('schedMonth').value='';renderSchedule()">Semua</button>
+          </div></div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Tanggal</th><th>Murid</th><th>Time</th><th>Durasi</th><th>Type</th><th>Topik</th><th>Action</th></tr></thead>
           <tbody id="schedBody"></tbody>
@@ -244,14 +248,19 @@ async function renderStats(){
 }
 const byDate=(a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||''));
 async function renderSchedule(){
-  const cls=(await API.getClasses({tutor_id:ME.id})).sort(byDate);
+  const mp=document.getElementById('schedMonth');
+  if(mp && !mp.value && !mp.dataset.init){ mp.value=todayStr().slice(0,7); mp.dataset.init='1'; }
+  const mon=mp?mp.value:'';
+  const q={tutor_id:ME.id}; if(mon) q.month=mon;
+  const cls=(await API.getClasses(q)).sort(byDate);
+  const label=mon?new Date(mon+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'}):'semua bulan';
   document.getElementById('schedBody').innerHTML=cls.map(c=>`<tr>
     <td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${timeRange(c.start_time,c.end_time)}</td>
     <td>${c.duration||'-'} min</td>
     <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
     <td>${c.topic||'<span class="muted">-</span>'}</td>
     <td><button class="btn btn-warn btn-sm" onclick="openFill('${c.id}')">Isi</button></td></tr>`).join('')
-    ||'<tr><td colspan="7" class="muted" style="text-align:center;padding:20px">Belum ada.</td></tr>';
+    ||`<tr><td colspan="7" class="muted" style="text-align:center;padding:20px">Tidak ada jadwal untuk ${label}.</td></tr>`;
 }
 async function renderFee(){
   const m=document.getElementById('feeMonthPick').value||todayStr().slice(0,7);
