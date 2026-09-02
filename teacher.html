@@ -304,7 +304,8 @@ async function saveFill(){
   const p={id:document.getElementById('fId').value,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value};
   const files=[...document.getElementById('fPdf').files];
   const links=document.getElementById('fLinks').value.split(/[\s,]+/).map(s=>s.trim()).filter(s=>/^https?:\/\//i.test(s));
-  const base=document.getElementById('fReplace').checked?[]:CUR_MAT.split('|').filter(Boolean);
+  // buang materi base64 lama (bikin timeout & diblokir browser) — hanya simpan URL/link
+  const base=document.getElementById('fReplace').checked?[]:CUR_MAT.split('|').filter(Boolean).filter(u=>!u.startsWith('data:'));
   const newFileUrls=[];
   if(files.length){
     toast('Mengupload '+files.length+' file materi…');
