@@ -331,9 +331,35 @@ const SB_API = {
     return {id};
   },
   async deletePayment(id){ await SB.req('payments?id=eq.'+SB.enc(id),{method:'DELETE',prefer:'return=minimal',isWrite:true}); return {deleted:id}; },
-  // ---- Uploads (materi/foto → data URL disimpan di kolom teks) ----
-  uploadFile:(base64,filename)=> Promise.resolve({url:base64,view:base64,name:filename}),
+  // ---- Uploads → Supabase Storage (bucket 'materials'), simpan URL saja ----
+  async uploadFile(base64,filename){
+    const blob=dataURLtoBlob(base64);
+    const safe=String(filename||'file').replace(/[^\w.\-]+/g,'_').slice(-80);
+    const path=`${Date.now()}_${Math.random().toString(36).slice(2,7)}_${safe}`;
+    const bucket='materials';
+    const res=await fetch(`${(SUPABASE_URL||'').replace(/\/$/,'')}/storage/v1/object/${bucket}/${path}`,{
+      method:'POST',
+      headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':blob.type||'application/octet-stream','x-upsert':'true'},
+      body:blob
+    });
+    if(!res.ok){
+      const t=await res.text().catch(()=> '');
+      if(res.status===400||res.status===404||/bucket/i.test(t))
+        throw new Error("Bucket 'materials' belum ada di Supabase. Jalankan supabase-storage.sql dulu.");
+      throw new Error('Upload gagal: '+(t||('HTTP '+res.status)));
+    }
+    const url=`${(SUPABASE_URL||'').replace(/\/$/,'')}/storage/v1/object/public/${bucket}/${path}`;
+    return {url,view:url,name:filename};
+  },
 };
+// data URL (base64) → Blob untuk upload ke Storage
+function dataURLtoBlob(dataurl){
+  const parts=String(dataurl||'').split(',');
+  const mime=(parts[0].match(/:(.*?);/)||[])[1]||'application/octet-stream';
+  const bin=atob(parts[1]||''); const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
 
 /* Pilih backend aktif */
 const API = USE_SUPABASE ? SB_API : SCRIPT_API;
@@ -347,15 +373,20 @@ function matLinks(u){
     const name=(x.split('/').pop().split('?')[0]||('File '+(i+1))).slice(0,26);
     const real = x.startsWith('http')||x.startsWith('data:');
     if(!real) return `<span class="muted" title="File lama belum ter-upload — minta tentor upload ulang">📄 ${name}</span>`;
+    const isData=x.startsWith('data:');
     const isImg=/\.(jpe?g|png)(\?|$)/i.test(x)||x.startsWith('data:image');
-    const isPdf=/\.pdf(\?|$)/i.test(x);
+    const isPdf=/\.pdf(\?|$)/i.test(x)||/^data:application\/pdf/i.test(x);
     const isYT=/youtu\.?be/i.test(x), isDrive=/drive\.google/i.test(x);
     let icon='🔗',label='Link',dl='';
-    if(isImg){icon='🖼️';label=name;}
-    else if(isPdf){icon='📄';label=name;dl='download';}
+    if(isImg){icon='🖼️';label=isData?'Gambar':name;}
+    else if(isPdf){icon='📄';label=isData?'PDF':name;dl='download';}
     else if(isYT){icon='▶️';label='YouTube';}
     else if(isDrive){icon='📁';label='Google Drive';}
-    return `<a class="btn btn-outline btn-sm" href="${x}" target="_blank" style="margin:2px" ${dl}>${icon} ${label}</a>`;
+    else if(isData){icon='📄';label='File';dl='download';}
+    // data: URL harus di-download (Chrome memblokir buka data: di tab baru)
+    const dlAttr = isData ? `download="materi-${i+1}${isPdf?'.pdf':(isImg?'.jpg':'')}"` : (dl?'download':'');
+    const tgt = isData ? '' : 'target="_blank"';
+    return `<a class="btn btn-outline btn-sm" href="${x}" ${tgt} style="margin:2px" ${dlAttr}>${icon} ${label}</a>`;
   }).join(' ');
 }
 
