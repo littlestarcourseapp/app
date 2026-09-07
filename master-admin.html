@@ -76,7 +76,9 @@
       <a data-view="students"><span class="ic">🧑‍🎓</span> Murid</a>
       <a data-view="tutors"><span class="ic">👩‍🏫</span> Tentor</a>
       <a data-view="laporan"><span class="ic">📊</span> Laporan</a>
-      <a data-view="payment"><span class="ic">💳</span> Payment</a>
+      <a data-view="data"><span class="ic">🗄️</span> Data Explorer</a>
+      <a data-view="payment"><span class="ic">💳</span> Payment Student</a>
+      <a data-view="tpay"><span class="ic">🧑‍🏫</span> Payment Tentor</a>
       <a data-view="settings"><span class="ic">🔒</span> Ganti Password</a>
       <div class="divider"></div>
       <div class="sidebar-role" style="margin-top:0">Buka Portal Lain</div>
@@ -216,7 +218,7 @@
       <!-- PAYMENT -->
       <section class="view hide" id="view-payment">
         <div class="page-head">
-          <div><h1>Student Payment</h1><div class="breadcrumb">Payment › <b id="payCrumb">Pilih murid</b></div></div>
+          <div><h1>Payment Student</h1><div class="breadcrumb">Payment Student › <b id="payCrumb">Pilih murid</b></div></div>
           <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Cetak Invoice</button>
         </div>
 
@@ -244,6 +246,32 @@
 
         <div id="payDeposit"></div>
         <div id="payBilling" class="hide"></div>
+      </section>
+
+      <!-- DATA EXPLORER -->
+      <section class="view hide" id="view-data">
+        <div class="page-head"><div><h1>Data Explorer</h1><div class="sub">Lihat, cari, urutkan &amp; ekspor semua data — tanpa buka SQL</div></div>
+          <button class="btn btn-primary btn-sm no-print" onclick="exportDataCSV()">⬇️ Download CSV</button></div>
+        <div class="card card-pad" style="margin-bottom:14px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div id="dataTabs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            <input id="dataSearch" placeholder="🔎 Cari di semua kolom…" oninput="renderDataTable()" style="flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px">
+          </div>
+          <div class="hint" id="dataInfo" style="margin-top:8px"></div>
+        </div>
+        <div class="card"><div class="table-wrap"><table class="tbl" id="dataTable"><thead id="dataHead"></thead><tbody id="dataBody"></tbody></table></div></div>
+      </section>
+
+      <!-- PAYMENT TENTOR (komisi/bonus) -->
+      <section class="view hide" id="view-tpay">
+        <div class="page-head"><div><h1>Payment Tentor</h1><div class="sub">Isi komisi/bonus bulanan tentor — tampil di Portal Tentor sebagai tambahan fee</div></div></div>
+        <div class="card card-pad" style="margin-bottom:16px">
+          <div class="field-row">
+            <div class="field"><label>Pilih Tentor</label><select id="tpTutor" onchange="loadTentorPay()"></select></div>
+            <div class="field"><label>Bulan</label><input type="month" id="tpMonth" onchange="loadTentorPay()"></div>
+          </div>
+        </div>
+        <div id="tpContent"></div>
       </section>
 
       <!-- SETTINGS: GANTI PASSWORD -->
@@ -467,6 +495,112 @@ function renderM(v){
   if(v==='tutors')      renderTutorsM();
   if(v==='laporan')     renderLaporan();
   if(v==='payment')     initPayment();
+  if(v==='tpay')        initTentorPay();
+  if(v==='data')        initData();
+}
+/* ===== DATA EXPLORER ===== */
+const DATA_DEFS={
+  murid:{label:'🧑‍🎓 Murid',       load:()=>API.getStudents({})},
+  tentor:{label:'👩‍🏫 Tentor',      load:()=>API.getTutors()},
+  kelas:{label:'📅 Kelas',          load:()=>API.getClasses({})},
+  payment:{label:'💳 Payment',      load:()=>API.getPayments({})},
+  bonus:{label:'🧾 Komisi/Bonus',   load:()=>API.getTutorBonus({})},
+};
+let DATA_KEY='murid', DATA_ROWS=[], DATA_COLS=[], DATA_SORT={col:null,dir:1};
+function dataTabsHTML(){
+  return Object.entries(DATA_DEFS).map(([k,d])=>`<button class="btn btn-sm ${k===DATA_KEY?'btn-primary':'btn-outline'}" onclick="selectData('${k}')">${d.label}</button>`).join('');
+}
+function initData(){ document.getElementById('dataSearch').value=''; selectData(DATA_KEY); }
+async function selectData(k){
+  DATA_KEY=k; DATA_SORT={col:null,dir:1};
+  document.getElementById('dataTabs').innerHTML=dataTabsHTML();
+  document.getElementById('dataBody').innerHTML='<tr><td class="muted" style="padding:16px">Memuat…</td></tr>';
+  try{ DATA_ROWS=(await DATA_DEFS[k].load())||[]; }catch(e){ DATA_ROWS=[]; toast('Gagal memuat data','err'); }
+  const keys=[]; DATA_ROWS.forEach(r=>Object.keys(r).forEach(x=>{ if(!keys.includes(x)) keys.push(x); }));
+  DATA_COLS=keys;
+  renderDataTable();
+}
+function fmtCell(v){
+  if(v==null) return '';
+  let s=String(v);
+  if(s.startsWith('data:')) return '<span class="muted">[file base64]</span>';
+  if(/^https?:\/\//.test(s)) return `<a href="${s}" target="_blank">${esc(s.slice(0,40))}${s.length>40?'…':''}</a>`;
+  return esc(s.length>60?s.slice(0,60)+'…':s);
+}
+function currentDataRows(){
+  const q=(document.getElementById('dataSearch').value||'').toLowerCase().trim();
+  let rows=DATA_ROWS;
+  if(q) rows=rows.filter(r=>DATA_COLS.some(c=>String(r[c]==null?'':r[c]).toLowerCase().includes(q)));
+  if(DATA_SORT.col){ const c=DATA_SORT.col,d=DATA_SORT.dir;
+    rows=[...rows].sort((a,b)=>String(a[c]==null?'':a[c]).localeCompare(String(b[c]==null?'':b[c]),undefined,{numeric:true})*d); }
+  return rows;
+}
+function renderDataTable(){
+  if(!document.getElementById('dataHead')) return;
+  const rows=currentDataRows();
+  document.getElementById('dataHead').innerHTML='<tr>'+DATA_COLS.map(c=>`<th style="cursor:pointer;white-space:nowrap" onclick="sortData('${c}')">${c}${DATA_SORT.col===c?(DATA_SORT.dir>0?' ▲':' ▼'):''}</th>`).join('')+'</tr>';
+  document.getElementById('dataBody').innerHTML=rows.map(r=>'<tr>'+DATA_COLS.map(c=>`<td style="white-space:nowrap;max-width:280px;overflow:hidden;text-overflow:ellipsis">${fmtCell(r[c])}</td>`).join('')+'</tr>').join('')
+    ||`<tr><td colspan="${DATA_COLS.length||1}" class="muted" style="text-align:center;padding:20px">Tidak ada data.</td></tr>`;
+  document.getElementById('dataInfo').textContent=`${rows.length} baris · ${DATA_COLS.length} kolom · ${DATA_DEFS[DATA_KEY].label}`;
+}
+function sortData(c){ if(DATA_SORT.col===c) DATA_SORT.dir*=-1; else {DATA_SORT.col=c;DATA_SORT.dir=1;} renderDataTable(); }
+function exportDataCSV(){
+  const rows=currentDataRows();
+  const cell=v=>{ let s=String(v==null?'':v); if(s.startsWith('data:'))s='[file base64]'; if(/[",\n]/.test(s)) s='"'+s.replace(/"/g,'""')+'"'; return s; };
+  const csv=[DATA_COLS.join(','),...rows.map(r=>DATA_COLS.map(c=>cell(r[c])).join(','))].join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`data-${DATA_KEY}-${todayStr()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+let TP_FEE=0;
+function stuFeeTentor(c){
+  const s=STUDENTS.find(x=>x.id===c.student_id)||{};
+  const norm=Number(s.meeting_minutes)||90, per=Number(s.fee_tentor)||0, dur=Number(c.duration)||norm;
+  return Math.round(per/norm*dur);
+}
+function initTentorPay(){
+  const sel=document.getElementById('tpTutor');
+  sel.innerHTML='<option value="">Pilih tentor…</option>'+TUTORS.map(t=>`<option value="${t.id}">${esc(t.nama)}</option>`).join('');
+  document.getElementById('tpMonth').value=todayStr().slice(0,7);
+  document.getElementById('tpContent').innerHTML='<div class="card card-pad muted" style="text-align:center">Pilih tentor &amp; bulan.</div>';
+}
+async function loadTentorPay(){
+  const tid=document.getElementById('tpTutor').value, mon=document.getElementById('tpMonth').value;
+  const box=document.getElementById('tpContent');
+  if(!tid||!mon){ box.innerHTML='<div class="card card-pad muted" style="text-align:center">Pilih tentor &amp; bulan.</div>'; return; }
+  const t=TUTORS.find(x=>x.id===tid)||{};
+  box.innerHTML='<div class="card card-pad muted" style="text-align:center">Memuat…</div>';
+  const cls=await API.getClasses({tutor_id:tid, month:mon});
+  const fee=cls.reduce((a,c)=>a+stuFeeTentor(c),0); TP_FEE=fee;
+  const bonuses=await API.getTutorBonus({tutor_id:tid, month:mon});
+  const b=bonuses[0]||{}; const amt=Number(b.amount)||0, note=b.note||'';
+  const periodName=new Date(mon+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  box.innerHTML=`
+    <div class="card card-pad" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap">
+      <div><div class="lbl muted">Tentor</div><b>${esc(t.nama)}</b></div>
+      <div><div class="lbl muted">Periode</div><b>${periodName}</b></div>
+      <div><div class="lbl muted">Jumlah Sesi</div><b>${cls.length} sesi</b></div>
+      <div><div class="lbl muted">Fee Mengajar (otomatis)</div><b class="text-green">${fmtRp(fee)}</b></div>
+    </div>
+    <div class="grid grid-2" style="gap:16px">
+      <div class="stat tint-amber"><div class="lbl">KOMISI / BONUS (isi manual)</div>
+        <input type="number" id="tpAmount" value="${amt}" placeholder="nominal" oninput="tpCalc()" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:9px;margin:6px 0">
+        <textarea id="tpNote" placeholder="Keterangan (mis. bonus murid baru, lembur, dll.)" style="width:100%;min-height:52px;padding:8px;border:1.5px solid var(--line);border-radius:9px">${esc(note)}</textarea></div>
+      <div class="stat tint-purple"><div class="lbl">TOTAL DITERIMA TENTOR</div>
+        <div class="val" id="tpTotal" style="font-size:22px">${fmtRp(fee+amt)}</div>
+        <div class="hint">Fee <b>${fmtRp(fee)}</b> + Komisi/Bonus</div></div>
+    </div>
+    <div style="text-align:right;margin-top:14px"><button class="btn btn-primary" onclick="saveTentorPay('${tid}','${mon}')">💾 Simpan Komisi/Bonus</button></div>`;
+}
+function tpCalc(){
+  const amt=Number((document.getElementById('tpAmount')||{}).value)||0;
+  const el=document.getElementById('tpTotal'); if(el) el.textContent=fmtRp(TP_FEE+amt);
+}
+async function saveTentorPay(tid,mon){
+  const amount=Number((document.getElementById('tpAmount')||{}).value)||0;
+  const note=(document.getElementById('tpNote')||{}).value||'';
+  try{ await API.saveTutorBonus({tutor_id:tid,month:mon,amount,note}); toast('Komisi/bonus tersimpan','ok'); }
+  catch(e){ toast('Gagal simpan: '+(e.message||e),'err'); }
 }
 
 /* ================= PAYMENT MODULE ================= */

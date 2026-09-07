@@ -135,6 +135,11 @@
           <div class="stat tint-purple"><div class="lbl">Total Menit</div><div class="val" id="feeMinutes">0</div></div>
           <div class="stat tint-amber"><div class="lbl">Onsite / Online</div><div class="val" id="feeMix">0 / 0</div></div>
         </div>
+        <div class="card card-pad" style="margin-bottom:20px;display:flex;gap:28px;flex-wrap:wrap;align-items:center">
+          <div><div class="lbl muted">Fee Mengajar</div><b class="text-green" id="feeBase">Rp 0</b></div>
+          <div><div class="lbl muted">Komisi / Bonus</div><b style="color:var(--orange)" id="feeBonus">Rp 0</b><div class="hint" id="feeBonusNote" style="max-width:320px;white-space:pre-line"></div></div>
+          <div style="margin-left:auto;text-align:right"><div class="lbl muted">TOTAL DITERIMA</div><b style="font-size:22px;color:var(--purple)" id="feeGrand">Rp 0</b></div>
+        </div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Tanggal</th><th>Murid</th><th>Durasi</th><th>Type</th><th>Fee</th></tr></thead>
           <tbody id="feeBody"></tbody>
@@ -281,6 +286,13 @@ async function renderFee(){
   document.getElementById('feeSessions').textContent=cls.length;
   document.getElementById('feeMinutes').textContent=fmtNum(mins);
   document.getElementById('feeMix').textContent=on+' / '+onl;
+  // komisi/bonus dari master admin
+  let bonus=0, bnote='';
+  try{ const bs=await API.getTutorBonus({tutor_id:ME.id,month:m}); const b=bs[0]||{}; bonus=Number(b.amount)||0; bnote=b.note||''; }catch(e){}
+  document.getElementById('feeBase').textContent=fmtRp(fee);
+  document.getElementById('feeBonus').textContent=fmtRp(bonus);
+  document.getElementById('feeBonusNote').textContent=bnote?('📝 '+bnote):'';
+  document.getElementById('feeGrand').textContent=fmtRp(fee+bonus);
 }
 document.getElementById('feeMonthPick').onchange=renderFee;
 
