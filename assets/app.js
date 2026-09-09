@@ -190,6 +190,8 @@ const SCRIPT_API = {
   getPayments : (o={}) => SCRIPT_API._post({action:'getPayments',...o}),
   savePayment : (d)    => SCRIPT_API._post({action:'savePayment',...d}),
   deletePayment:(id)   => SCRIPT_API._post({action:'deletePayment',id}),
+  getTutorBonus:(o={}) => SCRIPT_API._post({action:'getTutorBonus',...o}),
+  saveTutorBonus:(d)   => SCRIPT_API._post({action:'saveTutorBonus',...d}),
 
   uploadFile  : (base64,filename) => SCRIPT_API._post({action:'uploadFile',base64,filename}),
 };
@@ -331,6 +333,14 @@ const SB_API = {
     return {id};
   },
   async deletePayment(id){ await SB.req('payments?id=eq.'+SB.enc(id),{method:'DELETE',prefer:'return=minimal',isWrite:true}); return {deleted:id}; },
+  // ---- Komisi/Bonus Tentor ----
+  getTutorBonus:(o={})=> SB.req('tutor_bonus?select=*'+(o.tutor_id?'&tutor_id=eq.'+SB.enc(o.tutor_id):'')+(o.month?'&month=eq.'+SB.enc(o.month):'')),
+  async saveTutorBonus(d){
+    const id=(d.tutor_id||'')+'_'+(d.month||'');
+    const row={id,tutor_id:d.tutor_id||'',month:d.month||'',amount:String(d.amount||0),note:d.note||''};
+    await SB.req('tutor_bonus',{method:'POST',body:row,prefer:'resolution=merge-duplicates,return=minimal',isWrite:true});
+    return {id};
+  },
   // ---- Uploads → Supabase Storage (bucket 'materials'), simpan URL saja ----
   async uploadFile(base64,filename){
     const blob=dataURLtoBlob(base64);
