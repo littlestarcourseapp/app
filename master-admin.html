@@ -515,7 +515,14 @@ async function selectData(k){
   DATA_KEY=k; DATA_SORT={col:null,dir:1};
   document.getElementById('dataTabs').innerHTML=dataTabsHTML();
   document.getElementById('dataBody').innerHTML='<tr><td class="muted" style="padding:16px">Memuat…</td></tr>';
-  try{ DATA_ROWS=(await DATA_DEFS[k].load())||[]; }catch(e){ DATA_ROWS=[]; toast('Gagal memuat data','err'); }
+  try{ DATA_ROWS=(await DATA_DEFS[k].load())||[]; }
+  catch(e){
+    DATA_ROWS=[]; DATA_COLS=[];
+    document.getElementById('dataHead').innerHTML='';
+    document.getElementById('dataBody').innerHTML=`<tr><td style="padding:16px;color:var(--red)">Gagal memuat: ${esc(e.message||e)}<br><span class="muted" style="font-size:12px">Kalau menyebut tabel belum ada, jalankan file SQL terkait di Supabase.</span></td></tr>`;
+    document.getElementById('dataInfo').textContent='';
+    return;
+  }
   const keys=[]; DATA_ROWS.forEach(r=>Object.keys(r).forEach(x=>{ if(!keys.includes(x)) keys.push(x); }));
   DATA_COLS=keys;
   renderDataTable();
@@ -570,12 +577,16 @@ async function loadTentorPay(){
   if(!tid||!mon){ box.innerHTML='<div class="card card-pad muted" style="text-align:center">Pilih tentor &amp; bulan.</div>'; return; }
   const t=TUTORS.find(x=>x.id===tid)||{};
   box.innerHTML='<div class="card card-pad muted" style="text-align:center">Memuat…</div>';
-  const cls=await API.getClasses({tutor_id:tid, month:mon});
+  let cls=[], b={}, bonusErr=false;
+  try{ cls=await API.getClasses({tutor_id:tid, month:mon})||[]; }
+  catch(e){ box.innerHTML=`<div class="card card-pad" style="text-align:center;color:var(--red)">Gagal memuat kelas: ${esc(e.message||e)}</div>`; return; }
+  try{ const bonuses=await API.getTutorBonus({tutor_id:tid, month:mon}); b=bonuses[0]||{}; }
+  catch(e){ bonusErr=true; }   // tabel tutor_bonus mungkin belum dibuat — jangan macet
   const fee=cls.reduce((a,c)=>a+stuFeeTentor(c),0); TP_FEE=fee;
-  const bonuses=await API.getTutorBonus({tutor_id:tid, month:mon});
-  const b=bonuses[0]||{}; const amt=Number(b.amount)||0, note=b.note||'';
+  const amt=Number(b.amount)||0, note=b.note||'';
   const periodName=new Date(mon+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
   box.innerHTML=`
+    ${bonusErr?`<div class="note-band" style="background:#fdecec;border-color:#f5b5b5;color:#a12626;margin-bottom:12px">⚠️ Tabel <b>tutor_bonus</b> belum ada — jalankan <b>supabase-tutorbonus.sql</b> di Supabase agar komisi/bonus bisa disimpan.</div>`:''}
     <div class="card card-pad" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap">
       <div><div class="lbl muted">Tentor</div><b>${esc(t.nama)}</b></div>
       <div><div class="lbl muted">Periode</div><b>${periodName}</b></div>
