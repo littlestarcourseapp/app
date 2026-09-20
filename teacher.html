@@ -85,7 +85,7 @@
         <div class="grid grid-4" style="margin-bottom:22px">
           <div class="stat tint-blue"><div class="lbl"><span class="icon">📅</span> Kelas Hari Ini</div><div class="val" id="cToday">0</div><div class="hint">jadwal tetap murid</div></div>
           <div class="stat tint-green"><div class="lbl"><span class="icon">✅</span> Selesai Bulan Ini</div><div class="val" id="cMonth">0</div><div class="hint" id="mLabel">—</div></div>
-          <div class="stat tint-amber"><div class="lbl"><span class="icon">💰</span> Total Fee Bulan Ini</div><div class="val" id="feeMonth">Rp 0</div><div class="hint">dari fee tentor tiap murid</div></div>
+          <div class="stat tint-amber"><div class="lbl"><span class="icon">💰</span> Total Fee Bulan Ini</div><div class="val" id="feeMonth">Rp ••••••</div><div class="hint"><a class="fee-eye" onclick="toggleFee()" style="cursor:pointer;color:var(--blue);font-weight:700">👁️ Lihat fee</a></div></div>
           <div class="stat tint-purple"><div class="lbl"><span class="icon">🧑‍🎓</span> Murid Saya</div><div class="val" id="myStudents">0</div></div>
         </div>
 
@@ -116,6 +116,7 @@
       <section class="view hide" id="view-fee">
         <div class="page-head"><div><h1>Rekap Bulan Ini</h1><div class="sub" id="feeLabel">—</div></div>
           <div style="display:flex;gap:10px;align-items:center" class="no-print">
+            <button class="btn btn-outline btn-sm fee-eye" onclick="toggleFee()">👁️ Lihat fee</button>
             <input type="month" id="feeMonthPick" class="btn btn-outline" style="font-weight:600">
             <button class="btn btn-primary" onclick="window.print()">🖨️ Generate PDF</button>
           </div></div>
@@ -242,6 +243,13 @@ async function renderToday(){
     || '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Tidak ada jadwal hari ini.</td></tr>';
   document.getElementById('cToday').textContent=list.length;
 }
+let FEE_HIDDEN=true;   // privasi: nominal fee disembunyikan dulu
+function maskRp(v){ return FEE_HIDDEN ? 'Rp ••••••' : fmtRp(v); }
+function toggleFee(){
+  FEE_HIDDEN=!FEE_HIDDEN;
+  document.querySelectorAll('.fee-eye').forEach(b=>b.textContent=FEE_HIDDEN?'👁️ Lihat fee':'🙈 Sembunyikan fee');
+  renderStats(); if(document.getElementById('feeTotal')&&ME) renderFee();
+}
 async function renderStats(){
   const m=todayStr().slice(0,7);
   const cls=(await API.getClasses({month:m,tutor_id:ME.id}));
@@ -249,7 +257,7 @@ async function renderStats(){
   const myStu=new Set((await API.getClasses({tutor_id:ME.id})).map(c=>c.student_id));
   document.getElementById('myStudents').textContent=myStu.size;
   const fee=cls.reduce((a,c)=>a+sTutorFee(c),0);
-  document.getElementById('feeMonth').textContent=fmtRp(fee);
+  document.getElementById('feeMonth').textContent=maskRp(fee);
 }
 const byDate=(a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||''));
 async function renderSchedule(){
@@ -279,20 +287,20 @@ async function renderFee(){
     const f=sTutorFee(c); fee+=f; mins+=Number(c.duration)||0; if(c.type==='online')onl++;else on++;
     return `<tr><td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${c.duration||'-'} min</td>
       <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
-      <td><b>${fmtRp(f)}</b></td></tr>`;
+      <td><b>${maskRp(f)}</b></td></tr>`;
   }).join('');
   document.getElementById('feeBody').innerHTML=body||'<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">Belum ada kelas.</td></tr>';
-  document.getElementById('feeTotal').textContent=fmtRp(fee);
+  document.getElementById('feeTotal').textContent=maskRp(fee);
   document.getElementById('feeSessions').textContent=cls.length;
   document.getElementById('feeMinutes').textContent=fmtNum(mins);
   document.getElementById('feeMix').textContent=on+' / '+onl;
   // komisi/bonus dari master admin
   let bonus=0, bnote='';
   try{ const bs=await API.getTutorBonus({tutor_id:ME.id,month:m}); const b=bs[0]||{}; bonus=Number(b.amount)||0; bnote=b.note||''; }catch(e){}
-  document.getElementById('feeBase').textContent=fmtRp(fee);
-  document.getElementById('feeBonus').textContent=fmtRp(bonus);
-  document.getElementById('feeBonusNote').textContent=bnote?('📝 '+bnote):'';
-  document.getElementById('feeGrand').textContent=fmtRp(fee+bonus);
+  document.getElementById('feeBase').textContent=maskRp(fee);
+  document.getElementById('feeBonus').textContent=maskRp(bonus);
+  document.getElementById('feeBonusNote').textContent=(!FEE_HIDDEN&&bnote)?('📝 '+bnote):'';
+  document.getElementById('feeGrand').textContent=maskRp(fee+bonus);
 }
 document.getElementById('feeMonthPick').onchange=renderFee;
 
@@ -334,10 +342,19 @@ async function saveFill(){
   const base=document.getElementById('fReplace').checked?[]:CUR_MATS.filter(u=>!u.startsWith('data:'));
   const newFileUrls=[];
   if(files.length){
-    toast('Mengupload '+files.length+' file materi…');
+    const btn0=document.querySelector('#mFill .btn-primary'); if(btn0){btn0.disabled=true;btn0.textContent='Mengupload…';}
     try{
-      for(const f of files){ const b64=await fileToBase64(f); const r=await API.uploadFile(b64,f.name); newFileUrls.push((r&&(r.view||r.url))||('materi/'+f.name)); }
-    }catch(e){ toast('Upload materi gagal: '+(e.message||e),'err'); return; }
+      let n=0;
+      for(const f of files){
+        n++; toast(`Mengupload ${n}/${files.length}: ${f.name}…`);
+        const b64=await fileToBase64(f);
+        const r=await API.uploadFile(b64,f.name);
+        const u=r&&(r.view||r.url);
+        if(!u || !/^https?:\/\//i.test(u)) throw new Error('Upload tidak menghasilkan URL yang benar untuk '+f.name+'. Pastikan bucket Storage "materials" sudah dibuat & app.js terbaru terpasang.');
+        newFileUrls.push(u);
+      }
+    }catch(e){ toast('Upload materi gagal: '+(e.message||e),'err'); if(btn0){btn0.disabled=false;btn0.textContent='Simpan Laporan';} return; }
+    if(btn0){btn0.disabled=false;btn0.textContent='Simpan Laporan';}
   }
   const seen=new Set();
   p.material_url=[...base,...newFileUrls,...links].filter(u=>u&&!seen.has(u)&&seen.add(u)).join('|');

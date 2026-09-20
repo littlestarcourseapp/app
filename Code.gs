@@ -163,9 +163,30 @@ function doPost(e){
       case 'deletePayment':   return ok(del('Payments',p.id));
       // Uploads
       case 'uploadFile':      return ok(uploadFile(p));
+      // PIN portal (Admin / Master Admin)
+      case 'verifyPin':       return ok(verifyPin(p));
+      case 'changePin':       return ok(changePin(p));
       default:                return err('Unknown action: '+p.action);
     }
   }catch(ex){ return err(ex.message); }
+}
+
+/* ---------- Portal PIN (Admin / Master Admin) ---------- */
+function portalPin_(role){
+  const props=PropertiesService.getScriptProperties();
+  if(role==='master') return String(props.getProperty('MASTER_PIN')||'5758');
+  return String(props.getProperty('ADMIN_PIN')||'17081945');
+}
+function verifyPin(p){
+  return { ok: String(p.pin||'') === portalPin_(p.role==='master'?'master':'admin') };
+}
+function changePin(p){
+  const role = p.role==='master' ? 'master' : 'admin';
+  if(String(p.oldPin||'') !== portalPin_(role)) return { ok:false, message:'Password lama salah.' };
+  const np = String(p.newPin||'').trim();
+  if(!/^\d{4,10}$/.test(np)) return { ok:false, message:'Password baru harus 4–10 digit angka.' };
+  PropertiesService.getScriptProperties().setProperty(role==='master'?'MASTER_PIN':'ADMIN_PIN', np);
+  return { ok:true };
 }
 
 /* ---------- Setup ---------- */

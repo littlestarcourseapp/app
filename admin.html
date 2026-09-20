@@ -157,12 +157,15 @@
 <script>
 document.getElementById('logo').innerHTML = logoBlock('Little Star','Portal Admin');
 /* ---- PIN gate ---- */
-const ADMIN_PIN='17081945';
 try{ if(sessionStorage.getItem('ad_ok')==='1') document.getElementById('adGate').style.display='none'; else document.getElementById('adPin').focus(); }catch(e){}
-function adLogin(){
+async function adLogin(){
   const v=document.getElementById('adPin').value.trim();
-  if(v===ADMIN_PIN){ try{sessionStorage.setItem('ad_ok','1');}catch(e){} document.getElementById('adGate').style.display='none'; }
-  else { document.getElementById('adErr').textContent='PIN salah'; document.getElementById('adPin').value=''; }
+  const err=document.getElementById('adErr'); err.textContent='Memeriksa…';
+  try{
+    const r=await API.verifyPin('admin',v);
+    if(r&&r.ok){ try{sessionStorage.setItem('ad_ok','1');}catch(e){} document.getElementById('adGate').style.display='none'; err.textContent=''; }
+    else { err.textContent='PIN salah'; document.getElementById('adPin').value=''; }
+  }catch(e){ err.textContent='Gagal memeriksa PIN — coba lagi.'; }
 }
 document.getElementById('todayDate').textContent = '📅 ' + longToday();
 

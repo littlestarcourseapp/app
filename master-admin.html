@@ -189,6 +189,9 @@
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-ghost btn-sm" id="genUserBtn" onclick="generateAllUsernames()">🪄 Generate semua username</button>
             <button class="btn btn-primary" onclick="openStudent()">＋ Tambah Murid</button></div></div>
+        <div class="card card-pad" style="margin-bottom:14px;padding:12px 16px">
+          <input id="muridSearch" oninput="renderStudentsM()" placeholder="🔎 Cari murid di daftar (nama / username / sekolah / orang tua)…" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px">
+        </div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Nama</th><th>Username</th><th>Sekolah</th><th>Grade</th><th>Orang Tua</th><th>Jadwal</th><th>Fee Ortu</th><th>Fee Tentor</th><th>PIN Ortu</th><th>Action</th></tr></thead>
           <tbody id="msBody"></tbody>
@@ -834,7 +837,9 @@ function renderBirthday(){
 }
 const gradeKey=s=>{const m=String(s.grade||'').match(/\d+/);return m?parseInt(m[0]):999;};
 function renderStudentsM(){
-  const list=[...STUDENTS].sort((a,b)=>gradeKey(a)-gradeKey(b)||String(a.nama||'').localeCompare(String(b.nama||'')));
+  const q=((document.getElementById('muridSearch')||{}).value||'').toLowerCase().trim();
+  let list=[...STUDENTS].sort((a,b)=>gradeKey(a)-gradeKey(b)||String(a.nama||'').localeCompare(String(b.nama||'')));
+  if(q) list=list.filter(s=>[s.nama,s.username,s.school,s.parent_name,s.grade].some(v=>String(v||'').toLowerCase().includes(q)));
   document.getElementById('msBody').innerHTML=list.map(s=>`<tr>
     <td><b>${s.nama}</b></td><td><b style="color:var(--navy)">${s.username||'<span class="muted">-</span>'}</b></td><td>${s.school||'<span class="muted">-</span>'}</td><td>${s.grade||'-'}</td>
     <td>${s.parent_name||'-'}</td><td>${s.schedule||'-'}</td>
