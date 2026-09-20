@@ -98,7 +98,6 @@
   <div class="main">
     <div class="topbar">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
-      <div class="search"><span class="mag">🔎</span><input id="globalSearch" placeholder="Cari murid atau tentor…"></div>
       <div class="spacer"></div>
       <div class="me"><div class="who">Master Admin<small>Super Administrator</small></div><div class="avatar">M</div></div>
     </div>
@@ -1063,6 +1062,7 @@ function renderHits(id,list){
 }
 function wireGlobalSearch(){
   const inp=document.getElementById('globalSearch');
+  if(!inp) return;   // kolom search atas dihapus
   inp.oninput=()=>{ showView('search'); renderCombined(inp.value.trim().toLowerCase()); };
 }
 async function renderCombined(q){

@@ -393,10 +393,10 @@ function matLinks(u){
     else if(isYT){icon='▶️';label='YouTube';}
     else if(isDrive){icon='📁';label='Google Drive';}
     else if(isData){icon='📄';label='File';dl='download';}
-    // data: URL harus di-download (Chrome memblokir buka data: di tab baru)
-    const dlAttr = isData ? `download="materi-${i+1}${isPdf?'.pdf':(isImg?'.jpg':'')}"` : (dl?'download':'');
-    const tgt = isData ? '' : 'target="_blank"';
-    return `<a class="btn btn-outline btn-sm" href="${x}" ${tgt} style="margin:2px" ${dlAttr}>${icon} ${label}</a>`;
+    // data: URL → paksa download (Chrome blokir buka data: di tab baru).
+    // http(s) → buka tab baru TANPA atribut download (download diabaikan lintas-domain & bisa bikin klik "diam").
+    if(isData) return `<a class="btn btn-outline btn-sm" href="${x}" download="materi-${i+1}${isPdf?'.pdf':(isImg?'.jpg':'.bin')}" style="margin:2px">${icon} ${label}</a>`;
+    return `<a class="btn btn-outline btn-sm" href="${x}" target="_blank" rel="noopener" style="margin:2px">${icon} ${label}</a>`;
   }).join(' ');
 }
 
