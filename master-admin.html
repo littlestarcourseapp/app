@@ -201,6 +201,9 @@
       <section class="view hide" id="view-tutors">
         <div class="page-head"><div><h1>Tentor</h1><div class="sub">Kelola data tentor & PIN login</div></div>
           <button class="btn btn-primary" onclick="openTutor()">＋ Tambah Tentor</button></div>
+        <div class="card card-pad" style="margin-bottom:14px;padding:12px 16px">
+          <input id="tentorSearch" oninput="renderTutorsM()" placeholder="🔎 Cari tentor di daftar (nama / username / pelajaran / jenjang)…" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px">
+        </div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Nama</th><th>Username</th><th>Pelajaran</th><th>Jenjang</th><th>WA</th><th>PIN Login</th><th>Action</th></tr></thead>
           <tbody id="mtBody"></tbody>
@@ -853,7 +856,10 @@ function renderStudentsM(){
     ||'<tr><td colspan="10" class="muted" style="text-align:center;padding:22px">Belum ada murid.</td></tr>';
 }
 function renderTutorsM(){
-  document.getElementById('mtBody').innerHTML=TUTORS.map(t=>`<tr>
+  const q=((document.getElementById('tentorSearch')||{}).value||'').toLowerCase().trim();
+  let list=TUTORS;
+  if(q) list=list.filter(t=>[t.nama,t.username,t.subject,t.level,t.wa].some(v=>String(v||'').toLowerCase().includes(q)));
+  document.getElementById('mtBody').innerHTML=list.map(t=>`<tr>
     <td><b>${t.nama}</b></td><td><b style="color:var(--navy)">${t.username||'<span class="muted">-</span>'}</b></td><td>${t.subject||'-'}</td><td>${t.level||'<span class="muted">-</span>'}</td><td>${t.wa||'-'}</td>
     <td><span style="font-weight:800;letter-spacing:3px;color:var(--navy)">${t.pin||'----'}</span>
         <button class="btn btn-ghost btn-sm" title="Buat PIN baru" onclick="regenPin('${t.id}')">🔄</button></td>
