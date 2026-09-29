@@ -307,7 +307,10 @@ document.getElementById('feeMonthPick').onchange=renderFee;
 /* fill modal */
 let CUR_MAT='', CUR_MATS=[];
 async function openFill(id){
-  const c=(await API.getClasses({})).find(x=>x.id===id); if(!c)return;
+  let c;
+  try{ c=(await API.getClasses({id})).find(x=>x.id===id)||(await API.getClasses({tutor_id:ME.id})).find(x=>x.id===id); }
+  catch(e){ toast('Gagal memuat kelas: '+(e.message||e),'err'); return; }
+  if(!c){ toast('Kelas tidak ditemukan','err'); return; }
   document.getElementById('fId').value=id;
   document.getElementById('fTopic').value=c.topic||''; document.getElementById('fNote').value=c.note||'';
   CUR_MAT=c.material_url||'';

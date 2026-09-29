@@ -314,7 +314,9 @@ function openAddClass(){
   openModal('mClass');
 }
 async function editClass(id){
-  const c=(await API.getClasses({})).find(x=>x.id===id); if(!c) return;
+  let c;
+  try{ c=(await API.getClasses({id})).find(x=>x.id===id); }catch(e){ toast('Gagal memuat kelas','err'); return; }
+  if(!c) return;
   document.getElementById('mClassTitle').textContent='Edit Class';
   document.getElementById('cId').value=c.id; document.getElementById('cDate').value=c.date;
   fillSelect(document.getElementById('cStudent'),STUDENTS,c.student_id);
