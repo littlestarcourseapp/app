@@ -214,6 +214,9 @@
       <section class="view hide" id="view-laporan">
         <div class="page-head"><div><h1>Laporan</h1><div class="sub">Rekap kelas per murid untuk laporan bulanan</div></div>
           <input type="month" id="repMonth" class="btn btn-outline" style="font-weight:600"></div>
+        <div class="card card-pad" style="margin-bottom:14px;padding:12px 16px">
+          <input id="laporanSearch" oninput="renderLaporan()" placeholder="🔎 Cari murid di laporan (nama / orang tua / sekolah)…" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px">
+        </div>
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Murid</th><th>Jml Kelas</th><th>Total Menit</th><th>Fee Ortu/Meet</th><th>Estimasi Tagihan</th><th></th></tr></thead>
           <tbody id="repBody"></tbody>
@@ -872,8 +875,10 @@ async function renderLaporan(){
   const m=document.getElementById('repMonth').value||todayStr().slice(0,7);
   const cls=await API.getClasses({month:m});
   const byStu={}; cls.forEach(c=>{(byStu[c.student_id]=byStu[c.student_id]||[]).push(c);});
+  const q=((document.getElementById('laporanSearch')||{}).value||'').toLowerCase().trim();
   const html=STUDENTS.map(s=>{
     const list=byStu[s.id]||[]; if(!list.length) return '';
+    if(q && ![s.nama,s.parent_name,s.school].some(v=>String(v||'').toLowerCase().includes(q))) return '';
     const mins=list.reduce((a,c)=>a+(Number(c.duration)||0),0);
     const est=Math.round(mins/(s.meeting_minutes||90))*(s.fee_per_meeting||0);
     return `<tr><td><b>${s.nama}</b></td><td>${list.length}</td><td>${mins} min</td>
