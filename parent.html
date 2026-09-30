@@ -198,28 +198,33 @@ async function renderDash(){
   const allCls=await API.getClasses({student_id:ME.id});
   const cls=allCls.filter(c=>String(c.date).startsWith(P_MONTH)).sort((a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||'')));
   const pays=await API.getPayments({student_id:ME.id});
-  const pay=pays.find(x=>x.month===P_MONTH)||pays[0]||null; // payment for selected month
+  // Satu bulan bisa dibayar dengan beberapa kali cicilan → gabungkan semua record bulan terpilih
+  const monthPays=pays.filter(x=>x.month===P_MONTH);
+  const payRows=monthPays.length?monthPays:(pays[0]?[pays[0]]:[]);
+  const pay=payRows[0]||null; // record perwakilan (untuk harga/durasi)
+  const sumF=(f)=>payRows.reduce((a,p)=>a+(Number(p[f])||0),0);
   const perMin=pay?Number(pay.duration)||90:(ME.meeting_minutes||90);
-  const meets=pay?Number(pay.meetings)||0:(ME.deposit_meetings||0);
   const perMeet=pay?Number(pay.price_per_meet)||0:(ME.fee_per_meeting||0);
-  const base=pay?Number(pay.deposit_total)||perMeet*meets:perMeet*meets;
-  const addFee1=pay?Number(pay.add_fee1)||0:0, addFee2=pay?Number(pay.add_fee2)||0:0;
-  const addFee2Note=pay?pay.add_fee2_note||'':'';
-  const nextDep=pay?Number(pay.next_deposit)||0:0;
-  const grandBill=pay?Number(pay.grand_total)||(addFee1+addFee2+nextDep):(addFee1+addFee2+nextDep);
+  const meets=pay?sumF('meetings'):(ME.deposit_meetings||0);          // total meeting = jumlah semua cicilan
+  const base=pay?(sumF('deposit_total')||perMeet*meets):perMeet*meets; // total deposit dibayar = jumlah semua cicilan
+  const addFee1=sumF('add_fee1'), addFee2=sumF('add_fee2');
+  const addFee2Note=payRows.map(p=>p.add_fee2_note).filter(Boolean).join(' · ');
+  const nextDep=sumF('next_deposit');
+  const grandBill=pay?(sumF('grand_total')||(addFee1+addFee2+nextDep)):(addFee1+addFee2+nextDep);
+  const payDates=payRows.map(p=>prettyDate(p.pay_date)).filter(Boolean).join(', ');
   // deposit band
   document.getElementById('depTitle').textContent = pay?`LUNAS ${meets}× MEETING`:'BELUM ADA DEPOSIT';
   const dS=document.getElementById('depStatus');
   if(pay){dS.textContent='✅ LUNAS';dS.style.color='';}
   else{dS.textContent='⏳ Belum Lunas';dS.style.color='#d9822b';}
   document.getElementById('depDetail').innerHTML = pay
-    ? `Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(meets*perMin)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b> · Bayar: ${prettyDate(pay.pay_date)}`
+    ? `Per meet: <b>${fmtRp(perMeet)}</b> · ${meets}×${perMin} = ${fmtNum(meets*perMin)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b> · Bayar: ${payDates||prettyDate(pay.pay_date)}${payRows.length>1?` (${payRows.length}× cicilan)`:''}`
     : 'Hubungi admin untuk info pembayaran.';
   // history (bulan terpilih)
   const tb=document.getElementById('histBody');
   tb.innerHTML=cls.map((c,i)=>rowHist(i+1,c)).join('')||emptyRow(9);
   // summary cards (bulan terpilih)
-  const carryIn=pay?Number(pay.carry_in)||0:0;
+  const carryIn=pay?sumF('carry_in'):0;
   const total=meets*perMin+carryIn;
   const used=cls.reduce((a,c)=>a+(Number(c.duration)||0),0);
   const left=Math.max(0,total-used);
