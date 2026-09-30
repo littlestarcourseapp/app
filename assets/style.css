@@ -150,6 +150,8 @@ img{max-width:100%;display:block}
 /* ---------- Tables ---------- */
 .table-wrap{overflow:auto;max-height:74vh}
 .table-wrap table.tbl th{position:sticky;top:0;z-index:3;background:var(--bg)}
+.table-wrap.tw-full{max-height:none;overflow-y:visible;overflow-x:auto}
+.table-wrap.tw-full table.tbl th{position:static}
 table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 table.tbl th{background:var(--bg);color:var(--muted);font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.5px;text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.tbl td{padding:14px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -199,6 +201,11 @@ table.tbl .muted{color:var(--muted)}
 .right-arrow{color:#c7cbdb}
 .foot-note{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 .hide{display:none!important}
+.print-only{display:none}
+.print-head{margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--line)}
+.print-head img{width:52px;height:52px;border-radius:10px;object-fit:cover}
+.print-head .pt{font-weight:800;font-size:17px;color:var(--navy)}
+.print-head .pl{font-size:12.5px;color:var(--muted);margin-top:2px}
 .text-green{color:var(--green2)}.text-red{color:var(--red)}.text-blue{color:var(--blue)}.text-muted{color:var(--muted)}
 .mt-16{margin-top:16px}.mt-24{margin-top:24px}.mb-0{margin-bottom:0}
 
@@ -250,4 +257,18 @@ table.tbl .muted{color:var(--muted)}
   .tbl th,.tbl td{padding:9px 10px;font-size:12.5px}
   .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:85;display:none}
   .backdrop.open{display:block}
+}
+
+/* ---------- Print / Export PDF ---------- */
+@media print{
+  .no-print,.sidebar,.hamburger,.backdrop,.toast{display:none!important}
+  .content{padding:0!important}
+  /* Tampilkan tabel penuh saat cetak — jangan terpotong kotak scroll */
+  .table-wrap,.table-wrap.tw-full,.cal-scroll{max-height:none!important;overflow:visible!important}
+  .table-wrap table.tbl th{position:static!important}
+  .print-only{display:block!important}
+  /* Jangan potong baris di tengah antar halaman */
+  table.tbl tr{page-break-inside:avoid}
+  table.tbl thead{display:table-header-group}
+  .card{box-shadow:none!important;break-inside:avoid}
 }
