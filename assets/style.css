@@ -270,5 +270,8 @@ table.tbl .muted{color:var(--muted)}
   /* Jangan potong baris di tengah antar halaman */
   table.tbl tr{page-break-inside:avoid}
   table.tbl thead{display:table-header-group}
-  .card{box-shadow:none!important;break-inside:avoid}
+  /* Kartu boleh mengalir antar halaman supaya tabel riwayat sudah mulai di halaman 1 */
+  .card{box-shadow:none!important}
+  .page-head{margin-bottom:8px!important}
+  .avatar-lg{width:60px!important;height:60px!important;font-size:30px!important}
 }

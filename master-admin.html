@@ -75,7 +75,8 @@
       <a data-view="all-classes"><span class="ic">📅</span> Semua Kelas</a>
       <a data-view="students"><span class="ic">🧑‍🎓</span> Murid</a>
       <a data-view="tutors"><span class="ic">👩‍🏫</span> Tentor</a>
-      <a data-view="laporan"><span class="ic">📊</span> Laporan</a>
+      <a data-view="laporan"><span class="ic">📊</span> Laporan Murid</a>
+      <a data-view="laptentor"><span class="ic">📑</span> Laporan Tentor</a>
       <a data-view="data"><span class="ic">🗄️</span> Data Explorer</a>
       <a data-view="payment"><span class="ic">💳</span> Payment Student</a>
       <a data-view="tpay"><span class="ic">🧑‍🏫</span> Payment Tentor</a>
@@ -218,7 +219,7 @@
 
       <!-- LAPORAN -->
       <section class="view hide" id="view-laporan">
-        <div class="page-head"><div><h1>Laporan</h1><div class="sub">Rekap kelas per murid untuk laporan bulanan</div></div>
+        <div class="page-head"><div><h1>Laporan Murid</h1><div class="sub">Rekap kelas per murid untuk laporan bulanan</div></div>
           <input type="month" id="repMonth" class="btn btn-outline" style="font-weight:600"></div>
         <div class="card card-pad" style="margin-bottom:14px;padding:12px 16px">
           <input id="laporanSearch" oninput="renderLaporan()" placeholder="🔎 Cari murid di laporan (nama / orang tua / sekolah)…" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px">
@@ -226,6 +227,43 @@
         <div class="card"><div class="table-wrap"><table class="tbl">
           <thead><tr><th>Murid</th><th>Jml Kelas</th><th>Total Menit</th><th>Fee Ortu/Meet</th><th>Estimasi Tagihan</th><th></th></tr></thead>
           <tbody id="repBody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- LAPORAN TENTOR -->
+      <section class="view hide" id="view-laptentor">
+        <div class="page-head"><div><h1>Laporan Tentor</h1><div class="sub">Rekap fee mengajar + komisi per tentor — siap cetak PDF</div></div>
+          <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Generate PDF</button></div>
+        <div class="card card-pad no-print" style="margin-bottom:16px">
+          <div class="field-row">
+            <div class="field"><label>Pilih Tentor</label><select id="ltTutor" onchange="renderLapTentor()"></select></div>
+            <div class="field"><label>Bulan</label><input type="month" id="ltMonth" onchange="renderLapTentor()"></div>
+          </div>
+        </div>
+        <div class="print-only print-head">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img src="assets/logo.jpeg" alt="Little Star">
+            <div>
+              <div class="pt">Rekap Fee Tentor — Little Star Course</div>
+              <div class="pl">Tentor: <b id="ltPhName">—</b></div>
+              <div class="pl">Periode: <b id="ltPhPeriod">—</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-4" style="margin-bottom:20px">
+          <div class="stat tint-green"><div class="lbl">Total Fee Mengajar</div><div class="val" id="ltTotal">Rp 0</div></div>
+          <div class="stat tint-blue"><div class="lbl">Total Sesi</div><div class="val" id="ltSessions">0</div></div>
+          <div class="stat tint-purple"><div class="lbl">Total Menit</div><div class="val" id="ltMinutes">0</div></div>
+          <div class="stat tint-amber"><div class="lbl">Onsite / Online</div><div class="val" id="ltMix">0 / 0</div></div>
+        </div>
+        <div class="card card-pad" style="margin-bottom:20px;display:flex;gap:28px;flex-wrap:wrap;align-items:center">
+          <div><div class="lbl muted">Fee Mengajar</div><b class="text-green" id="ltBase">Rp 0</b></div>
+          <div><div class="lbl muted">Komisi / Bonus</div><b style="color:var(--orange)" id="ltBonus">Rp 0</b><div class="hint" id="ltBonusNote" style="max-width:320px;white-space:pre-line"></div></div>
+          <div style="margin-left:auto;text-align:right"><div class="lbl muted">TOTAL DITERIMA</div><b style="font-size:22px;color:var(--purple)" id="ltGrand">Rp 0</b></div>
+        </div>
+        <div class="card"><div class="table-wrap tw-full"><table class="tbl">
+          <thead><tr><th>Tanggal</th><th>Murid</th><th>Durasi</th><th>Type</th><th>Fee</th></tr></thead>
+          <tbody id="ltBody"></tbody>
         </table></div></div>
       </section>
 
@@ -338,7 +376,7 @@
     <div class="modal-body">
       <div class="field"><label>Pilih Salam</label>
         <select id="waGreet">
-          <option>Selamat Pagi 🌅</option><option>Selamat Siang ☀️</option><option>Selamat Sore 🌇</option><option>Selamat Malam 🌙</option>
+          <option>Selamat Pagi</option><option>Selamat Siang</option><option>Selamat Sore</option><option>Selamat Malam</option>
         </select></div>
       <div class="field"><label>Preview Pesan</label><div class="wa-msg" id="waMsg">—</div></div>
       <div class="wa-total"><div class="hint">GRAND TOTAL YANG HARUS DITRANSFER</div><div class="big" id="waTotal">Rp 0</div></div>
@@ -508,6 +546,7 @@ function renderM(v){
   if(v==='students')    renderStudentsM();
   if(v==='tutors')      renderTutorsM();
   if(v==='laporan')     renderLaporan();
+  if(v==='laptentor')   initLapTentor();
   if(v==='payment')     initPayment();
   if(v==='tpay')        initTentorPay();
   if(v==='data')        initData();
@@ -1155,12 +1194,12 @@ async function openReport(id, month){
       <div class="avatar-lg">🧑‍🎓</div>
       <div><div style="font-size:20px;font-weight:800;color:var(--navy)">${CUR.nama} <span class="badge badge-active">Active</span></div>
         <div class="hint">Grade ${CUR.grade||'-'} · School: ${CUR.school||'-'}</div>
-        <div class="hint">Date of Birth: ${CUR.dob?prettyDate(CUR.dob):'-'}</div>
-        <div class="hint">Address: ${CUR.address||'-'}</div>
-        <div class="hint">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'})</div></div></div>
+        <div class="hint no-print">Date of Birth: ${CUR.dob?prettyDate(CUR.dob):'-'}</div>
+        <div class="hint no-print">Address: ${CUR.address||'-'}</div>
+        <div class="hint no-print">Parent: ${CUR.parent_name||'-'} (${CUR.wa_ortu||'-'})</div></div></div>
     <div class="stat tint-green"><div class="lbl">💳 TOTAL DEPOSIT PAYMENT</div><div class="val" style="font-size:18px">${hasPay?`LUNAS ${meets}× MEETING`:'⏳ BELUM LUNAS'}</div><div class="hint">${hasPay?`Per meet: ${fmtRp(perMeet)} · ${meets}×${perMin}${carryIn?` + carry ${fmtNum(carryIn)}`:''} = ${fmtNum(total)} menit<br>Deposit dibayar: <b class="text-green">${fmtRp(base)}</b><br>${prettyDate(pay.pay_date)}`:'Input di tab Payment dulu'}</div></div>
-    <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${fmtNum(used)} <span style="font-size:13px">menit</span></div><div class="hint">${Math.round(used/perMin)} meetings</div></div>
-    <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${fmtNum(left)} <span style="font-size:13px">menit</span></div><div class="hint">Setara ${Math.floor(left/perMin)} sesi</div></div>`;
+    <div class="stat tint-blue"><div class="lbl">⏱️ TOTAL USED</div><div class="val">${Math.round(used/perMin)} <span style="font-size:13px">meetings</span></div><div class="hint">${fmtNum(used)} menit</div></div>
+    <div class="stat tint-amber"><div class="lbl">📚 REMAINING</div><div class="val">${Math.floor(left/perMin)} <span style="font-size:13px">sesi</span></div><div class="hint">${fmtNum(left)} menit</div></div>`;
   // history
   document.getElementById('rBody').innerHTML=cls.map((c,i)=>`<tr>
     <td>${i+1}</td><td>${prettyDate(c.date)}<br><span class="muted">(${dayName(c.date)})</span></td>
@@ -1175,7 +1214,55 @@ async function openReport(id, month){
     <div class="stat tint-amber"><div class="lbl">ADDITIONAL FEE 2 (Manual)</div><div class="val">${fmtRp(addFee2)}</div><div class="hint">${addFee2Note?esc(addFee2Note):'-'}</div></div>
     <div class="stat tint-green"><div class="lbl">DEPOSIT BULAN DEPAN</div><div class="val">${fmtRp(nextDep)}</div><div class="hint">${pay?(Number(pay.next_meetings)||0):0}× meeting</div></div>
     <div class="stat tint-purple"><div class="lbl">TOTAL YANG HARUS DIBAYAR</div><div class="val">${fmtRp(grandBill)}</div><div class="hint">Fee1 + Fee2 + Deposit depan</div></div>`;
-  buildWa(cls,{periodName,perMin,perMeet,meets,base,used,addFee1,addFee2,addFee2Note,nextDep,grandBill,pay});
+  buildWa(cls,{periodName,perMin,perMeet,meets,base,used,extraMin,addFee1,addFee2,addFee2Note,nextDep,grandBill,pay});
+}
+
+/* ===== LAPORAN TENTOR ===== */
+// Fee tentor proporsional durasi: (fee_tentor / durasi normal) × durasi kelas
+function mTutorFee(c){
+  const s=STUDENTS.find(x=>x.id===c.student_id)||{};
+  const norm=Number(s.meeting_minutes)||90, feePer=Number(s.fee_tentor)||0, dur=Number(c.duration)||norm;
+  return Math.round(feePer/norm*dur);
+}
+function initLapTentor(){
+  const sel=document.getElementById('ltTutor');
+  if(sel && !sel.options.length) sel.innerHTML='<option value="">— pilih tentor —</option>'+TUTORS.map(t=>`<option value="${t.id}">${t.nama}</option>`).join('');
+  const mp=document.getElementById('ltMonth'); if(mp && !mp.value) mp.value=todayStr().slice(0,7);
+  renderLapTentor();
+}
+async function renderLapTentor(){
+  const tid=document.getElementById('ltTutor').value;
+  const m=document.getElementById('ltMonth').value||todayStr().slice(0,7);
+  const t=TUTORS.find(x=>x.id===tid)||{};
+  const periodName=new Date(m+'-01').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  document.getElementById('ltPhName').textContent=t.nama||'-';
+  document.getElementById('ltPhPeriod').textContent=periodName;
+  const setZero=(txt)=>{ document.getElementById('ltBody').innerHTML=`<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">${txt}</td></tr>`;
+    ['ltTotal','ltBase','ltBonus','ltGrand'].forEach(i=>document.getElementById(i).textContent='Rp 0');
+    document.getElementById('ltSessions').textContent='0'; document.getElementById('ltMinutes').textContent='0'; document.getElementById('ltMix').textContent='0 / 0'; document.getElementById('ltBonusNote').textContent=''; };
+  if(!tid){ setZero('Pilih tentor dulu.'); return; }
+  document.getElementById('ltBody').innerHTML='<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">Memuat…</td></tr>';
+  let cls=[];
+  try{ cls=await API.getClasses({month:m,tutor_id:tid}); }catch(e){ setZero('Gagal memuat kelas.'); toast('Gagal memuat kelas tentor','err'); return; }
+  cls.sort((a,b)=>((a.date||'')+(a.start_time||'')).localeCompare((b.date||'')+(b.start_time||'')));
+  let fee=0,mins=0,on=0,onl=0;
+  const body=cls.map(c=>{
+    const f=mTutorFee(c); fee+=f; mins+=Number(c.duration)||0; if(c.type==='online')onl++;else on++;
+    return `<tr><td>${prettyDate(c.date)}</td><td><b>${sName(c.student_id)}</b></td><td>${c.duration||'-'} min</td>
+      <td>${c.type==='online'?'<span class="badge badge-online">ONLINE</span>':'<span class="badge badge-onsite">ONSITE</span>'}</td>
+      <td><b>${fmtRp(f)}</b></td></tr>`;
+  }).join('');
+  document.getElementById('ltBody').innerHTML=body||`<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">Belum ada kelas pada ${periodName}.</td></tr>`;
+  document.getElementById('ltTotal').textContent=fmtRp(fee);
+  document.getElementById('ltSessions').textContent=cls.length;
+  document.getElementById('ltMinutes').textContent=fmtNum(mins);
+  document.getElementById('ltMix').textContent=on+' / '+onl;
+  let bonus=0,bnote='';
+  try{ const bs=await API.getTutorBonus({tutor_id:tid,month:m}); const b=bs[0]||{}; bonus=Number(b.amount)||0; bnote=b.note||''; }catch(e){}
+  document.getElementById('ltBase').textContent=fmtRp(fee);
+  document.getElementById('ltBonus').textContent=fmtRp(bonus);
+  document.getElementById('ltBonusNote').textContent=bnote?('📝 '+bnote):'';
+  document.getElementById('ltGrand').textContent=fmtRp(fee+bonus);
 }
 
 /* ---- WA composer ---- */
@@ -1185,9 +1272,9 @@ function buildWa(cls,x){
   const g=document.getElementById('waGreet').value;
   const nextMeets=x.pay?(Number(x.pay.next_meetings)||0):0;
   const lines=[];
-  lines.push(`${g}, ${CUR.parent_name||'Bapak/Ibu'} 😊`,'',`Berikut laporan kelas ${nm} untuk bulan ${x.periodName} di Little Star Course.`,'');
+  lines.push(`${g}, ${nm}'s parents 😊`,'',`Berikut laporan kelas ${nm} untuk bulan ${x.periodName} di Little Star Course.`,'');
   lines.push(`📅 Total pertemuan bulan ini: ${cls.length} kali`);
-  lines.push(`⏱️ Total durasi: ${x.used} menit`);
+  if(x.extraMin) lines.push(`⏱️ Tambahan durasi: ${fmtNum(x.extraMin)} menit`);
   if(x.base) lines.push(`💳 Deposit bulan ini: ${x.meets}× meeting = ${fmtRp(x.base)}`);
   lines.push('');
   if(x.addFee1) lines.push(`➕ Additional fee 1 (sesi tambahan): ${fmtRp(x.addFee1)}`);
